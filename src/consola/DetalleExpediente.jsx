@@ -8,6 +8,15 @@
  * hacer cuando todavia no hay nada, y entonces ocupa toda la pantalla; cuando ya hay datos
  * pasa a ser un enlace discreto arriba, porque volver a consultar es raro y no compite con la
  * respuesta.
+ *
+ * DOS NATURALEZAS: lo que hay en esta pantalla no es todo del mismo tipo. La respuesta y su
+ * explicacion (veredicto, topes, lo que falta) se leen de arriba abajo una vez; los documentos
+ * y lo que ha pasado se consultan cuando hace falta. Apilados, el material pesa lo mismo que la
+ * respuesta y la pagina se vuelve larguisima.
+ *
+ * En una pantalla ancha van en dos columnas: la narrativa en ancho de lectura y el material en
+ * una columna lateral que acompania. En una angosta se apilan en el mismo orden, que es lo
+ * correcto en el telefono: ahi no hay dos columnas que valga la pena separar.
  */
 
 import { useCallback, useState } from "react";
@@ -86,24 +95,29 @@ export default function DetalleExpediente() {
       {!tieneDatos ? (
         <Empezar caso={caso} onListo={(mensaje) => { setUltimaConsulta(mensaje); recargar(); }} />
       ) : (
-        <>
-          {/* La respuesta va primero. Antes los pendientes estaban arriba, y quien entraba a
-              saber si le tocaba declarar se encontraba con una lista de problemas. */}
-          {resumen.loading ? (
-            <Cargando filas={4} />
-          ) : (
-            <Resumen
-              resumen={resumen.data}
-              porRevisar={porRevisar}
-              // Lo que hay que confirmar va pegado a los topes que puede mover, no al final
-              // de la pantalla: es lo que le da sentido a la salvedad del veredicto.
-              antesDeFacturas={<Pendientes caso={caso} onCambio={recargar} />}
-            />
-          )}
-          <Documentos documentos={caso.documents} />
-          <SubirDocumento caso={caso} onListo={recargar} />
-          <Actividad eventos={caso.events} />
-        </>
+        <div className="declaracion">
+          <div className="declaracion-narrativa">
+            {/* La respuesta va primero. Antes los pendientes estaban arriba, y quien entraba a
+                saber si le tocaba declarar se encontraba con una lista de problemas. */}
+            {resumen.loading ? (
+              <Cargando filas={4} />
+            ) : (
+              <Resumen
+                resumen={resumen.data}
+                porRevisar={porRevisar}
+                // Lo que hay que confirmar va pegado a los topes que puede mover, no al final
+                // de la pantalla: es lo que le da sentido a la salvedad del veredicto.
+                antesDeFacturas={<Pendientes caso={caso} onCambio={recargar} />}
+              />
+            )}
+          </div>
+
+          <aside className="declaracion-material">
+            <Documentos documentos={caso.documents} />
+            <SubirDocumento caso={caso} onListo={recargar} />
+            <Actividad eventos={caso.events} />
+          </aside>
+        </div>
       )}
     </>
   );

@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "estilos": "node scripts/revisar-estilos.mjs",
+    "prebuild": "node scripts/revisar-estilos.mjs",
     "build": "vite build",
     "preview": "vite preview"
   },

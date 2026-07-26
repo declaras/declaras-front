@@ -1,25 +1,43 @@
 /**
  * La entrada.
  *
- * Para el cliente no hay lista de clientes: hay sus declaraciones, una por ano. Para el
- * contador si, y ademas necesita ver muchas de un vistazo, contarlas y saber cuales estan
- * listas. Son dos necesidades distintas sobre los mismos datos, asi que es la misma pantalla
- * con dos densidades y no dos pantallas.
+ * Para el cliente no hay lista de clientes: hay sus declaraciones, una por ano.
+ *
+ * Para el contador la unidad de trabajo es la PERSONA, no el par (persona, ano): cuando piensa
+ * "como va Juan Jose" no piensa "como va Juan Jose 2025". Por eso la lista es de clientes y los
+ * anos van adentro. Antes era una tabla de declaraciones con el nombre repetido en cada fila,
+ * mas una tabla de clientes debajo con los mismos nombres otra vez: con cuarenta clientes y dos
+ * anos eran ciento veinte apariciones del mismo dato, y el nombre dejaba de ser la clave para
+ * volverse ruido.
+ *
+ * En temporada el contador si trabaja un ano a la vez para todos, pero eso es un filtro y no
+ * otra estructura.
  */
 
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, Users } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 import { api } from "./api";
 import { useAction, useApi } from "./hooks";
 import { formatDateTime, statusLabel } from "./formato";
-import { Cargando, ChipEstado, ErrorApi, Vacio } from "./componentes";
+import { Avatar, Cargando, ErrorApi, Vacio } from "./componentes";
 import { useVista } from "./vista";
 
-// La declaracion de un ano se presenta al ano siguiente, asi que el ano gravable por defecto
-// es el anterior al actual.
+// La declaracion de un ano se presenta al ano siguiente, asi que el ano gravable por defecto es
+// el anterior al actual.
 const ANIO_GRAVABLE_POR_DEFECTO = new Date().getFullYear() - 1;
+
+// El avance se dice con la palabra y su tono, no con una etiqueta de color: el color se reserva
+// para lo que pide atencion, que es lo que esta listo para revisar.
+const TONO_AVANCE = {
+  OPEN: "avance-quieto",
+  EXTRACTING: "avance-andando",
+  READY_FOR_REVIEW: "avance-listo",
+  DRAFT_READY: "avance-listo",
+  SUBMITTED: "avance-cerrado",
+  CLOSED: "avance-cerrado",
+};
 
 export default function ListaExpedientes() {
   const { profunda } = useVista();
@@ -27,20 +45,32 @@ export default function ListaExpedientes() {
   const expedientes = useApi(() => api.listCases(), []);
   const clientes = useApi(() => api.listClients(), []);
   const [empezando, setEmpezando] = useState(false);
+  const [anioFiltrado, setAnioFiltrado] = useState(null);
 
-  const porId = useMemo(() => {
-    const mapa = new Map();
-    for (const cliente of clientes.data ?? []) mapa.set(cliente.id, cliente);
-    return mapa;
-  }, [clientes.data]);
+  const casos = useMemo(() => expedientes.data ?? [], [expedientes.data]);
+  const anios = useMemo(
+    () => [...new Set(casos.map((c) => c.tax_year))].sort((a, b) => b - a),
+    [casos],
+  );
+
+  const porCliente = useMemo(() => {
+    const visibles = anioFiltrado ? casos.filter((c) => c.tax_year === anioFiltrado) : casos;
+    const grupos = new Map();
+    for (const cliente of clientes.data ?? []) grupos.set(cliente.id, { cliente, casos: [] });
+    for (const caso of visibles) {
+      const grupo = grupos.get(caso.client_id);
+      if (grupo) grupo.casos.push(caso);
+    }
+    return [...grupos.values()]
+      .filter((g) => g.casos.length)
+      .map((g) => ({ ...g, casos: [...g.casos].sort((a, b) => b.tax_year - a.tax_year) }));
+  }, [casos, clientes.data, anioFiltrado]);
 
   const recargar = () => {
     expedientes.reload();
     clientes.reload();
   };
-
   const abrir = (caso) => navigate(`/consola/expedientes/${caso.id}`);
-  const casos = expedientes.data ?? [];
 
   if (!profunda) {
     return (
@@ -54,13 +84,15 @@ export default function ListaExpedientes() {
         {expedientes.loading ? <Cargando filas={3} /> : null}
 
         <div className="tarjetas">
-          {casos.map((caso) => (
-            <button key={caso.id} className="tarjeta" onClick={() => abrir(caso)}>
-              <span className="tarjeta-anio">{caso.tax_year}</span>
-              <span className="tarjeta-estado">{statusLabel(caso.status)}</span>
-              <ArrowRight size={16} className="tarjeta-flecha" />
-            </button>
-          ))}
+          {[...casos]
+            .sort((a, b) => b.tax_year - a.tax_year)
+            .map((caso) => (
+              <button key={caso.id} className="tarjeta" onClick={() => abrir(caso)}>
+                <span className="tarjeta-anio">{caso.tax_year}</span>
+                <span className="tarjeta-estado">{statusLabel(caso.status)}</span>
+                <ArrowRight size={16} className="tarjeta-flecha" />
+              </button>
+            ))}
         </div>
 
         {empezando ? (
@@ -82,34 +114,28 @@ export default function ListaExpedientes() {
     );
   }
 
+  const listas = casos.filter((c) => c.status === "READY_FOR_REVIEW").length;
+
   return (
     <div className="lista-clientes">
-      <h1 className="lista-titulo">Clientes</h1>
-      <p className="lista-sub">Cada declaración es el trabajo de un cliente para un año gravable.</p>
+      <header className="lista-top">
+        <div>
+          <h1 className="lista-titulo">Clientes</h1>
+          {/* Una linea en vez de cuatro tarjetas de metricas: dos de ellas solo contaban las
+              filas que estan justo debajo. */}
+          <p className="lista-sub">
+            {resumen(casos.length, clientes.data?.length ?? 0, listas)}
+          </p>
+        </div>
+        <button className="btn-mini primario" onClick={() => setEmpezando((v) => !v)}>
+          Nueva declaración
+        </button>
+      </header>
 
       <ErrorApi error={expedientes.error} />
 
-      <div className="metricas">
-        <Metrica valor={casos.length || "—"} nombre="Declaraciones" />
-        <Metrica valor={clientes.data?.length ?? "—"} nombre="Clientes" />
-        <Metrica
-          valor={casos.filter((c) => c.status === "READY_FOR_REVIEW").length}
-          nombre="Listas para revisar"
-        />
-        <Metrica valor={casos.filter((c) => c.status === "SUBMITTED").length} nombre="Presentadas" />
-      </div>
-
-      <div className="panel">
-        <div className="panel-head">
-          <h2>Todas las declaraciones</h2>
-          {casos.length ? <span className="count">{casos.length}</span> : null}
-          <span className="spacer" />
-          <button className="btn-mini primario" onClick={() => setEmpezando((v) => !v)}>
-            Nueva declaración
-          </button>
-        </div>
-
-        {empezando ? (
+      {empezando ? (
+        <div className="panel" style={{ marginBottom: 24 }}>
           <FormularioNuevo
             onListo={(caso) => {
               setEmpezando(false);
@@ -118,61 +144,79 @@ export default function ListaExpedientes() {
             }}
             onCancelar={() => setEmpezando(false)}
           />
-        ) : null}
+        </div>
+      ) : null}
 
-        {expedientes.loading ? <Cargando filas={4} /> : null}
+      {/* En temporada se trabaja un ano a la vez para todos: eso es un filtro, no otra pantalla. */}
+      {anios.length > 1 ? (
+        <div className="filtro-anios">
+          <button
+            className={anioFiltrado === null ? "filtro-activo" : ""}
+            onClick={() => setAnioFiltrado(null)}
+          >
+            Todos
+          </button>
+          {anios.map((anio) => (
+            <button
+              key={anio}
+              className={anioFiltrado === anio ? "filtro-activo" : ""}
+              onClick={() => setAnioFiltrado(anio)}
+            >
+              {anio}
+            </button>
+          ))}
+        </div>
+      ) : null}
 
-        {!expedientes.loading && casos.length === 0 ? (
-          <Vacio>Todavía no hay declaraciones. Abre la primera para empezar.</Vacio>
-        ) : null}
+      {expedientes.loading ? <Cargando filas={4} /> : null}
+      {!expedientes.loading && porCliente.length === 0 ? (
+        <Vacio>Todavía no hay declaraciones. Abre la primera para empezar.</Vacio>
+      ) : null}
 
-        {casos.length > 0 ? (
-          <table className="tabla">
-            <thead>
-              <tr>
-                <th>Cliente</th>
-                <th className="num">Año gravable</th>
-                <th>Estado</th>
-                <th>Última actividad</th>
-              </tr>
-            </thead>
-            <tbody>
-              {casos.map((caso) => {
-                const cliente = porId.get(caso.client_id);
-                return (
-                  <tr key={caso.id} className="clickable" onClick={() => abrir(caso)}>
-                    <td className="strong">
-                      {cliente?.full_name ?? "Sin nombre"}
-                      <div className="celda-suave" style={{ fontWeight: 400, fontSize: 12.5 }}>
-                        {cliente ? `${cliente.id_kind} ${cliente.id_number}` : caso.client_id}
-                      </div>
-                    </td>
-                    <td className="num strong">{caso.tax_year}</td>
-                    <td>
-                      <ChipEstado status={caso.status} />
-                    </td>
-                    <td className="celda-suave">{formatDateTime(caso.updated_at)}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        ) : null}
-      </div>
+      <ul className="clientes">
+        {porCliente.map(({ cliente, casos: suyos }) => (
+          <li className="cliente" key={cliente.id}>
+            <div className="cliente-quien">
+              <Avatar nombre={cliente.full_name ?? cliente.id_number} size="sm" />
+              <div style={{ minWidth: 0 }}>
+                <p className="cliente-nombre">{cliente.full_name ?? "Sin nombre"}</p>
+                <p className="cliente-doc">
+                  {cliente.id_kind} {cliente.id_number}
+                  {cliente.phone_number ? ` · ${cliente.phone_number}` : ""}
+                  {cliente.email ? ` · ${cliente.email}` : ""}
+                </p>
+              </div>
+            </div>
 
-      <ListaClientes clientes={clientes} />
+            <ul className="cliente-anios">
+              {suyos.map((caso) => (
+                <li key={caso.id}>
+                  <button onClick={() => abrir(caso)}>
+                    <span className="anio">{caso.tax_year}</span>
+                    <span className={`avance ${TONO_AVANCE[caso.status] ?? "avance-quieto"}`}>
+                      {statusLabel(caso.status)}
+                    </span>
+                    <span className="cuando">{formatDateTime(caso.updated_at)}</span>
+                    <ArrowRight size={15} className="flecha" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
 
-function Metrica({ valor, nombre }) {
-  return (
-    <div className="metrica">
-      <div className="metrica-valor">{valor}</div>
-      <div className="metrica-nombre">{nombre}</div>
-    </div>
-  );
-}
+const resumen = (declaraciones, clientes, listas) => {
+  const partes = [
+    `${declaraciones} ${declaraciones === 1 ? "declaración" : "declaraciones"}`,
+    `${clientes} ${clientes === 1 ? "cliente" : "clientes"}`,
+  ];
+  const frase = `${partes[0]} de ${partes[1]}`;
+  return listas ? `${frase} · ${listas} ${listas === 1 ? "lista" : "listas"} para revisar` : frase;
+};
 
 /**
  * Abrir una declaracion.
@@ -254,40 +298,5 @@ function FormularioNuevo({ onListo, onCancelar, simple = false }) {
         </button>
       </div>
     </form>
-  );
-}
-
-function ListaClientes({ clientes }) {
-  if (clientes.loading || (clientes.data ?? []).length === 0) return null;
-  return (
-    <div className="panel">
-      <div className="panel-head">
-        <Users size={15} style={{ color: "var(--muted)" }} />
-        <h2>Clientes</h2>
-        <span className="count">{clientes.data.length}</span>
-      </div>
-      <table className="tabla">
-        <thead>
-          <tr>
-            <th>Nombre</th>
-            <th>Documento</th>
-            <th>WhatsApp</th>
-            <th>Correo</th>
-          </tr>
-        </thead>
-        <tbody>
-          {clientes.data.map((cliente) => (
-            <tr key={cliente.id}>
-              <td className="strong">{cliente.full_name ?? "Sin nombre"}</td>
-              <td className="num">
-                {cliente.id_kind} {cliente.id_number}
-              </td>
-              <td className="celda-suave">{cliente.phone_number ?? "—"}</td>
-              <td className="celda-suave">{cliente.email ?? "—"}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
   );
 }
