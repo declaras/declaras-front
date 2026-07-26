@@ -1,24 +1,33 @@
-/** Lista de expedientes: la pantalla de entrada del contador. */
+/**
+ * La entrada.
+ *
+ * Para el cliente no hay lista de clientes: hay sus declaraciones, una por ano. Para el
+ * contador si, y ademas necesita ver muchas de un vistazo, contarlas y saber cuales estan
+ * listas. Son dos necesidades distintas sobre los mismos datos, asi que es la misma pantalla
+ * con dos densidades y no dos pantallas.
+ */
 
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FolderPlus, Users } from "lucide-react";
+import { ArrowRight, Users } from "lucide-react";
 
 import { api } from "./api";
 import { useAction, useApi } from "./hooks";
-import { formatDateTime } from "./formato";
+import { formatDateTime, statusLabel } from "./formato";
 import { Cargando, ChipEstado, ErrorApi, Vacio } from "./componentes";
+import { useVista } from "./vista";
 
+// La declaracion de un ano se presenta al ano siguiente, asi que el ano gravable por defecto
+// es el anterior al actual.
 const ANIO_GRAVABLE_POR_DEFECTO = new Date().getFullYear() - 1;
 
 export default function ListaExpedientes() {
+  const { profunda } = useVista();
   const navigate = useNavigate();
   const expedientes = useApi(() => api.listCases(), []);
   const clientes = useApi(() => api.listClients(), []);
-  const [abriendo, setAbriendo] = useState(false);
+  const [empezando, setEmpezando] = useState(false);
 
-  // El expediente guarda el id del cliente, no su nombre: se cruza aqui para que la
-  // tabla muestre a quien pertenece cada caso.
   const porId = useMemo(() => {
     const mapa = new Map();
     for (const cliente of clientes.data ?? []) mapa.set(cliente.id, cliente);
@@ -30,59 +39,94 @@ export default function ListaExpedientes() {
     clientes.reload();
   };
 
+  const abrir = (caso) => navigate(`/consola/expedientes/${caso.id}`);
+  const casos = expedientes.data ?? [];
+
+  if (!profunda) {
+    return (
+      <section>
+        <h1 className="lista-titulo">Tus declaraciones</h1>
+        <p className="lista-sub">
+          Una por año gravable. Abre la del año que quieras revisar o presentar.
+        </p>
+
+        <ErrorApi error={expedientes.error} />
+        {expedientes.loading ? <Cargando filas={3} /> : null}
+
+        <div className="tarjetas">
+          {casos.map((caso) => (
+            <button key={caso.id} className="tarjeta" onClick={() => abrir(caso)}>
+              <span className="tarjeta-anio">{caso.tax_year}</span>
+              <span className="tarjeta-estado">{statusLabel(caso.status)}</span>
+              <ArrowRight size={16} className="tarjeta-flecha" />
+            </button>
+          ))}
+        </div>
+
+        {empezando ? (
+          <FormularioNuevo
+            simple
+            onListo={(caso) => {
+              setEmpezando(false);
+              recargar();
+              abrir(caso);
+            }}
+            onCancelar={() => setEmpezando(false)}
+          />
+        ) : (
+          <button className="btn-grande" onClick={() => setEmpezando(true)}>
+            {casos.length ? "Empezar otro año" : "Empezar mi declaración"}
+          </button>
+        )}
+      </section>
+    );
+  }
+
   return (
-    <>
-      <h1 className="consola-h1">Expedientes</h1>
-      <p className="consola-sub">
-        Cada expediente es el trabajo de un cliente para un año gravable.
-      </p>
+    <div className="lista-clientes">
+      <h1 className="lista-titulo">Clientes</h1>
+      <p className="lista-sub">Cada declaración es el trabajo de un cliente para un año gravable.</p>
 
       <ErrorApi error={expedientes.error} />
 
       <div className="metricas">
-        <Metrica valor={expedientes.data?.length ?? "—"} nombre="Expedientes" />
+        <Metrica valor={casos.length || "—"} nombre="Declaraciones" />
         <Metrica valor={clientes.data?.length ?? "—"} nombre="Clientes" />
         <Metrica
-          valor={(expedientes.data ?? []).filter((c) => c.status === "READY_FOR_REVIEW").length}
-          nombre="Listos para revisar"
+          valor={casos.filter((c) => c.status === "READY_FOR_REVIEW").length}
+          nombre="Listas para revisar"
         />
-        <Metrica
-          valor={(expedientes.data ?? []).filter((c) => c.status === "SUBMITTED").length}
-          nombre="Presentados"
-        />
+        <Metrica valor={casos.filter((c) => c.status === "SUBMITTED").length} nombre="Presentadas" />
       </div>
 
       <div className="panel">
         <div className="panel-head">
-          <h2>Todos los expedientes</h2>
-          {expedientes.data ? <span className="count">{expedientes.data.length}</span> : null}
+          <h2>Todas las declaraciones</h2>
+          {casos.length ? <span className="count">{casos.length}</span> : null}
           <span className="spacer" />
-          <button className="btn-mini primario" onClick={() => setAbriendo((v) => !v)}>
-            <FolderPlus size={13} />
-            Abrir expediente
+          <button className="btn-mini primario" onClick={() => setEmpezando((v) => !v)}>
+            Nueva declaración
           </button>
         </div>
 
-        {abriendo ? (
+        {empezando ? (
           <FormularioNuevo
             onListo={(caso) => {
-              setAbriendo(false);
+              setEmpezando(false);
               recargar();
-              navigate(`/consola/expedientes/${caso.id}`);
+              abrir(caso);
             }}
-            onCancelar={() => setAbriendo(false)}
+            onCancelar={() => setEmpezando(false)}
           />
         ) : null}
 
         {expedientes.loading ? <Cargando filas={4} /> : null}
 
-        {!expedientes.loading && (expedientes.data ?? []).length === 0 ? (
-          <Vacio>
-            Todavía no hay expedientes. Abre el primero para empezar a trabajar un cliente.
-          </Vacio>
+        {!expedientes.loading && casos.length === 0 ? (
+          <Vacio>Todavía no hay declaraciones. Abre la primera para empezar.</Vacio>
         ) : null}
 
-        {(expedientes.data ?? []).length > 0 ? (
+        {casos.length > 0 ? (
           <table className="tabla">
             <thead>
               <tr>
@@ -93,17 +137,13 @@ export default function ListaExpedientes() {
               </tr>
             </thead>
             <tbody>
-              {expedientes.data.map((caso) => {
+              {casos.map((caso) => {
                 const cliente = porId.get(caso.client_id);
                 return (
-                  <tr
-                    key={caso.id}
-                    className="clickable"
-                    onClick={() => navigate(`/consola/expedientes/${caso.id}`)}
-                  >
+                  <tr key={caso.id} className="clickable" onClick={() => abrir(caso)}>
                     <td className="strong">
                       {cliente?.full_name ?? "Sin nombre"}
-                      <div style={{ color: "var(--muted)", fontSize: 12.5, fontWeight: 400 }}>
+                      <div className="celda-suave" style={{ fontWeight: 400, fontSize: 12.5 }}>
                         {cliente ? `${cliente.id_kind} ${cliente.id_number}` : caso.client_id}
                       </div>
                     </td>
@@ -111,9 +151,7 @@ export default function ListaExpedientes() {
                     <td>
                       <ChipEstado status={caso.status} />
                     </td>
-                    <td style={{ color: "var(--muted)", fontSize: 13 }}>
-                      {formatDateTime(caso.updated_at)}
-                    </td>
+                    <td className="celda-suave">{formatDateTime(caso.updated_at)}</td>
                   </tr>
                 );
               })}
@@ -123,7 +161,7 @@ export default function ListaExpedientes() {
       </div>
 
       <ListaClientes clientes={clientes} />
-    </>
+    </div>
   );
 }
 
@@ -136,7 +174,14 @@ function Metrica({ valor, nombre }) {
   );
 }
 
-function FormularioNuevo({ onListo, onCancelar }) {
+/**
+ * Abrir una declaracion.
+ *
+ * En modo simple solo se pide la cedula y el ano: es el minimo para consultar la DIAN, y el
+ * nombre lo trae el RUT. Pedirle a alguien datos que el sistema va a averiguar en el siguiente
+ * paso es la clase de friccion que hace que se abandone un formulario.
+ */
+function FormularioNuevo({ onListo, onCancelar, simple = false }) {
   const [datos, setDatos] = useState({
     id_number: "",
     full_name: "",
@@ -160,11 +205,11 @@ function FormularioNuevo({ onListo, onCancelar }) {
   };
 
   return (
-    <form className="panel-body" onSubmit={enviar} style={{ borderBottom: "1px solid var(--line)" }}>
+    <form className={simple ? "clave-forma" : "panel-body"} onSubmit={enviar}>
       <ErrorApi error={accion.error} />
-      <div className="fila-campos">
+      <div className={simple ? "" : "fila-campos"}>
         <label className="campo">
-          <span>Cédula del cliente</span>
+          <span>{simple ? "Tu cédula" : "Cédula del cliente"}</span>
           <input
             value={datos.id_number}
             onChange={cambiar("id_number")}
@@ -172,39 +217,39 @@ function FormularioNuevo({ onListo, onCancelar }) {
             inputMode="numeric"
             required
             minLength={5}
-          />
-        </label>
-        <label className="campo">
-          <span>Nombre completo</span>
-          <input
-            value={datos.full_name}
-            onChange={cambiar("full_name")}
-            placeholder="Ana María Pérez"
+            autoFocus
           />
         </label>
         <label className="campo">
           <span>Año gravable</span>
-          <input
-            value={datos.tax_year}
-            onChange={cambiar("tax_year")}
-            inputMode="numeric"
-            required
-          />
+          <input value={datos.tax_year} onChange={cambiar("tax_year")} inputMode="numeric" required />
         </label>
-        <label className="campo">
-          <span>WhatsApp (opcional)</span>
-          <input
-            value={datos.phone_number}
-            onChange={cambiar("phone_number")}
-            placeholder="+57 300 000 0000"
-          />
-        </label>
+        {simple ? null : (
+          <>
+            <label className="campo">
+              <span>Nombre completo</span>
+              <input
+                value={datos.full_name}
+                onChange={cambiar("full_name")}
+                placeholder="Ana María Pérez"
+              />
+            </label>
+            <label className="campo">
+              <span>WhatsApp (opcional)</span>
+              <input
+                value={datos.phone_number}
+                onChange={cambiar("phone_number")}
+                placeholder="+57 300 000 0000"
+              />
+            </label>
+          </>
+        )}
       </div>
-      <div style={{ display: "flex", gap: 8 }}>
-        <button className="btn-mini primario" disabled={accion.running}>
-          {accion.running ? "Abriendo…" : "Abrir expediente"}
+      <div className="clave-botones">
+        <button className={simple ? "btn-grande" : "btn-mini primario"} disabled={accion.running}>
+          {accion.running ? "Abriendo…" : simple ? "Continuar" : "Abrir declaración"}
         </button>
-        <button type="button" className="btn-mini" onClick={onCancelar}>
+        <button type="button" className="enlace-suave" onClick={onCancelar}>
           Cancelar
         </button>
       </div>
@@ -237,8 +282,8 @@ function ListaClientes({ clientes }) {
               <td className="num">
                 {cliente.id_kind} {cliente.id_number}
               </td>
-              <td style={{ color: "var(--muted)" }}>{cliente.phone_number ?? "—"}</td>
-              <td style={{ color: "var(--muted)" }}>{cliente.email ?? "—"}</td>
+              <td className="celda-suave">{cliente.phone_number ?? "—"}</td>
+              <td className="celda-suave">{cliente.email ?? "—"}</td>
             </tr>
           ))}
         </tbody>

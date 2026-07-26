@@ -1,171 +1,126 @@
-/** Documentos del expediente y lo que se leyó de cada uno. */
+/**
+ * Los documentos del expediente.
+ *
+ * QUE SE QUITO Y POR QUE: cada fila tenia tres etiquetas de color ("portal DIAN", "leído",
+ * "sin lector") compitiendo con el nombre del documento. Ninguna de las tres le sirve a quien
+ * lo va a mirar: que el archivo se pudo leer es el caso normal, y de donde vino se sabe por
+ * el nombre. Solo se marca lo excepcional, que es que algo no se haya podido leer, porque eso
+ * si obliga a hacer algo.
+ *
+ * Las acciones (ver y descargar) van al final de la fila y aparecen al pasar por encima: en
+ * reposo la lista es solo la lista.
+ */
 
 import { useState } from "react";
-import { ChevronDown, ChevronRight, Download, FileText, MessageCircle } from "lucide-react";
+import { Download, Eye } from "lucide-react";
 
-import { campoLabel, docLabel, formatDateTime, formatMoney } from "./formato";
-import { Vacio } from "./componentes";
+import {
+  campoLabel,
+  docLabel,
+  esFechaIso,
+  formatDate,
+  formatIso,
+  formatMoney,
+  sinCaracterIlegible,
+} from "./formato";
+import { SoloContador } from "./vista";
+import VisorDocumento from "./VisorDocumento";
 
-/** Campos cuyo valor es un monto en pesos: se formatean como plata. */
-const CAMPOS_MONTO = new Set([
-  "total_net_amount",
-  "total_benefit_eligible_amount",
-]);
-const PREFIJOS_MONTO = ["tope_"];
-
-const esMonto = (nombre) =>
-  CAMPOS_MONTO.has(nombre) || PREFIJOS_MONTO.some((p) => nombre.startsWith(p));
-
-/** El texto completo del documento se guarda para auditoría, no para mostrarlo en tabla. */
-const CAMPOS_OCULTOS = new Set(["raw_text"]);
+const CAMPOS_TECNICOS = new Set(["raw_text"]);
 
 export default function Documentos({ documentos }) {
-  return (
-    <div className="panel">
-      <div className="panel-head">
-        <FileText size={15} style={{ color: "var(--muted)" }} />
-        <h2>Documentos</h2>
-        <span className="count">{documentos.length}</span>
-      </div>
+  const [viendo, setViendo] = useState(null);
+  if (!documentos.length) return null;
 
-      {documentos.length === 0 ? (
-        <Vacio>
-          Sin documentos todavía. Consulta la DIAN o pídele al cliente que suba lo que falte.
-        </Vacio>
-      ) : (
-        documentos.map((doc) => <Documento key={doc.id} doc={doc} />)
-      )}
-    </div>
+  return (
+    <section className="bloque">
+      <header className="bloque-top">
+        <h2 className="bloque-titulo">Tus documentos</h2>
+        <p className="bloque-nota">
+          Los trajimos del portal de la DIAN con tu clave. Puedes verlos aquí mismo.
+        </p>
+      </header>
+
+      <ul className="docs">
+        {documentos.map((doc) => (
+          <Documento key={doc.id} doc={doc} onVer={() => setViendo(doc)} />
+        ))}
+      </ul>
+
+      {viendo ? <VisorDocumento doc={viendo} onCerrar={() => setViendo(null)} /> : null}
+    </section>
   );
 }
 
-function Documento({ doc }) {
-  const [abierto, setAbierto] = useState(false);
-  const tieneLectura = Boolean(doc.reading);
-  const campos = (doc.reading?.fields ?? []).filter((f) => !CAMPOS_OCULTOS.has(f.name));
+function Documento({ doc, onVer }) {
+  const noSePudoLeer = !doc.reading && doc.doc_type !== "CLIENT_DOCUMENT";
 
   return (
-    <div style={{ borderBottom: "1px solid var(--line)" }}>
-      <div className="doc-fila">
-        {/* Toda la franja del documento abre y cierra su lectura: apuntarle a un chevron
-            de 16 pixeles es innecesariamente dificil cuando se revisan muchos casos. */}
-        <button
-          className={`doc-toggle ${tieneLectura ? "" : "sin-lectura"}`}
-          onClick={() => tieneLectura && setAbierto((v) => !v)}
-          disabled={!tieneLectura}
-          aria-expanded={abierto}
-        >
-          <span className="doc-chevron">
-            {tieneLectura ? (
-              abierto ? (
-                <ChevronDown size={16} />
-              ) : (
-                <ChevronRight size={16} />
-              )
-            ) : null}
-          </span>
-          <span>
-            <span className="doc-nombre">{docLabel(doc.doc_type)}</span>
-            <span className="doc-archivo">
-              {doc.filename} · {formatDateTime(doc.added_at)}
-            </span>
-          </span>
+    <li className="doc">
+      <button className="doc-principal" onClick={onVer}>
+        <span className="doc-nombre">{docLabel(doc.doc_type)}</span>
+        <span className="doc-meta">
+          {formatDate(doc.added_at)}
+          {noSePudoLeer ? <span className="doc-alerta">no se pudo leer</span> : null}
+        </span>
+      </button>
+
+      <div className="doc-acciones">
+        <button className="btn-icono" onClick={onVer} title="Ver el documento">
+          <Eye size={15} />
         </button>
-
-        {doc.source === "CLIENT_UPLOAD" ? (
-          <span className="chip chip-neutral">
-            <MessageCircle size={11} /> lo subió el cliente
-          </span>
-        ) : (
-          <span className="chip chip-forest">portal DIAN</span>
-        )}
-
-        {tieneLectura ? (
-          <span className="chip chip-green">leído</span>
-        ) : (
-          <span className="chip chip-amber">sin lector</span>
-        )}
-
-        <a className="btn-mini" href={`/api${doc.download_url}`} target="_blank" rel="noreferrer">
-          <Download size={12} />
-          Descargar
+        <a
+          className="btn-icono"
+          href={`/api${doc.download_url}`}
+          target="_blank"
+          rel="noreferrer"
+          title="Descargar"
+        >
+          <Download size={15} />
         </a>
       </div>
 
-      {abierto && tieneLectura ? (
-        <div className="lectura">
-          <div className="lectura-grid">
-            {campos.map((campo) => (
-              <div className="lectura-item" key={campo.name}>
-                <span className="lectura-nombre">{campoLabel(campo.name)}</span>
-                <span className="lectura-valor">
-                  {esMonto(campo.name) ? formatMoney(campo.value) : String(campo.value ?? "—")}
-                  {campo.source ? <div className="lectura-origen">{campo.source}</div> : null}
-                </span>
-              </div>
-            ))}
-          </div>
+      <SoloContador>
+        <CamposLeidos doc={doc} />
+      </SoloContador>
+    </li>
+  );
+}
 
-          {(doc.reading.rows ?? []).length > 0 ? (
-            <FilasReportadas filas={doc.reading.rows} parser={doc.reading.parser} />
-          ) : null}
-        </div>
+/** Profundidad de contador: los campos exactos que se leyeron y de donde salio cada uno. */
+function CamposLeidos({ doc }) {
+  const [abierto, setAbierto] = useState(false);
+  const campos = (doc.reading?.fields ?? []).filter((c) => !CAMPOS_TECNICOS.has(c.name));
+  if (!campos.length) return null;
+
+  return (
+    <div className="doc-tecnico">
+      <button className="enlace-suave" onClick={() => setAbierto((v) => !v)}>
+        {abierto ? "Ocultar" : `Ver los ${campos.length} campos leídos`}
+      </button>
+      {abierto ? (
+        <dl className="datos datos-densos">
+          {campos.map((campo) => (
+            <div className="dato" key={campo.name}>
+              <dt>{campoLabel(campo.name)}</dt>
+              <dd>
+                {valorDelCampo(campo)}
+                {campo.source ? <span className="dato-origen">{campo.source}</span> : null}
+              </dd>
+            </div>
+          ))}
+        </dl>
       ) : null}
+      <p className="doc-parser">
+        Leído con {doc.reading.parser} · {doc.filename}
+      </p>
     </div>
   );
 }
 
-/** Las filas de detalle (terceros que reportaron, o facturas). */
-function FilasReportadas({ filas, parser }) {
-  const [mostrarTodas, setMostrarTodas] = useState(false);
-  const visibles = mostrarTodas ? filas : filas.slice(0, 8);
-  const esExogena = parser?.startsWith("exogena");
-
-  return (
-    <div style={{ borderTop: "1px solid var(--line)" }}>
-      <table className="tabla">
-        <thead>
-          <tr>
-            <th>{esExogena ? "Quién reportó" : "Emisor"}</th>
-            <th>{esExogena ? "Concepto" : "Fecha"}</th>
-            <th className="num">Valor</th>
-            {esExogena ? <th>Renglones 210</th> : <th>Medio de pago</th>}
-          </tr>
-        </thead>
-        <tbody>
-          {visibles.map((fila, indice) => (
-            <tr key={indice}>
-              <td>{fila.values.reporter_name ?? fila.values.issuer_name ?? "—"}</td>
-              <td style={{ color: "var(--muted)", fontSize: 13 }}>
-                {fila.values.concept ?? fila.values.issue_date ?? "—"}
-              </td>
-              <td className="num strong">
-                {formatMoney(fila.values.amount ?? fila.values.net_amount)}
-              </td>
-              <td>
-                {esExogena ? (
-                  (fila.values.form_lines ?? []).map((linea) => (
-                    <span key={linea} className="chip chip-neutral" style={{ marginRight: 4 }}>
-                      R{linea}
-                    </span>
-                  ))
-                ) : (
-                  <span style={{ color: "var(--muted)", fontSize: 13 }}>
-                    {fila.values.payment_method ?? "—"}
-                  </span>
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      {filas.length > 8 ? (
-        <div style={{ padding: "10px 20px" }}>
-          <button className="btn-mini" onClick={() => setMostrarTodas((v) => !v)}>
-            {mostrarTodas ? "Mostrar menos" : `Ver las ${filas.length} filas`}
-          </button>
-        </div>
-      ) : null}
-    </div>
-  );
+function valorDelCampo(campo) {
+  if (campo.value === null || campo.value === undefined) return "—";
+  if (campo.unit === "COP") return formatMoney(campo.value);
+  if (esFechaIso(campo.value)) return formatIso(campo.value);
+  return sinCaracterIlegible(campo.value);
 }

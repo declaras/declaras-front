@@ -33,26 +33,40 @@ export const formatDateTime = (iso) => {
   });
 };
 
-/** Nombres legibles de los tipos de documento del portal. */
+/**
+ * Nombres de los documentos, dichos como se los diria a la persona a la que pertenecen.
+ *
+ * "Información exógena" es como se llama en la DIAN y no significa nada para quien no trabaja
+ * en esto; lo que es, es la lista de lo que otros reportaron a su nombre.
+ */
 const DOC_LABELS = {
-  RUT: "RUT",
-  EXOGENA: "Información exógena",
-  PRIOR_RETURN: "Declaración del año anterior",
-  SUGGESTED_RETURN: "Borrador sugerido por la DIAN",
-  EINVOICE_SUMMARY: "Facturas electrónicas",
+  RUT: "Tu RUT",
+  EXOGENA: "Lo que otros reportaron a tu nombre",
+  PRIOR_RETURN: "Tu declaración del año pasado",
+  SUGGESTED_RETURN: "El borrador que la DIAN te preparó",
+  EINVOICE_SUMMARY: "Tus facturas electrónicas",
+  CLIENT_DOCUMENT: "Documento que subiste",
+  certificado_intereses_vivienda: "Certificado de intereses de vivienda",
+  certificado_prepagada: "Certificado de medicina prepagada",
+  certificado_afc: "Certificado de AFC o pensión voluntaria",
+  registro_civil: "Registro civil de un dependiente",
+  planilla_pila: "Planilla de aportes (PILA)",
+  predial: "Impuesto predial",
+  recibo_de_pago: "Recibo de pago",
+  otro: "Otro documento",
 };
 
 export const docLabel = (docType) =>
   DOC_LABELS[docType] ?? docType.replaceAll("_", " ").toLowerCase();
 
-/** Estados del expediente, en lenguaje de contador. */
+/** En que va la declaracion. */
 const STATUS_LABELS = {
-  OPEN: "Abierto",
+  OPEN: "Sin empezar",
   EXTRACTING: "Consultando la DIAN",
-  READY_FOR_REVIEW: "Listo para revisar",
+  READY_FOR_REVIEW: "Lista para revisar",
   DRAFT_READY: "Borrador listo",
-  SUBMITTED: "Presentado",
-  CLOSED: "Cerrado",
+  SUBMITTED: "Presentada",
+  CLOSED: "Cerrada",
 };
 
 export const statusLabel = (status) => STATUS_LABELS[status] ?? status;
@@ -64,6 +78,8 @@ export const statusLabel = (status) => STATUS_LABELS[status] ?? status;
  * porque un contador no tiene por qué leer `tope_consumo_tarjeta`.
  */
 const CAMPO_LABELS = {
+  reported_id_number: "Identificación a la que reportaron",
+  reported_name: "Nombre al que reportaron",
   cutoff_date: "Fecha de corte",
   report_date: "Fecha del reporte",
   tax_year: "Año gravable",
@@ -93,5 +109,34 @@ const CAMPO_LABELS = {
   economic_activity_start_date: "Inicio de actividad",
 };
 
-export const campoLabel = (nombre) =>
-  CAMPO_LABELS[nombre] ?? nombre.replaceAll("_", " ");
+export const campoLabel = (nombre) => {
+  if (CAMPO_LABELS[nombre]) return CAMPO_LABELS[nombre];
+  // Las casillas del formulario 210 llegan como `casilla_29`; el lector ya manda el nombre
+  // impreso en el formulario como procedencia del campo, asi que aqui basta el numero.
+  const casilla = nombre.match(/^casilla_(\d+)$/);
+  if (casilla) return `Casilla ${casilla[1]}`;
+  return nombre.replaceAll("_", " ");
+};
+
+
+/**
+ * El portal sirve algunos archivos declarando UTF-8 con bytes en ISO-8859-1, asi que ciertos
+ * nombres llegan con un caracter irrecuperable. Se muestra el valor tal como llego, porque el
+ * panel de lectura existe para ser fiel al documento, pero marcandolo: sin la marca parece un
+ * defecto nuestro, y con ella queda claro de donde viene.
+ */
+const CARACTER_ILEGIBLE = "\ufffd";
+
+export const tieneCaracterIlegible = (valor) =>
+  typeof valor === "string" && valor.includes(CARACTER_ILEGIBLE);
+
+export const sinCaracterIlegible = (valor) =>
+  String(valor).replaceAll(CARACTER_ILEGIBLE, "·");
+
+/** Fechas y fechas con hora que llegan en ISO desde el backend. */
+const ES_FECHA_ISO = /^\d{4}-\d{2}-\d{2}(T|$)/;
+
+export const esFechaIso = (valor) => typeof valor === "string" && ES_FECHA_ISO.test(valor);
+
+export const formatIso = (valor) =>
+  valor.includes("T") ? formatDateTime(valor) : formatDate(valor);
