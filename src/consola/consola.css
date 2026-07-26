@@ -776,3 +776,47 @@
   overflow: hidden;
 }
 .panel-body { padding: 22px; }
+
+/* ── en que va la consulta ──
+ * Los pasos hechos no gritan: un check verde pequeno alcanza. El que esta corriendo es el unico
+ * en tinta plena, porque es donde esta la atencion. Los que faltan quedan en gris para que se
+ * pueda ver cuanto falta, que es la mitad de lo que quiere saber quien espera.
+ */
+.progreso { list-style: none; padding: 0; margin: 22px 0 0; }
+.paso {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  padding: 7px 0;
+  color: var(--muted);
+  font-size: 14px;
+  transition: color 0.2s;
+}
+.paso-marca {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--white);
+  color: var(--muted);
+}
+.paso-texto { padding-top: 1px; }
+.paso-detalle { display: block; margin-top: 2px; font-size: 12.5px; }
+
+.paso-done { color: var(--ink); }
+.paso-done .paso-marca { border-color: var(--brand); background: var(--brand); color: white; }
+
+.paso-running { color: var(--ink); font-weight: 500; }
+.paso-running .paso-marca { border-color: var(--brand); color: var(--brand); }
+
+/* Que la DIAN no tenga un documento no es una falla: le pasa a quien declara por primera vez.
+   Se marca en gris, no en rojo, porque no hay nada que arreglar. */
+.paso-empty .paso-marca { border-style: dashed; }
+.paso-empty .paso-detalle { color: var(--muted); }
+
+.paso-failed { color: #b93b3f; }
+.paso-failed .paso-marca { border-color: var(--red); color: var(--red); }
+.paso-failed .paso-detalle { color: #b93b3f; }

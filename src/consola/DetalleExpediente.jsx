@@ -31,6 +31,7 @@ import Documentos from "./Documentos";
 import Resumen from "./Resumen";
 import Pendientes from "./Pendientes";
 import Actividad from "./Actividad";
+import Progreso from "./Progreso";
 import { useVista } from "./vista";
 
 export default function DetalleExpediente() {
@@ -155,41 +156,42 @@ function Empezar({ caso, onListo }) {
 function ConsultarDian({ caso, onListo, discreto = false }) {
   const [abierto, setAbierto] = useState(false);
   const [clave, setClave] = useState("");
-  const [paso, setPaso] = useState(null);
+  // El backend publica en que va el trabajo; aqui solo se refleja. Antes esto era una cadena de
+  // texto inventada en el navegador ("Trayendo tus documentos…") que no correspondia con lo que
+  // estaba pasando de verdad.
+  const [pasos, setPasos] = useState(null);
 
   const accion = useAction(async () => {
-    setPaso("Entrando al portal…");
     const job = await api.runExtraction({
       id_kind: caso.client.id_kind,
       id_number: caso.client.id_number,
       dian_password: clave,
       tax_year: caso.tax_year,
     });
+    setPasos(job.progress ?? []);
 
     let estado = job;
-    for (let intento = 0; intento < 60; intento += 1) {
-      await new Promise((listo) => setTimeout(listo, 1500));
+    for (let intento = 0; intento < 90; intento += 1) {
+      await new Promise((listo) => setTimeout(listo, 1000));
       estado = await api.getExtraction(job.job_id);
+      setPasos(estado.progress ?? []);
       if (["SUCCEEDED", "FAILED", "AWAITING_CHALLENGE"].includes(estado.status)) break;
-      setPaso("Trayendo tus documentos…");
     }
 
     if (estado.status === "AWAITING_CHALLENGE") {
-      setPaso(null);
       throw Object.assign(new Error("La DIAN pidió una verificación de identidad."), {
         code: "DIAN_IDENTITY_CHALLENGE",
       });
     }
     if (estado.status !== "SUCCEEDED") {
-      setPaso(null);
       throw Object.assign(new Error(estado.error?.message ?? "No se pudo consultar."), {
         code: estado.error?.code ?? "EXTRACTION_FAILED",
+        details: estado.error?.details ?? {},
       });
     }
 
-    setPaso("Revisando qué cambió…");
     const detalle = await api.linkExtraction(caso.id, job.job_id);
-    setPaso(null);
+    setPasos(null);
     // El backend ya comparo esta consulta con la anterior y lo dejo escrito en la actividad;
     // se usa ese mismo texto para no decir dos cosas distintas del mismo hecho.
     return detalle.events.filter((e) => e.kind === "DIAN_QUERY").at(-1)?.message ?? "Listo.";
@@ -214,9 +216,20 @@ function ConsultarDian({ caso, onListo, discreto = false }) {
     );
   }
 
+  // Mientras corre, la pantalla es el progreso: el formulario ya cumplio su papel y dejarlo
+  // ahi invita a volver a darle al boton.
+  if (accion.running) {
+    return (
+      <div className="clave-forma">
+        <Progreso pasos={pasos} />
+      </div>
+    );
+  }
+
   return (
     <form className="clave-forma" onSubmit={enviar}>
       <ErrorApi error={accion.error} />
+      {accion.error && pasos ? <Progreso pasos={pasos} /> : null}
       <label className="campo">
         <span>Tu clave del portal de la DIAN</span>
         <input
@@ -233,8 +246,8 @@ function ConsultarDian({ caso, onListo, discreto = false }) {
         parte.
       </p>
       <div className="clave-botones">
-        <button className="btn-grande" disabled={accion.running || !clave}>
-          {accion.running ? (paso ?? "Consultando…") : "Consultar la DIAN"}
+        <button className="btn-grande" disabled={!clave}>
+          Consultar la DIAN
         </button>
         {discreto ? (
           <button type="button" className="enlace-suave" onClick={() => setAbierto(false)}>
