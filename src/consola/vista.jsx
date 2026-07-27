@@ -22,9 +22,22 @@ const VistaContext = createContext({
   identificarse: () => {},
 });
 
+/**
+ * La vista se puede fijar por la direccion: `?vista=contador` o `?vista=cliente`.
+ *
+ * Sirve para enlazar directo a una de las dos, que sin esto era imposible: el modo vivia solo en
+ * el almacenamiento del navegador, asi que no se podia mandar un enlace ni abrir la vista del
+ * contador desde fuera. Lo que venga en la direccion manda y queda guardado, para que el resto
+ * de la sesion siga ahi sin repetir el parametro.
+ */
+function vistaDeLaDireccion() {
+  const pedida = new URLSearchParams(globalThis.location?.search ?? "").get("vista");
+  return pedida === "contador" ? true : pedida === "cliente" ? false : null;
+}
+
 export function ProveedorDeVista({ children }) {
   const [profunda, setProfunda] = useState(
-    () => globalThis.localStorage?.getItem(CLAVE) === "contador",
+    () => vistaDeLaDireccion() ?? globalThis.localStorage?.getItem(CLAVE) === "contador",
   );
   // De quien es la declaracion que se esta viendo en modo cliente. Mientras no exista ingreso
   // con clave, esto hace las veces de identidad: sin ella la pantalla decia "tus declaraciones"
