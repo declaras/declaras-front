@@ -31,6 +31,7 @@ import Documentos from "./Documentos";
 import Resumen from "./Resumen";
 import Pendientes from "./Pendientes";
 import Actividad from "./Actividad";
+import Dialogo from "./Dialogo";
 import Progreso from "./Progreso";
 import { useVista } from "./vista";
 
@@ -150,8 +151,20 @@ function Empezar({ caso, onListo }) {
 /**
  * La consulta al portal.
  *
- * La clave se pide en el momento y no se guarda en ninguna parte: viaja al backend, se usa y
- * se destruye. Decirlo aqui no es un detalle legal, es lo que hace que alguien la escriba.
+ * La clave se pide en el momento y no se guarda en ninguna parte: viaja al backend, se usa y se
+ * destruye. Decirlo aqui no es un detalle legal, es lo que hace que alguien la escriba.
+ *
+ * DONDE VIVE ESTE FORMULARIO, QUE NO ES OBVIO
+ *
+ * La primera vez ocupa la pantalla completa, porque no hay nada mas que mirar y meter un clic
+ * extra en el momento de arranque es el peor sitio para meterlo.
+ *
+ * Volver a consultar es otra cosa: es una tarea con principio y fin sobre una pagina que ya
+ * tiene contenido. Antes se abria en el sitio del boton, dentro de la fila del titulo, y el
+ * formulario quedaba flotando ahi sin pertenecer ni al encabezado ni al cuerpo. Ahora abre un
+ * dialogo, que es donde se hace algo que necesita atencion completa y la devuelve al terminar.
+ *
+ * Es el mismo formulario en los dos casos; lo unico que cambia es el contenedor.
  */
 function ConsultarDian({ caso, onListo, discreto = false }) {
   const [abierto, setAbierto] = useState(false);
@@ -207,26 +220,13 @@ function ConsultarDian({ caso, onListo, discreto = false }) {
     }
   };
 
-  if (discreto && !abierto) {
-    return (
-      <button className="btn-mini" onClick={() => setAbierto(true)}>
-        <RefreshCw size={13} />
-        Volver a consultar la DIAN
-      </button>
-    );
-  }
-
-  // Mientras corre, la pantalla es el progreso: el formulario ya cumplio su papel y dejarlo
-  // ahi invita a volver a darle al boton.
-  if (accion.running) {
-    return (
-      <div className="clave-forma">
-        <Progreso pasos={pasos} />
-      </div>
-    );
-  }
-
-  return (
+  // Mientras corre, el progreso reemplaza al formulario: ya cumplio su papel, y dejarlo ahi
+  // invita a volver a darle al boton, que cuenta como otro intento contra el bloqueo.
+  const formulario = accion.running ? (
+    <div className="clave-forma">
+      <Progreso pasos={pasos} />
+    </div>
+  ) : (
     <form className="clave-forma" onSubmit={enviar}>
       <ErrorApi error={accion.error} />
       {accion.error && pasos ? <Progreso pasos={pasos} /> : null}
@@ -249,13 +249,33 @@ function ConsultarDian({ caso, onListo, discreto = false }) {
         <button className="btn-grande" disabled={!clave}>
           Consultar la DIAN
         </button>
-        {discreto ? (
-          <button type="button" className="enlace-suave" onClick={() => setAbierto(false)}>
-            Cancelar
-          </button>
-        ) : null}
       </div>
     </form>
+  );
+
+  if (!discreto) return formulario;
+
+  return (
+    <>
+      <button className="btn-mini" onClick={() => setAbierto(true)}>
+        <RefreshCw size={13} />
+        Volver a consultar la DIAN
+      </button>
+      {abierto ? (
+        <Dialogo
+          titulo="Consultar la DIAN otra vez"
+          descripcion={
+            accion.running
+              ? null
+              : "Trae de nuevo tu información del portal y te dice si algo cambió desde la última vez."
+          }
+          onCerrar={() => setAbierto(false)}
+          bloqueado={accion.running}
+        >
+          {formulario}
+        </Dialogo>
+      ) : null}
+    </>
   );
 }
 

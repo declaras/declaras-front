@@ -140,6 +140,9 @@
 .declaracion-top .btn-mini { margin-left: auto; }
 
 .resultado-consulta {
+  /* Es la respuesta a algo que se hizo desde la narrativa, asi que se alinea con ella en vez
+     de cruzar tambien la columna del material. */
+  max-width: 660px;
   padding: 13px 18px;
   margin: -12px 0 28px;
   border: 1px solid rgba(14, 159, 110, 0.24);
@@ -820,3 +823,54 @@
 .paso-failed { color: #b93b3f; }
 .paso-failed .paso-marca { border-color: var(--red); color: var(--red); }
 .paso-failed .paso-detalle { color: #b93b3f; }
+
+/* ── dialogo: una tarea que toma el control un momento ── */
+.dialogo-fondo {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(10, 30, 22, 0.32);
+  backdrop-filter: blur(3px);
+  animation: aparecer 0.16s ease;
+}
+.dialogo {
+  width: min(460px, 100%);
+  background: var(--cream);
+  border-radius: 18px;
+  box-shadow: 0 24px 70px rgba(10, 30, 22, 0.24);
+  overflow: hidden;
+  animation: subir 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes subir { from { transform: translateY(10px) scale(0.99); opacity: 0; } }
+
+.dialogo-top { display: flex; align-items: flex-start; gap: 14px; padding: 24px 24px 0; }
+.dialogo-titulo { font: 500 21px/1.2 "Fraunces", serif; letter-spacing: -0.02em; margin: 0; }
+.dialogo-descripcion {
+  margin: 7px 0 0;
+  color: var(--muted);
+  font-size: 13.5px;
+  line-height: 1.55;
+  max-width: 46ch;
+}
+.dialogo-cerrar {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  margin-left: auto;
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: 9px;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+.dialogo-cerrar:hover { background: rgba(22, 35, 29, 0.06); color: var(--ink); }
+.dialogo-cuerpo { padding: 22px 24px 24px; }
+/* Dentro del dialogo el formulario ya tiene el ancho de la tarjeta. */
+.dialogo-cuerpo .clave-forma { max-width: none; }
+.dialogo-cuerpo .campo { margin-bottom: 12px; }
+.dialogo-cuerpo .progreso { margin-top: 4px; }
