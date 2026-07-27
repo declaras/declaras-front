@@ -10,9 +10,15 @@
  *
  * Se cierra con Escape o clicando afuera, pero no mientras la tarea corre: cerrar a media
  * ejecucion dejaria el trabajo andando sin nada que reporte como termino.
+ *
+ * Se monta en el `body` y no donde se escribe: cualquier ancestro con `position: sticky`,
+ * `transform` o `filter` crea un contexto de apilamiento, y ahi dentro un `z-index` alto solo
+ * vale contra los hermanos. Paso con el visor de documentos, al que el encabezado de la pagina
+ * le pintaba encima teniendo el visor un numero tres veces mayor.
  */
 
 import { useEffect } from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 
 export default function Dialogo({ titulo, descripcion, onCerrar, bloqueado = false, children }) {
@@ -24,7 +30,7 @@ export default function Dialogo({ titulo, descripcion, onCerrar, bloqueado = fal
     return () => globalThis.removeEventListener("keydown", alTeclear);
   }, [onCerrar, bloqueado]);
 
-  return (
+  return createPortal(
     <div className="dialogo-fondo" onClick={() => !bloqueado && onCerrar()}>
       <div
         className="dialogo"
@@ -46,6 +52,7 @@ export default function Dialogo({ titulo, descripcion, onCerrar, bloqueado = fal
         </header>
         <div className="dialogo-cuerpo">{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

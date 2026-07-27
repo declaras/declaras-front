@@ -14,8 +14,10 @@
  */
 
 import { useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Download, X } from "lucide-react";
 
+import { useVista } from "./vista";
 import {
   campoLabel,
   docLabel,
@@ -33,6 +35,8 @@ const esPdf = (nombre = "") => /\.pdf$/i.test(nombre);
 const CAMPOS_TECNICOS = new Set(["raw_text"]);
 
 export default function VisorDocumento({ doc, onCerrar }) {
+  const { profunda } = useVista();
+
   // Escape cierra: en un panel que tapa la pantalla, buscar la X con el mouse es un paso
   // de mas cuando se estan revisando varios documentos seguidos.
   useEffect(() => {
@@ -46,7 +50,7 @@ export default function VisorDocumento({ doc, onCerrar }) {
   const urlDescarga = `/api${doc.download_url}`;
   const urlVista = `${urlDescarga}&inline=true`;
 
-  return (
+  return createPortal(
     <div className="visor-fondo" onClick={onCerrar}>
       <aside
         className="visor"
@@ -57,7 +61,12 @@ export default function VisorDocumento({ doc, onCerrar }) {
         <header className="visor-top">
           <div style={{ minWidth: 0 }}>
             <h2 className="visor-titulo">{docLabel(doc.doc_type)}</h2>
-            <p className="visor-sub">{doc.filename}</p>
+            {/* Con un PDF el visor del navegador ya muestra el nombre del archivo justo debajo,
+                asi que repetirlo aqui es ruido. En los demas casos no aparece en ningun lado, y
+                en la vista de contador se muestra siempre porque ahi sirve para rastrear. */}
+            {!esPdf(doc.filename) || profunda ? (
+              <p className="visor-sub">{doc.filename}</p>
+            ) : null}
           </div>
           <a className="btn-mini" href={urlDescarga} target="_blank" rel="noreferrer">
             <Download size={13} />
@@ -82,7 +91,8 @@ export default function VisorDocumento({ doc, onCerrar }) {
           )}
         </div>
       </aside>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
