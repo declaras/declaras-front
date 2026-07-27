@@ -40,7 +40,7 @@ const TONO_AVANCE = {
 };
 
 export default function ListaExpedientes() {
-  const { profunda } = useVista();
+  const { profunda, quien, identificarse } = useVista();
   const navigate = useNavigate();
   const expedientes = useApi(() => api.listCases(), []);
   const clientes = useApi(() => api.listClients(), []);
@@ -73,26 +73,55 @@ export default function ListaExpedientes() {
   const abrir = (caso) => navigate(`/consola/expedientes/${caso.id}`);
 
   if (!profunda) {
+    const yo = (clientes.data ?? []).find((c) => c.id === quien);
+    // Sin identidad no se puede decir "tus declaraciones": la lista traeria las de todo el
+    // mundo. Mientras no exista el ingreso con clave, se pregunta de quien son.
+    if (!yo) {
+      return (
+        <QuienEres
+          clientes={clientes}
+          onElegir={identificarse}
+          onEmpezar={() => setEmpezando(true)}
+          empezando={empezando}
+          alAbrir={(caso) => {
+            identificarse(caso.client_id);
+            recargar();
+            abrir(caso);
+          }}
+          onCancelar={() => setEmpezando(false)}
+        />
+      );
+    }
+
+    const mios = casos
+      .filter((c) => c.client_id === yo.id)
+      .sort((a, b) => b.tax_year - a.tax_year);
+
     return (
       <section>
-        <h1 className="lista-titulo">Tus declaraciones</h1>
-        <p className="lista-sub">
-          Una por año gravable. Abre la del año que quieras revisar o presentar.
-        </p>
+        <header className="lista-top">
+          <div>
+            <h1 className="lista-titulo">Tus declaraciones</h1>
+            <p className="lista-sub">
+              Una por año gravable. Abre la del año que quieras revisar o presentar.
+            </p>
+          </div>
+          <button className="enlace-suave" onClick={() => identificarse(null)}>
+            No soy {(yo.full_name ?? "").split(" ")[0] || yo.id_number}
+          </button>
+        </header>
 
         <ErrorApi error={expedientes.error} />
         {expedientes.loading ? <Cargando filas={3} /> : null}
 
         <div className="tarjetas">
-          {[...casos]
-            .sort((a, b) => b.tax_year - a.tax_year)
-            .map((caso) => (
-              <button key={caso.id} className="tarjeta" onClick={() => abrir(caso)}>
-                <span className="tarjeta-anio">{caso.tax_year}</span>
-                <span className="tarjeta-estado">{statusLabel(caso.status)}</span>
-                <ArrowRight size={16} className="tarjeta-flecha" />
-              </button>
-            ))}
+          {mios.map((caso) => (
+            <button key={caso.id} className="tarjeta" onClick={() => abrir(caso)}>
+              <span className="tarjeta-anio">{caso.tax_year}</span>
+              <span className="tarjeta-estado">{statusLabel(caso.status)}</span>
+              <ArrowRight size={16} className="tarjeta-flecha" />
+            </button>
+          ))}
         </div>
 
         {empezando ? (
@@ -107,7 +136,7 @@ export default function ListaExpedientes() {
           />
         ) : (
           <button className="btn-grande" onClick={() => setEmpezando(true)}>
-            {casos.length ? "Empezar otro año" : "Empezar mi declaración"}
+            {mios.length ? "Empezar otro año" : "Empezar mi declaración"}
           </button>
         )}
       </section>
@@ -298,5 +327,58 @@ function FormularioNuevo({ onListo, onCancelar, simple = false }) {
         </button>
       </div>
     </form>
+  );
+}
+
+
+/**
+ * De quien es esta declaracion.
+ *
+ * Hace las veces de ingreso mientras no exista uno con clave. No es un adorno del prototipo: sin
+ * identidad, la pantalla del cliente decia "tus declaraciones" y listaba las de todas las
+ * personas del sistema, que es peor que no mostrar nada. Cuando exista el ingreso de verdad,
+ * esta pantalla desaparece y `quien` sale de la sesion.
+ */
+function QuienEres({ clientes, onElegir, onEmpezar, empezando, alAbrir, onCancelar }) {
+  const gente = clientes.data ?? [];
+
+  if (empezando) {
+    return (
+      <section className="empezar">
+        <h1 className="empezar-titulo">Empecemos tu declaración</h1>
+        <p className="empezar-texto">Con tu cédula y el año gravable que quieres presentar.</p>
+        <FormularioNuevo simple onListo={alAbrir} onCancelar={onCancelar} />
+      </section>
+    );
+  }
+
+  return (
+    <section className="empezar">
+      <h1 className="empezar-titulo">¿De quién es la declaración?</h1>
+      <p className="empezar-texto">
+        Todavía no hay ingreso con clave, así que aquí se elige a quién pertenece lo que vas a
+        ver.
+      </p>
+
+      {clientes.loading ? <Cargando filas={2} /> : null}
+
+      <div className="tarjetas">
+        {gente.map((persona) => (
+          <button key={persona.id} className="tarjeta" onClick={() => onElegir(persona.id)}>
+            <Avatar nombre={persona.full_name ?? persona.id_number} size="sm" />
+            <span style={{ minWidth: 0 }}>
+              <span className="tarjeta-nombre">{persona.full_name ?? "Sin nombre"}</span>
+              <span className="tarjeta-estado">
+                {persona.id_kind} {persona.id_number}
+              </span>
+            </span>
+          </button>
+        ))}
+      </div>
+
+      <button className="btn-grande" onClick={onEmpezar}>
+        Soy alguien más
+      </button>
+    </section>
   );
 }

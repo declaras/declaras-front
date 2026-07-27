@@ -466,6 +466,7 @@
 
 /* ── empezar: cuando todavia no hay nada ── */
 .empezar { padding: 24px 0 0; max-width: 58ch; }
+.empezar .tarjetas { margin: 30px 0 34px; }
 .empezar-titulo {
   font: 500 30px/1.15 "Fraunces", serif;
   letter-spacing: -0.025em;
@@ -874,3 +875,41 @@
 .dialogo-cuerpo .clave-forma { max-width: none; }
 .dialogo-cuerpo .campo { margin-bottom: 12px; }
 .dialogo-cuerpo .progreso { margin-top: 4px; }
+
+/* ── tarjetas de declaracion (la entrada del cliente) ── */
+.tarjetas {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  margin-bottom: 34px;
+}
+.tarjeta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 22px 24px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--white);
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  text-align: left;
+  color: inherit;
+  transition: 0.16s;
+}
+.tarjeta:hover { border-color: var(--brand); transform: translateY(-1px); }
+.tarjeta-anio { font: 500 26px/1 "Fraunces", serif; letter-spacing: -0.02em; flex: 0 0 auto; }
+.tarjeta-nombre { display: block; font-size: 14.5px; font-weight: 600; }
+.tarjeta-nombre + .tarjeta-estado { display: block; margin-top: 2px; font-variant-numeric: tabular-nums; }
+.tarjeta-estado { color: var(--muted); font-size: 13px; }
+.tarjeta-flecha { margin-left: auto; color: var(--muted); flex: 0 0 auto; }
+.tarjeta:hover .tarjeta-flecha { color: var(--brand); }
+
+/* ── constancias: defectos conocidos, sin nada que hacer ── */
+.constancias { list-style: none; padding: 0; margin: 12px 0 0; }
+.constancias li {
+  padding: 9px 0;
+  border-top: 1px solid rgba(231, 227, 218, 0.6);
+  color: var(--muted);
+  font-size: 13px;
+}
