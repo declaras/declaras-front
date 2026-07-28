@@ -913,3 +913,238 @@
   color: var(--muted);
   font-size: 13px;
 }
+
+/* ════════════════════════════════════════════════════════════════════
+   El cruce, las peticiones y la ganancia
+
+   Tres vistas nuevas sobre el mismo ritmo del resto: `.bloque` para separar,
+   `--line` para dividir, `--muted` para lo secundario. Nada de color nuevo.
+   ════════════════════════════════════════════════════════════════════ */
+
+/* ── la ganancia: la respuesta que el cliente vino a buscar ── */
+.ganancia { margin-bottom: 40px; }
+.ganancia-cifras {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+}
+.ganancia-cifra {
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--white);
+}
+.ganancia-etiqueta {
+  margin: 0 0 8px;
+  color: var(--muted);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+.ganancia-monto {
+  margin: 0;
+  font: 600 25px/1.15 "Inter", sans-serif;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.ganancia-detalle { margin: 7px 0 0; color: var(--muted); font-size: 12.5px; line-height: 1.5; }
+/* El punto de partida se ve apagado a proposito: es la cifra que NO se va a pagar. */
+.ganancia-neutra { background: transparent; }
+.ganancia-neutra .ganancia-monto { color: var(--muted); }
+.ganancia-buena { border-color: rgba(14, 159, 110, 0.28); }
+/* La tercera es la conclusion y por eso pesa mas que las dos que compara. */
+.ganancia-total { background: var(--cream); border-color: transparent; }
+.ganancia-total.gana .ganancia-monto { color: var(--forest); }
+.ganancia-total.pierde .ganancia-monto { color: var(--red); }
+.ganancia-salvedad { margin-top: 14px; }
+/* Una cifra que dejo de corresponder al expediente. Se avisa arriba de las cifras, no debajo:
+   quien lee el numero primero y la advertencia despues ya se lo creyo. */
+.ganancia-rancia {
+  display: flex;
+  align-items: flex-start;
+  margin: 0 0 16px;
+  padding: 12px 15px;
+  border-radius: 11px;
+  background: rgba(214, 158, 46, 0.1);
+  color: var(--ink);
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+
+/* ── las peticiones ── */
+.peticiones { list-style: none; padding: 0; margin: 0; }
+.peticion {
+  padding: 20px 0;
+  border-top: 1px solid var(--line);
+}
+.peticion:last-child { border-bottom: 1px solid var(--line); }
+.peticion-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 18px;
+}
+.peticion-razon { margin: 0; font-size: 14.5px; line-height: 1.6; max-width: 58ch; }
+.peticion-ahorro {
+  flex: 0 0 auto;
+  margin: 0;
+  color: var(--forest);
+  font: 600 15px/1.2 "Inter", sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+.peticion-tercero { margin: 6px 0 0; color: var(--muted); font-size: 13px; }
+.peticion-pregunta { margin-top: 14px; font-size: 14px; line-height: 1.6; }
+.peticion-botones { display: flex; gap: 8px; margin-top: 12px; }
+/* El mensaje para mandar por WhatsApp: se ve como lo que es, un texto que se copia tal cual. */
+.peticion-copy {
+  margin-top: 13px;
+  padding: 14px 16px;
+  border-radius: 11px;
+  background: var(--cream);
+}
+.peticion-copy p { margin: 0 0 12px; font-size: 13.5px; line-height: 1.65; }
+.peticion-subir { margin-top: 13px; }
+.soltar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 1px dashed var(--line);
+  border-radius: 11px;
+  color: var(--muted);
+  font-size: 13.5px;
+  cursor: pointer;
+  transition: 0.15s;
+}
+.soltar:hover, .soltar-encima { border-color: var(--brand); color: var(--ink); }
+.resultados-subida { list-style: none; padding: 0; margin: 11px 0 0; font-size: 13px; }
+.resultados-subida li { padding: 5px 0; color: var(--muted); line-height: 1.5; }
+.resultado-emparejado strong { color: var(--forest); }
+.resultado-a_bandeja strong { color: var(--amber); }
+
+/* ── la mesa del cruce ── */
+.declaracion-cruce { margin-top: 8px; }
+.partidas { list-style: none; padding: 0; margin: 0; }
+.partida {
+  padding: 20px 0;
+  border-top: 1px solid var(--line);
+}
+.partida:last-child { border-bottom: 1px solid var(--line); }
+.partida-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+.partida-tercero { margin: 0; font-size: 14.5px; font-weight: 500; }
+.partida-concepto { margin: 4px 0 0; color: var(--muted); font-size: 12.5px; }
+/* Un renglon de plata ajena se ve distinto ANTES de que nadie lea nada: si se pinta igual, el
+   ingreso de un tercero vuelve a entrar a la declaracion del cliente. */
+.partida-ajena { background: rgba(214, 158, 46, 0.055); }
+.partida-aviso-ajena {
+  margin: 12px 0 0;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--ink);
+}
+.partida-versiones {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+.version {
+  padding: 13px 15px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+}
+.version-vacia { border-style: dashed; }
+.version-titulo { margin: 0 0 6px; color: var(--muted); font-size: 12px; font-weight: 500; }
+.version-monto {
+  margin: 0;
+  font: 600 18px/1.2 "Inter", sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+.version-detalle { margin: 6px 0 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
+.version-rivales { margin: 7px 0 0; color: var(--amber); font-size: 12px; line-height: 1.45; }
+.partida-diferencias {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin: 13px 0 0;
+  font-size: 13px;
+  color: var(--red);
+  font-variant-numeric: tabular-nums;
+}
+.partida-decidir { margin-top: 15px; }
+.partida-botones { display: flex; flex-wrap: wrap; gap: 8px; }
+.btn-mini-activo { border-color: var(--brand); color: var(--brand); }
+.partida-resuelta {
+  margin: 14px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.55;
+}
+/* Una provisional del sistema no es una decision de una persona, y se distingue: el contador
+   tiene que poder ver de un vistazo cuales revisó alguien. */
+.partida-resuelta.por-sistema { font-style: italic; }
+.decision-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 14px;
+  margin-top: 14px;
+  padding: 16px;
+  border-radius: 11px;
+  background: var(--cream);
+}
+.decision-form label {
+  display: block;
+  color: var(--muted);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+.decision-form select, .decision-form input {
+  display: block;
+  margin-top: 6px;
+  padding: 9px 11px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--white);
+  color: var(--ink);
+  font: inherit;
+  font-size: 13.5px;
+}
+.btn-texto {
+  margin-top: 12px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 13px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.btn-texto:hover { color: var(--ink); }
+.bloque-subtitulo { margin: 0 0 6px; font: 600 15px/1.35 "Inter", sans-serif; }
+.huerfanas { margin-top: 34px; padding-top: 22px; border-top: 1px solid var(--line); }
+
+/* ── los chips de estado del cruce ── */
+.chip {
+  flex: 0 0 auto;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+.chip-ok { background: rgba(14, 159, 110, 0.12); color: var(--forest); }
+.chip-alerta { background: rgba(197, 48, 48, 0.1); color: var(--red); }
+.chip-falta { background: rgba(22, 35, 29, 0.06); color: var(--muted); }
+
+/* Una franja al borde por desenlace: la lista se recorre con el ojo y hay que poder ver donde
+   hay que trabajar sin leer cada chip. El color no dice nada que el chip no diga; el sitio si. */
+.partida-ok, .partida-alerta, .partida-falta { padding-left: 15px; }
+.partida-ok { box-shadow: inset 2px 0 0 rgba(14, 159, 110, 0.4); }
+.partida-alerta { box-shadow: inset 2px 0 0 var(--red); }
+.partida-falta { box-shadow: inset 2px 0 0 rgba(22, 35, 29, 0.16); }

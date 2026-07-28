@@ -27,7 +27,10 @@ import { api } from "./api";
 import { useAction, useApi } from "./hooks";
 import { formatDate } from "./formato";
 import { Cargando, ErrorApi } from "./componentes";
+import Conciliacion from "./Conciliacion";
 import Documentos from "./Documentos";
+import Ganancia from "./Ganancia";
+import Peticiones from "./Peticiones";
 import Resumen from "./Resumen";
 import Pendientes from "./Pendientes";
 import Actividad from "./Actividad";
@@ -42,12 +45,22 @@ export default function DetalleExpediente() {
 
   const expediente = useApi(() => api.getCase(caseId), [caseId]);
   const resumen = useApi(() => api.getCaseSummary(caseId), [caseId]);
+  // Los tres del cruce fallan mientras nadie haya conciliado, y eso es normal, no un error:
+  // `useApi` guarda el error y estas vistas simplemente no se pintan. Por eso no se muestra
+  // `ErrorApi` de estos tres — un 409 "hay que conciliar" no es algo que el contador tenga
+  // que leer como falla.
+  const conciliacion = useApi(() => api.getConciliacion(caseId), [caseId]);
+  const peticiones = useApi(() => api.listPeticiones(caseId), [caseId]);
+  const liquidacion = useApi(() => api.getLiquidacion(caseId), [caseId]);
   const [ultimaConsulta, setUltimaConsulta] = useState(null);
 
   const recargar = useCallback(() => {
     expediente.reload();
     resumen.reload();
-  }, [expediente, resumen]);
+    conciliacion.reload();
+    peticiones.reload();
+    liquidacion.reload();
+  }, [expediente, resumen, conciliacion, peticiones, liquidacion]);
 
   if (expediente.loading) return <Cargando texto="Cargando…" />;
   if (expediente.error) {
@@ -99,6 +112,18 @@ export default function DetalleExpediente() {
       ) : (
         <div className="declaracion">
           <div className="declaracion-narrativa">
+            {/* La cifra va primero: es la respuesta que el cliente vino a buscar y la que el
+                contador le va a decir. Solo aparece cuando ya hay una liquidación; antes de
+                conciliar no hay nada que prometer. */}
+            <Ganancia liquidacion={liquidacion.data} />
+
+            {/* Lo que falta para llegar a esa cifra, ordenado por lo que cada documento
+                mueve. Va pegado a la cifra porque es lo que la explica. */}
+            {/* `GET /peticiones` devuelve la LISTA pelada, no un objeto que la envuelva.
+                Leer `.peticiones` de ahí daba undefined y la vista no pintaba nada — y sin
+                error, porque la respuesta era 200. */}
+            <Peticiones caseId={caseId} peticiones={peticiones.data} onCambio={recargar} />
+
             {/* La respuesta va primero. Antes los pendientes estaban arriba, y quien entraba a
                 saber si le tocaba declarar se encontraba con una lista de problemas. */}
             {resumen.loading ? (
@@ -112,6 +137,16 @@ export default function DetalleExpediente() {
                 antesDeFacturas={<Pendientes caso={caso} onCambio={recargar} />}
               />
             )}
+          </div>
+
+          {/* La mesa de trabajo, al final de la narrativa y no en la columna lateral: es
+              ancha, se lee renglón por renglón y compite con todo lo demás si va arriba. */}
+          <div className="declaracion-narrativa declaracion-cruce">
+            <Conciliacion
+              caseId={caseId}
+              conciliacion={conciliacion.data}
+              onCambio={recargar}
+            />
           </div>
 
           <aside className="declaracion-material">

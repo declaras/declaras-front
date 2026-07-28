@@ -71,4 +71,45 @@ export const api = {
     form.append("file", file);
     return request(`/v1/cases/${caseId}/documents`, { method: "POST", body: form });
   },
+
+  /**
+   * Sube varios archivos en una sola peticion y devuelve el desenlace de CADA UNO.
+   *
+   * Los `doc_type` van en el mismo orden que los archivos: el backend empareja por indice,
+   * no por nombre — dos archivos con el mismo nombre recibian el desenlace del otro.
+   */
+  uploadDocuments: (caseId, entradas) => {
+    const form = new FormData();
+    for (const { docType, file } of entradas) {
+      form.append("doc_type", docType);
+      form.append("file", file);
+    }
+    return request(`/v1/cases/${caseId}/documents`, { method: "POST", body: form });
+  },
+
+  // ─────────────────────────── conciliacion ───────────────────────────
+
+  runConciliacion: (caseId) => request(`/v1/cases/${caseId}/conciliacion`, { method: "POST" }),
+  getConciliacion: (caseId) => request(`/v1/cases/${caseId}/conciliacion`),
+
+  /**
+   * Resuelve un renglon. OJO con el id: NO es un UUID — lleva dos puntos (`nit:CONCEPTO`) y
+   * puede llevar espacios o barras, asi que va codificado o la ruta se parte.
+   */
+  resolverPartida: (caseId, partidaId, payload) =>
+    request(
+      `/v1/cases/${caseId}/conciliacion/${encodeURIComponent(partidaId)}/resolver`,
+      json(payload),
+    ),
+
+  listPeticiones: (caseId) => request(`/v1/cases/${caseId}/peticiones`),
+  postRespuesta: (caseId, payload) => request(`/v1/cases/${caseId}/respuestas`, json(payload)),
+  cerrarPeticion: (caseId, peticionId) =>
+    request(`/v1/cases/${caseId}/cerrar-peticion/${encodeURIComponent(peticionId)}`, {
+      method: "POST",
+    }),
+
+  getLiquidacion: (caseId) => request(`/v1/cases/${caseId}/liquidacion`),
+  cerrarLiquidacion: (caseId) =>
+    request(`/v1/cases/${caseId}/liquidacion/cerrar`, { method: "POST" }),
 };
