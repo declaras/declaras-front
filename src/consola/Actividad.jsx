@@ -10,7 +10,6 @@
 import { useState } from "react";
 
 import { formatDateTime } from "./formato";
-import { SoloContador } from "./vista";
 
 const VISIBLES_AL_INICIO = 4;
 
@@ -31,12 +30,9 @@ export default function Actividad({ eventos }) {
         {visibles.map((evento) => (
           <li key={evento.id}>
             <span className="actividad-cuando">{formatDateTime(evento.occurred_at)}</span>
-            <span className="actividad-que">
-              {evento.message}
-              <SoloContador>
-                <span className="codigo">{evento.kind}</span>
-              </SoloContador>
-            </span>
+            {/* Sin el código del evento: en una columna de 252 píxeles desbordaba, y el sitio
+                donde sirve para rastrear es la memoria de cálculo, no el registro de actividad. */}
+            <span className="actividad-que">{evento.message}</span>
           </li>
         ))}
       </ol>

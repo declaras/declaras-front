@@ -21,7 +21,7 @@
 
 import { useCallback, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, ChevronDown, ChevronRight, RefreshCw, Upload } from "lucide-react";
+import { ArrowLeft, ArrowRight, RefreshCw, Upload } from "lucide-react";
 
 import { api } from "./api";
 import { useAction, useApi } from "./hooks";
@@ -36,6 +36,11 @@ import Resumen from "./Resumen";
 import Pendientes from "./Pendientes";
 import Actividad from "./Actividad";
 import Dialogo from "./Dialogo";
+import Etapas from "./Etapas";
+import EtapaBorrador from "./EtapaBorrador";
+import EtapaDecisiones from "./EtapaDecisiones";
+import EtapaPresentar from "./EtapaPresentar";
+import EtapaResultado from "./EtapaResultado";
 import Progreso from "./Progreso";
 import { useVista } from "./vista";
 
@@ -113,89 +118,116 @@ export default function DetalleExpediente() {
       {!tieneDatos ? (
         <Empezar caso={caso} onListo={(mensaje) => { setUltimaConsulta(mensaje); recargar(); }} />
       ) : (
-        <div className="declaracion">
-          <div className="declaracion-narrativa">
-            {/* DOS HISTORIAS DISTINTAS, NO UNA CON MAS DETALLE.
-                El cliente viene a enterarse: le toca declarar, por qué, y qué le falta mandar.
-                El contador viene a trabajar: qué falta para cerrar, en una sola cola, y si la
-                cifra se sostiene. Mostrarle a uno la historia del otro fue el error: al contador
-                le salía "lo que te ahorras", que es la respuesta a una pregunta que no hizo. */}
-            {profunda ? (
-              <>
-                <MesaDeTrabajo
-                  caso={caso}
-                  conciliacion={conciliacion.data}
-                  peticiones={peticiones.data}
-                  liquidacion={liquidacion.data}
-                  onCambio={recargar}
-                />
-
-                <div id="avisos">
-                  <Pendientes caso={caso} onCambio={recargar} />
-                </div>
-                <div id="peticiones">
-                  <Peticiones
-                    caseId={caseId}
-                    peticiones={peticiones.data}
-                    respuestas={respuestas.data}
-                    onCambio={recargar}
-                  />
-                </div>
-
-                {/* El respaldo de la cifra: se consulta cuando hay que defenderla, no se lee
-                    de arriba abajo. Plegado, deja de competir con el trabajo. */}
-                <Respaldo>
-                  <Ganancia liquidacion={liquidacion.data} />
-                  {resumen.loading ? <Cargando filas={3} /> : <Resumen resumen={resumen.data} />}
-                </Respaldo>
-              </>
-            ) : (
-              <>
-                <Ganancia liquidacion={liquidacion.data} />
-                {resumen.loading ? (
-                  <Cargando filas={4} />
-                ) : (
-                  <Resumen
-                    resumen={resumen.data}
-                    porRevisar={porRevisar}
-                    antesDeFacturas={
-                      <>
-                        <Pendientes caso={caso} onCambio={recargar} />
-                        <Peticiones
-                          caseId={caseId}
-                          peticiones={peticiones.data}
-                          respuestas={respuestas.data}
-                          onCambio={recargar}
-                        />
-                      </>
-                    }
-                  />
-                )}
-              </>
-            )}
-          </div>
-
-          {/* El cruce es la mesa de trabajo del contador: veintiséis renglones con decisiones
-              del tipo "usar la cifra de la DIAN". Al cliente no le toca decidir eso, y verlo lo
-              único que hace es sembrarle dudas sobre cifras que ya alguien resolvió. */}
-          {profunda ? (
-            <div className="declaracion-narrativa declaracion-cruce" id="cruce">
-              <Conciliacion
-                caseId={caseId}
-                conciliacion={conciliacion.data}
-                onCambio={recargar}
-              />
-            </div>
-          ) : null}
-
-          <aside className="declaracion-material">
-            <Documentos documentos={caso.documents} />
-            <SubirDocumento caso={caso} onListo={recargar} />
-            <Actividad eventos={caso.events} />
-          </aside>
-        </div>
+        <Flujo
+          caseId={caseId}
+          caso={caso}
+          conciliacion={conciliacion.data}
+          peticiones={peticiones.data}
+          respuestas={respuestas.data}
+          liquidacion={liquidacion.data}
+          resumen={resumen.data}
+          profunda={profunda}
+          onCambio={recargar}
+        />
       )}
     </>
+  );
+}
+
+/**
+ * El flujo de cuatro etapas, que es la misma historia para las dos personas.
+ *
+ * El cliente y el contador recorren lo mismo —resultado, decisiones, borrador, presentar— porque
+ * el trabajo es el mismo: un cliente autogestionado no "se entera", decide. Lo que cambia es el
+ * vocabulario, cuanto detalle se ofrece, y que las decisiones tecnicas no se le presentan al
+ * titular como preguntas suyas.
+ *
+ * LA ETAPA SE PROPONE, NO SE IMPONE. Se abre en la que toca segun el estado, y desde ahi se puede
+ * ir a cualquiera ya alcanzada. Lo que no se puede es adelantarse a una que todavia no aplica:
+ * leer el borrador antes de decidir los renglones es leer una cifra que va a cambiar.
+ */
+function Flujo({ caseId, caso, conciliacion, peticiones, respuestas, liquidacion, resumen, profunda, onCambio }) {
+  const sinDecidir = (conciliacion?.partidas ?? []).filter((p) => !p.resolucion).length;
+  const porConfirmar = caso.flags.filter((f) => !f.resolved_at && f.severity !== "info").length;
+  const porPedir = (peticiones ?? []).length;
+  const faltan = sinDecidir + porConfirmar + porPedir;
+  const hayBorrador = Boolean(liquidacion?.actual);
+
+  // Hasta donde se puede llegar hoy. No es una restricción de permisos: es que una etapa sin
+  // insumos no tiene nada que mostrar.
+  const hasta = faltan ? "decisiones" : hayBorrador ? "presentar" : "decisiones";
+  const [etapa, setEtapa] = useState(null);
+  const actual = etapa ?? (faltan ? "resultado" : hayBorrador ? "resultado" : "resultado");
+
+  const pendientes = [
+    ...caso.flags.filter((f) => !f.resolved_at && f.severity !== "info").map((f) => ({
+      id: f.id,
+      que: f.message,
+    })),
+    ...(sinDecidir
+      ? [{ id: "cruce", que: `Quedan ${sinDecidir} renglones por decidir` }]
+      : []),
+  ];
+
+  return (
+    <div className="flujo">
+      <aside className="flujo-etapas">
+        <Etapas actual={actual} hasta={hasta} onIr={setEtapa} />
+      </aside>
+
+      <div className="flujo-cuerpo">
+        {actual === "resultado" ? (
+          <EtapaResultado
+            liquidacion={liquidacion}
+            resumen={resumen}
+            pendientes={pendientes}
+            onSeguir={() => setEtapa(faltan ? "decisiones" : "borrador")}
+          />
+        ) : null}
+        {actual === "decisiones" ? (
+          <EtapaDecisiones
+            caseId={caseId}
+            caso={caso}
+            conciliacion={conciliacion}
+            peticiones={peticiones}
+            respuestas={respuestas}
+            profunda={profunda}
+            onCambio={onCambio}
+            onSeguir={() => setEtapa("borrador")}
+          />
+        ) : null}
+        {actual === "borrador" ? (
+          <EtapaBorrador
+            caseId={caseId}
+            caso={caso}
+            resumen={resumen}
+            liquidacion={liquidacion}
+          />
+        ) : null}
+        {actual === "presentar" ? (
+          <EtapaPresentar
+            caseId={caseId}
+            caso={caso}
+            conciliacion={conciliacion}
+            peticiones={peticiones}
+            liquidacion={liquidacion}
+            onIr={setEtapa}
+            onCambio={onCambio}
+          />
+        ) : null}
+
+        {actual === "borrador" && hayBorrador ? (
+          <button className="btn-grande" onClick={() => setEtapa("presentar")}>
+            Continuar <ArrowRight size={16} />
+          </button>
+        ) : null}
+      </div>
+
+      <aside className="flujo-lateral">
+        <SubirDocumento caso={caso} onListo={onCambio} />
+        <Actividad eventos={caso.events} />
+      </aside>
+    </div>
   );
 }
 

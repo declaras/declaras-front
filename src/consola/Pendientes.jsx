@@ -113,9 +113,8 @@ function Aviso({ flag, caseId, onCambio }) {
           {resuelto
             ? `Revisado el ${formatDate(flag.resolved_at)}${flag.resolution_note ? `: ${flag.resolution_note}` : ""}`
             : formatDate(flag.raised_at)}
-          <SoloContador>
-            <span className="codigo">{flag.code}</span>
-          </SoloContador>
+          {/* El código NO se muestra ni en la vista de contador: acá se está trabajando, y lo
+              que sirve para reportar un problema es la memoria de cálculo, no la cola. */}
         </p>
         <ErrorApi error={accion.error} />
 

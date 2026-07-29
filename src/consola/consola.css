@@ -81,6 +81,8 @@
 .interruptor-activo:hover { border-color: var(--ink); background: var(--ink); color: var(--cream); }
 
 .app-cuerpo { width: min(1120px, calc(100% - 48px)); margin: 40px auto 96px; }
+/* El flujo de etapas pide tres columnas, así que necesita más ancho que la lectura sola. */
+.app-cuerpo:has(.flujo) { width: min(1320px, calc(100% - 48px)); }
 
 /* ── las dos naturalezas de la pantalla ──
  * La narrativa se lee de arriba abajo una vez; el material se consulta. En ancho van en dos
@@ -1330,3 +1332,268 @@
 }
 .respaldo-abrir:hover { color: var(--ink); }
 .respaldo { margin-top: 24px; }
+
+/* ── el indicador guiado de etapas ──
+ * No son pestanas: unas pestanas invitan a pasear entre iguales, esto es el progreso de un
+ * proceso con orden. En ancho va al lado (acompana sin gastar altura); en el telefono arriba,
+ * porque ahi el ancho es lo escaso.
+ */
+.etapas ol { list-style: none; padding: 0; margin: 0; }
+.etapa button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 0;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.etapa button:disabled { cursor: default; opacity: 0.45; }
+.etapa button:hover:not(:disabled) { color: var(--ink); }
+.etapa-marca {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--white);
+}
+.etapa-punto { width: 5px; height: 5px; border-radius: 50%; background: var(--line); }
+.etapa-nombre { min-width: 0; }
+/* Una etapa que todavia no aplica se ve, pero no se puede abrir: revisar el borrador antes de
+   decidir los renglones es leer una cifra que va a cambiar. */
+.etapa-lejos button { cursor: default; }
+.etapa-hecha .etapa-marca { border-color: var(--brand); background: var(--brand); color: white; }
+.etapa-hecha button { color: var(--muted); }
+.etapa-actual button { color: var(--ink); font-weight: 500; }
+.etapa-actual .etapa-marca { border-color: var(--brand); }
+.etapa-actual .etapa-punto { background: var(--brand); width: 7px; height: 7px; }
+
+@media (min-width: 1060px) {
+  /* La linea que une los pasos: hace ver que es una secuencia y no una lista de opciones. */
+  .etapas ol { position: relative; }
+  .etapas ol::before {
+    content: "";
+    position: absolute;
+    left: 10px;
+    top: 18px;
+    bottom: 18px;
+    width: 1px;
+    background: var(--line);
+  }
+  .etapa { position: relative; }
+}
+@media (max-width: 1059px) {
+  .etapas { border-bottom: 1px solid var(--line); margin-bottom: 28px; }
+  .etapas ol { display: flex; gap: 4px; overflow-x: auto; }
+  .etapa button { padding: 12px 0; white-space: nowrap; }
+  .etapa:not(:last-child) button::after { content: ""; width: 18px; height: 1px; background: var(--line); }
+}
+
+/* ══════════════════ EL FLUJO DE CUATRO ETAPAS ══════════════════
+ *
+ * Tres columnas en ancho: las etapas a la izquierda (acompañan sin gastar altura), el trabajo en
+ * el centro a ancho de lectura, y el material de consulta a la derecha. En el teléfono se apila y
+ * las etapas pasan a ser una barra arriba.
+ */
+.flujo { display: block; }
+@media (min-width: 1240px) {
+  .flujo {
+    display: grid;
+    grid-template-columns: 152px minmax(0, 1fr) 252px;
+    gap: 48px;
+    align-items: start;
+  }
+  .flujo-etapas { grid-column: 1; position: sticky; top: 96px; }
+  .flujo-cuerpo { grid-column: 2; }
+  .flujo-lateral { grid-column: 3; position: sticky; top: 96px; }
+}
+.flujo-cuerpo { max-width: 620px; }
+
+/* Una etapa: un título, su contenido, y nada más compitiendo. */
+.etapa-cuerpo { padding-bottom: 40px; }
+.etapa-titulo {
+  font: 500 clamp(25px, 3vw, 31px) / 1.15 "Fraunces", serif;
+  letter-spacing: -0.025em;
+  margin: 0 0 10px;
+  max-width: 24ch;
+}
+.etapa-nota { color: var(--muted); font-size: 15px; line-height: 1.6; margin: 0 0 26px; max-width: 58ch; }
+
+/* ── etapa 1: el resultado ── */
+.resultado-titulo {
+  font: 500 clamp(30px, 4vw, 42px) / 1.08 "Fraunces", serif;
+  letter-spacing: -0.03em;
+  margin: 0 0 30px;
+  max-width: 20ch;
+}
+.resultado-cifras { display: flex; gap: 48px; flex-wrap: wrap; margin-bottom: 30px; }
+.resultado-cifra { display: flex; flex-direction: column; gap: 5px; }
+.resultado-valor { font: 600 32px/1 "Inter", sans-serif; letter-spacing: -0.03em; }
+.resultado-nombre { color: var(--muted); font-size: 13.5px; }
+.resultado-ahorro .resultado-valor { color: var(--brand); }
+
+.resultado-alertas { list-style: none; padding: 0; margin: 0 0 30px; }
+.resultado-alertas li {
+  padding: 13px 16px;
+  margin-bottom: 8px;
+  border-radius: 11px;
+  background: rgba(229, 165, 10, 0.09);
+  color: #7d5806;
+  font-size: 13.5px;
+  line-height: 1.6;
+}
+
+/* ── etapa 2: una decisión a la vez ── */
+.decision-marco { margin-bottom: 34px; }
+.decision-progreso {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  margin: 0 0 18px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.decision-progreso .enlace-suave { margin-left: auto; }
+
+.decision {
+  padding: 26px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--white);
+  box-shadow: var(--shadow);
+}
+.decision-tercero { margin: 0 0 4px; color: var(--muted); font-size: 13px; }
+.decision-pregunta {
+  font: 500 21px/1.25 "Fraunces", serif;
+  letter-spacing: -0.02em;
+  margin: 0 0 20px;
+}
+.decision-cifras { display: grid; gap: 12px; margin-bottom: 18px; }
+.decision-cifras p { display: flex; align-items: baseline; gap: 14px; margin: 0; }
+.decision-quien { color: var(--muted); font-size: 13.5px; }
+.decision-monto { margin-left: auto; font-size: 18px; font-weight: 600; }
+.decision-nota { margin: 0 0 18px; color: var(--muted); font-size: 13.5px; line-height: 1.6; }
+.decision-tecnico {
+  margin: 0 0 18px;
+  color: var(--muted);
+  font-size: 11.5px;
+  font-family: ui-monospace, monospace;
+}
+.decision-opciones { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-start; }
+/* Una opcion con formulario ocupa su propia linea: el formulario no cabe al lado de los botones. */
+.opcion { flex: 1 1 100%; }
+.opcion-forma { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); }
+
+/* Un botón grande secundario: la otra cara de una pregunta de sí o no. */
+.btn-secundario {
+  background: var(--white);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  box-shadow: none;
+}
+.btn-secundario:hover:not(:disabled) { border-color: var(--ink); background: var(--white); }
+
+/* ── etapa 3: el borrador ── */
+.pestanas { display: flex; gap: 2px; margin-bottom: 26px; border-bottom: 1px solid var(--line); }
+.pestana {
+  padding: 10px 15px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--muted);
+  font-size: 14px;
+  cursor: pointer;
+  transition: 0.15s;
+}
+.pestana:hover { color: var(--ink); }
+.pestana-activa { color: var(--ink); font-weight: 500; border-bottom-color: var(--brand); }
+
+.categorias { margin-bottom: 26px; }
+.categoria { border-top: 1px solid var(--line); }
+.categoria:last-child { border-bottom: 1px solid var(--line); }
+.categoria > button {
+  display: flex;
+  align-items: baseline;
+  gap: 11px;
+  width: 100%;
+  padding: 15px 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+}
+.categoria > button svg { align-self: center; color: var(--muted); }
+.categoria-nombre { font-size: 15px; font-weight: 500; }
+.categoria-total { margin-left: auto; font-size: 15.5px; font-weight: 600; }
+.categoria-cuerpo { padding: 0 0 18px 26px; }
+
+.topes-simples { list-style: none; padding: 0; margin: 0; }
+.topes-simples li {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  padding: 9px 0;
+  border-bottom: 1px solid rgba(231, 227, 218, 0.6);
+  font-size: 13.5px;
+}
+.topes-simples .money { margin-left: auto; }
+.tope-veredicto { color: var(--muted); font-size: 12.5px; min-width: 92px; text-align: right; }
+.tope-si { color: var(--forest); font-weight: 500; }
+.tope-si .tope-veredicto { color: var(--forest); }
+
+.memoria { display: inline-flex; align-items: center; gap: 7px; }
+
+/* ── etapa 4: presentar ── */
+.presentar-cifra { display: flex; align-items: baseline; gap: 12px; margin: 0 0 28px; }
+.presentar-cifra .money { font: 600 30px/1 "Inter", sans-serif; letter-spacing: -0.03em; }
+.presentar-cifra span:last-child { color: var(--muted); font-size: 14px; }
+
+.checklist { list-style: none; padding: 0; margin: 0 0 34px; }
+.checklist li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 0;
+  border-top: 1px solid var(--line);
+  font-size: 14.5px;
+}
+.checklist li:last-child { border-bottom: 1px solid var(--line); }
+.checklist .enlace-suave { margin-left: auto; }
+.check-marca {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+}
+.check-listo .check-marca { background: var(--brand); color: white; }
+.check-falta { color: #7d5806; }
+.check-falta .check-marca { background: rgba(229, 165, 10, 0.16); color: #7d5806; }
+
+.presentar-cerrar { margin-top: 8px; }
+.presentar-nota {
+  margin: 16px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+  max-width: 56ch;
+}
+
+/* En la columna lateral la actividad se apila: con 252 pixeles, la fecha y el texto en dos
+   columnas dejaban el texto en tres palabras por linea. */
+.flujo-lateral .actividad li { grid-template-columns: 1fr; gap: 2px; padding: 10px 0; }
+.flujo-lateral .actividad-cuando { font-size: 11.5px; }
+.flujo-lateral .actividad-que { font-size: 12.5px; line-height: 1.5; }
+.flujo-lateral .bloque-titulo { font-size: 14px; }
+.flujo-lateral .agregar { flex-direction: column; align-items: flex-start; gap: 10px; margin-bottom: 34px; }
+.flujo-lateral .agregar-nota { font-size: 11.5px; }
