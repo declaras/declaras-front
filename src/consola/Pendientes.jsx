@@ -18,9 +18,10 @@ import { SoloContador, useVista } from "./vista";
 /** Que hacer con cada aviso, en lenguaje de quien lo tiene que resolver. */
 const QUE_HACER = {
   REPORTED_TO_ANOTHER_PERSON:
-    "Confirma si ese valor es tuyo. Si no lo es, el tercero tiene que corregir su reporte ante la DIAN y ese valor no debe entrar a tu declaración.",
+    "Confirma si ese valor es tuyo. Si no lo es, quien lo reportó tiene que corregirlo ante la DIAN y no debe entrar a tu declaración.",
   DOCUMENT_IDENTITY_MISMATCH:
     "Este documento es de otra persona. Si entra al cálculo, la declaración queda mal.",
+  ANSWER_RECORDED: "Queda registrado. Se puede cambiar si hace falta.",
   DOCUMENT_UNREADABLE: "El archivo llegó dañado. Hay que volver a traerlo del portal.",
   NO_REPORTED_ITEMS: "La DIAN no tiene valores reportados por terceros para este año.",
   RUT_ID_MISMATCH: "El NIT y la cédula del RUT no coinciden. Hay que revisar el documento.",
@@ -35,6 +36,9 @@ const QUE_HACER = {
 
 export default function Pendientes({ caso, onCambio }) {
   const { profunda } = useVista();
+  // El titular confirma cosas SUYAS; el contador confirma cosas de otra persona. La misma lista,
+  // dos voces.
+  const deQuien = profunda ? "del cliente" : "tuyas";
   // Una constancia (`info`) no le pide nada a nadie: es registro de un defecto conocido que no
   // cambia ninguna cifra. Aparece en la vista de contador, que es donde sirve para reportar un
   // problema, y no en la lista de lo que hay que hacer.
@@ -57,8 +61,8 @@ export default function Pendientes({ caso, onCambio }) {
         {abiertos.length ? (
           <p className="bloque-nota">
             {abiertos.length === 1
-              ? "Hay una cosa que confirmar antes de presentar."
-              : `Hay ${abiertos.length} cosas que confirmar antes de presentar.`}
+              ? `Hay una cosa ${deQuien} que confirmar antes de presentar.`
+              : `Hay ${abiertos.length} cosas ${deQuien} que confirmar antes de presentar.`}
           </p>
         ) : (
           <p className="bloque-nota">Todo lo que había que confirmar ya se revisó.</p>

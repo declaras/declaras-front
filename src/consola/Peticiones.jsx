@@ -19,8 +19,16 @@ import { api } from "./api";
 import { useAction } from "./hooks";
 import { formatDate, formatMoney } from "./formato";
 import { ErrorApi, Vacio } from "./componentes";
+import { useVista } from "./vista";
 
+/**
+ * DOS VOCABULARIOS, UNA IMPLEMENTACION. El titular es quien contesta y quien manda los
+ * documentos, asi que la pantalla le habla a el; el contador ve lo mismo dicho en tercera
+ * persona, porque el va a pedirselo a alguien mas. Antes solo existia el segundo, y al cliente
+ * le salia "Que pedirle al cliente".
+ */
 export default function Peticiones({ caseId, peticiones, respuestas, onCambio }) {
+  const { profunda } = useVista();
   if (!peticiones) return null;
   const yaRespondidas = respuestas ?? [];
 
@@ -39,11 +47,17 @@ export default function Peticiones({ caseId, peticiones, respuestas, onCambio })
     <section className="bloque">
       <header className="bloque-top">
         <h2 className="bloque-titulo">
-          {peticiones.length ? "Qué pedirle al cliente" : "No falta ningún documento"}
+          {peticiones.length
+            ? profunda
+              ? "Qué pedirle al cliente"
+              : "Lo que falta que mandes"
+            : "No falta ningún documento"}
         </h2>
         <p className="bloque-nota">
           {peticiones.length
-            ? "Ordenado por lo que cada documento le puede ahorrar. Lo de arriba primero."
+            ? profunda
+              ? "Ordenado por lo que cada documento le puede ahorrar. Lo de arriba primero."
+              : "Ordenado por lo que cada uno te puede ahorrar. Empieza por el de arriba."
             : "Ya está todo lo que mueve la declaración."}
         </p>
       </header>
@@ -122,6 +136,9 @@ function Respondida({ caseId, respuesta, onCambio }) {
 }
 
 function Peticion({ caseId, peticion, onCambio }) {
+  // Del contexto y no por props: encadenar `profunda` por cada componente hijo la convierte en
+  // ruido en todas las firmas, y es exactamente para lo que existe el contexto de la vista.
+  const { profunda } = useVista();
   const [copiado, setCopiado] = useState(false);
   // `peticion.id` ES la clave de la respuesta: "PREPAGADA" para un beneficio, `partida:{id}`
   // para un renglon del cruce. Apagar una peticion es un solo mecanismo, la escriba el cliente
@@ -197,12 +214,16 @@ function Peticion({ caseId, peticion, onCambio }) {
         </div>
       ) : (
         <>
-          <div className="peticion-copy">
-            <button className="btn-mini" onClick={copiar}>
-              {copiado ? <Check size={14} /> : <Copy size={14} />}
-              {copiado ? "Copiado" : "Copiar mensaje"}
-            </button>
-          </div>
+          {/* Copiar el mensaje solo sirve a quien se lo va a mandar a alguien mas. El titular
+              no se escribe a si mismo. */}
+          {profunda ? (
+            <div className="peticion-copy">
+              <button className="btn-mini" onClick={copiar}>
+                {copiado ? <Check size={14} /> : <Copy size={14} />}
+                {copiado ? "Copiado" : "Copiar mensaje"}
+              </button>
+            </div>
+          ) : null}
           <SoltarArchivos
             caseId={caseId}
             docType={peticion.tipo_documento}
@@ -215,7 +236,9 @@ function Peticion({ caseId, peticion, onCambio }) {
               if (await cerrar.run()) onCambio();
             }}
           >
-            No lo va a conseguir, seguir sin este documento
+            {profunda
+              ? "No lo va a conseguir, seguir sin este documento"
+              : "No lo tengo, seguir sin este documento"}
           </button>
           <ErrorApi error={cerrar.error} />
         </>

@@ -53,9 +53,13 @@ export default function EtapaDecisiones({
   if (!sinDecidir.length && !porConfirmar.length && !(peticiones ?? []).length) {
     return (
       <section className="etapa-cuerpo">
-        <h1 className="etapa-titulo">No falta ninguna decisión</h1>
+        <h1 className="etapa-titulo">
+          {profunda ? "No falta ninguna decisión" : "No falta nada por confirmar"}
+        </h1>
         <p className="etapa-nota">
-          Todos los renglones están decididos y no hay documentos pendientes.
+          {profunda
+            ? "Todos los renglones están decididos y no hay documentos pendientes."
+            : "Ya confirmaste todo y no falta ningún documento por mandar."}
         </p>
         <button className="btn-grande" onClick={onSeguir}>
           Ver el borrador <ArrowRight size={16} />
@@ -66,16 +70,21 @@ export default function EtapaDecisiones({
 
   return (
     <section className="etapa-cuerpo">
-      <h1 className="etapa-titulo">Lo que hay que decidir</h1>
+      <h1 className="etapa-titulo">
+        {profunda ? "Lo que hay que decidir" : "Lo que necesitamos que confirmes"}
+      </h1>
 
       {sinDecidir.length ? (
         <div className="decision-marco">
           <p className="decision-progreso">
             <span>
-              Renglón {partidas.length - sinDecidir.length + 1} de {partidas.length}
+              {profunda ? "Renglón" : "Pregunta"} {partidas.length - sinDecidir.length + 1} de{" "}
+              {partidas.length}
             </span>
             <button className="enlace-suave" onClick={() => setVerTodas((v) => !v)}>
-              {verTodas ? "volver a una por una" : `ver las ${sinDecidir.length} de una vez`}
+              {verTodas
+                ? "volver a una por una"
+                : `ver ${profunda ? "los" : "las"} ${sinDecidir.length} de una vez`}
             </button>
           </p>
 

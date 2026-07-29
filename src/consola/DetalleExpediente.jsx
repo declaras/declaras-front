@@ -20,7 +20,7 @@
  */
 
 import { useCallback, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ArrowLeft, ArrowRight, RefreshCw, Upload } from "lucide-react";
 
 import { api } from "./api";
@@ -36,7 +36,7 @@ import Resumen from "./Resumen";
 import Pendientes from "./Pendientes";
 import Actividad from "./Actividad";
 import Dialogo from "./Dialogo";
-import Etapas from "./Etapas";
+import Etapas, { ETAPAS } from "./Etapas";
 import EtapaBorrador from "./EtapaBorrador";
 import EtapaDecisiones from "./EtapaDecisiones";
 import EtapaPresentar from "./EtapaPresentar";
@@ -70,7 +70,9 @@ export default function DetalleExpediente() {
     liquidacion.reload();
   }, [expediente, resumen, conciliacion, peticiones, respuestas, liquidacion]);
 
-  if (expediente.loading) return <Cargando texto="Cargando…" />;
+  // Solo mientras no haya NADA que mostrar. Un refresco posterior no borra la pantalla: además
+  // del parpadeo, desmontar el árbol se llevaba el estado de todo lo que hay dentro.
+  if (expediente.loading && !expediente.data) return <Cargando texto="Cargando…" />;
   if (expediente.error) {
     return (
       <>
@@ -156,8 +158,21 @@ function Flujo({ caseId, caso, conciliacion, peticiones, respuestas, liquidacion
   // Hasta donde se puede llegar hoy. No es una restricción de permisos: es que una etapa sin
   // insumos no tiene nada que mostrar.
   const hasta = faltan ? "decisiones" : hayBorrador ? "presentar" : "decisiones";
-  const [etapa, setEtapa] = useState(null);
-  const actual = etapa ?? (faltan ? "resultado" : hayBorrador ? "resultado" : "resultado");
+
+  // LA ETAPA VIVE EN LA DIRECCION, no en el estado de este componente. Dos razones: sobrevive a
+  // un refresco de pagina y a cualquier remontaje del arbol (que es lo que rompio esto antes:
+  // guardar una respuesta devolvia al usuario a la primera etapa), y se puede compartir el enlace
+  // de una etapa concreta.
+  const [parametros, setParametros] = useSearchParams();
+  const pedida = parametros.get("paso");
+  const actual = ETAPAS.some((e) => e.id === pedida) ? pedida : "resultado";
+  const setEtapa = (id) => {
+    const siguientes = new URLSearchParams(parametros);
+    siguientes.set("paso", id);
+    // `replace` para que el botón de atrás del navegador salga de la declaración en vez de
+    // recorrer las cuatro etapas al revés.
+    setParametros(siguientes, { replace: true });
+  };
 
   const pendientes = [
     ...caso.flags.filter((f) => !f.resolved_at && f.severity !== "info").map((f) => ({
