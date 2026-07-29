@@ -51,6 +51,7 @@ export default function DetalleExpediente() {
   // que leer como falla.
   const conciliacion = useApi(() => api.getConciliacion(caseId), [caseId]);
   const peticiones = useApi(() => api.listPeticiones(caseId), [caseId]);
+  const respuestas = useApi(() => api.listRespuestas(caseId), [caseId]);
   const liquidacion = useApi(() => api.getLiquidacion(caseId), [caseId]);
   const [ultimaConsulta, setUltimaConsulta] = useState(null);
 
@@ -59,8 +60,9 @@ export default function DetalleExpediente() {
     resumen.reload();
     conciliacion.reload();
     peticiones.reload();
+    respuestas.reload();
     liquidacion.reload();
-  }, [expediente, resumen, conciliacion, peticiones, liquidacion]);
+  }, [expediente, resumen, conciliacion, peticiones, respuestas, liquidacion]);
 
   if (expediente.loading) return <Cargando texto="Cargando…" />;
   if (expediente.error) {
@@ -117,24 +119,32 @@ export default function DetalleExpediente() {
                 conciliar no hay nada que prometer. */}
             <Ganancia liquidacion={liquidacion.data} />
 
-            {/* Lo que falta para llegar a esa cifra, ordenado por lo que cada documento
-                mueve. Va pegado a la cifra porque es lo que la explica. */}
-            {/* `GET /peticiones` devuelve la LISTA pelada, no un objeto que la envuelva.
-                Leer `.peticiones` de ahí daba undefined y la vista no pintaba nada — y sin
-                error, porque la respuesta era 200. */}
-            <Peticiones caseId={caseId} peticiones={peticiones.data} onCambio={recargar} />
-
-            {/* La respuesta va primero. Antes los pendientes estaban arriba, y quien entraba a
-                saber si le tocaba declarar se encontraba con una lista de problemas. */}
+            {/* La respuesta va antes que las preguntas. La ganancia de arriba solo aparece
+                cuando ya hay una liquidación; mientras no la haya, poner las peticiones aquí
+                dejaba siete preguntas como primera pantalla y el veredicto debajo, que es
+                justamente el orden que se corrigió antes con los pendientes. */}
             {resumen.loading ? (
               <Cargando filas={4} />
             ) : (
               <Resumen
                 resumen={resumen.data}
                 porRevisar={porRevisar}
-                // Lo que hay que confirmar va pegado a los topes que puede mover, no al final
-                // de la pantalla: es lo que le da sentido a la salvedad del veredicto.
-                antesDeFacturas={<Pendientes caso={caso} onCambio={recargar} />}
+                // Lo que puede mover la respuesta va pegado a los topes que mueve: primero lo
+                // que hay que confirmar de lo que ya se sabe, después lo que hay que pedir.
+                antesDeFacturas={
+                  <>
+                    <Pendientes caso={caso} onCambio={recargar} />
+                    {/* `GET /peticiones` devuelve la LISTA pelada, no un objeto que la
+                        envuelva. Leer `.peticiones` de ahí daba undefined y la vista no
+                        pintaba nada — y sin error, porque la respuesta era 200. */}
+                    <Peticiones
+                      caseId={caseId}
+                      peticiones={peticiones.data}
+                      respuestas={respuestas.data}
+                      onCambio={recargar}
+                    />
+                  </>
+                }
               />
             )}
           </div>

@@ -17,12 +17,14 @@ import { Check, Copy, Upload, X } from "lucide-react";
 
 import { api } from "./api";
 import { useAction } from "./hooks";
-import { formatMoney } from "./formato";
+import { formatDate, formatMoney } from "./formato";
 import { ErrorApi, Vacio } from "./componentes";
 
-export default function Peticiones({ caseId, peticiones, onCambio }) {
+export default function Peticiones({ caseId, peticiones, respuestas, onCambio }) {
   if (!peticiones) return null;
-  if (!peticiones.length) {
+  const yaRespondidas = respuestas ?? [];
+
+  if (!peticiones.length && !yaRespondidas.length) {
     return (
       <section className="bloque">
         <header className="bloque-top">
@@ -36,17 +38,86 @@ export default function Peticiones({ caseId, peticiones, onCambio }) {
   return (
     <section className="bloque">
       <header className="bloque-top">
-        <h2 className="bloque-titulo">Qué pedirle al cliente</h2>
+        <h2 className="bloque-titulo">
+          {peticiones.length ? "Qué pedirle al cliente" : "No falta ningún documento"}
+        </h2>
         <p className="bloque-nota">
-          Ordenado por lo que cada documento le puede ahorrar. Lo de arriba primero.
+          {peticiones.length
+            ? "Ordenado por lo que cada documento le puede ahorrar. Lo de arriba primero."
+            : "Ya está todo lo que mueve la declaración."}
         </p>
       </header>
-      <ul className="peticiones">
-        {peticiones.map((p) => (
-          <Peticion key={p.id} caseId={caseId} peticion={p} onCambio={onCambio} />
-        ))}
-      </ul>
+      {peticiones.length ? (
+        <ul className="peticiones">
+          {peticiones.map((p) => (
+            <Peticion key={p.id} caseId={caseId} peticion={p} onCambio={onCambio} />
+          ))}
+        </ul>
+      ) : null}
+
+      {yaRespondidas.length ? (
+        <YaRespondidas caseId={caseId} respuestas={yaRespondidas} onCambio={onCambio} />
+      ) : null}
     </section>
+  );
+}
+
+/**
+ * Lo que ya se contesto.
+ *
+ * POR QUE TIENE QUE ESTAR A LA VISTA: contestar apaga la pregunta, y antes no quedaba nada. Un
+ * "no" dado por error era irrecuperable desde aqui, y quien revisara despues no podia distinguir
+ * una deduccion que falta porque nadie pregunto de una que falta porque el cliente dijo que no la
+ * tenia. Son dos situaciones distintas y llevan a decisiones distintas.
+ *
+ * Va plegado y en gris: es registro, no trabajo pendiente.
+ */
+function YaRespondidas({ caseId, respuestas, onCambio }) {
+  const [abierto, setAbierto] = useState(false);
+  const noes = respuestas.filter((r) => !r.tiene).length;
+
+  return (
+    <div className="bloque-pie">
+      <button className="enlace-suave" onClick={() => setAbierto((v) => !v)}>
+        {abierto
+          ? "Ocultar lo ya preguntado"
+          : `Ver ${respuestas.length} pregunta${respuestas.length === 1 ? "" : "s"} ya contestada${respuestas.length === 1 ? "" : "s"}${noes ? ` (${noes} en no)` : ""}`}
+      </button>
+      {abierto ? (
+        <ul className="respondidas">
+          {respuestas.map((r) => (
+            <Respondida key={r.pregunta} caseId={caseId} respuesta={r} onCambio={onCambio} />
+          ))}
+        </ul>
+      ) : null}
+    </div>
+  );
+}
+
+function Respondida({ caseId, respuesta, onCambio }) {
+  const cambiar = useAction(() =>
+    api.postRespuesta(caseId, { pregunta: respuesta.pregunta, tiene: !respuesta.tiene }),
+  );
+
+  return (
+    <li className="respondida">
+      <span className="respondida-que">
+        {respuesta.tiene ? "Sí" : "No"} tiene {respuesta.etiqueta}
+      </span>
+      <span className="respondida-quien">
+        {respuesta.quien} · {formatDate(respuesta.cuando)}
+      </span>
+      <button
+        className="enlace-suave"
+        disabled={cambiar.running}
+        onClick={async () => {
+          if (await cambiar.run()) onCambio();
+        }}
+      >
+        {cambiar.running ? "Cambiando…" : respuesta.tiene ? "Marcar que no" : "Marcar que sí"}
+      </button>
+      <ErrorApi error={cambiar.error} />
+    </li>
   );
 }
 

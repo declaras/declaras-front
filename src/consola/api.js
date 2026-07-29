@@ -103,6 +103,7 @@ export const api = {
     ),
 
   listPeticiones: (caseId) => request(`/v1/cases/${caseId}/peticiones`),
+  listRespuestas: (caseId) => request(`/v1/cases/${caseId}/respuestas`),
   postRespuesta: (caseId, payload) => request(`/v1/cases/${caseId}/respuestas`, json(payload)),
   cerrarPeticion: (caseId, peticionId) =>
     request(`/v1/cases/${caseId}/cerrar-peticion/${encodeURIComponent(peticionId)}`, {

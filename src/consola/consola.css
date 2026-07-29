@@ -1209,3 +1209,18 @@
   max-width: 62ch;
 }
 .peticion-botones { margin-top: 12px; }
+
+/* ── lo ya preguntado: registro, no trabajo ── */
+.respondidas { list-style: none; padding: 0; margin: 12px 0 0; }
+.respondida {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 9px 0;
+  border-top: 1px solid rgba(231, 227, 218, 0.6);
+  font-size: 13px;
+}
+.respondida-que { color: var(--ink); }
+.respondida-quien { color: var(--muted); font-size: 12px; }
+.respondida .enlace-suave { margin-left: auto; }
