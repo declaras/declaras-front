@@ -111,6 +111,7 @@ export const api = {
     }),
 
   getLiquidacion: (caseId) => request(`/v1/cases/${caseId}/liquidacion`),
+  getFormulario: (caseId) => request(`/v1/cases/${caseId}/formulario`),
   cerrarLiquidacion: (caseId) =>
     request(`/v1/cases/${caseId}/liquidacion/cerrar`, { method: "POST" }),
 };

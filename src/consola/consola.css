@@ -1597,3 +1597,8 @@
 .flujo-lateral .bloque-titulo { font-size: 14px; }
 .flujo-lateral .agregar { flex-direction: column; align-items: flex-start; gap: 10px; margin-bottom: 34px; }
 .flujo-lateral .agregar-nota { font-size: 11.5px; }
+
+/* ── el 210 que se va a radicar ── */
+.formulario { margin: 8px 0 30px; }
+.formulario-tabla { margin-top: 16px; }
+.formulario-tabla td:first-child { width: 58px; font-variant-numeric: tabular-nums; }

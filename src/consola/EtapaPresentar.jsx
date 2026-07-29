@@ -9,13 +9,16 @@
 
 import { AlertCircle, Check, ExternalLink } from "lucide-react";
 
+import { useState } from "react";
+
 import { api } from "./api";
-import { useAction } from "./hooks";
+import { useAction, useApi } from "./hooks";
 import { ErrorApi } from "./componentes";
 import { formatMoney } from "./formato";
 
 export default function EtapaPresentar({ caseId, caso, conciliacion, peticiones, liquidacion, onIr, onCambio }) {
   const cerrar = useAction(() => api.cerrarLiquidacion(caseId));
+  const formulario = useApi(() => api.getFormulario(caseId), [caseId]);
   const yaLista = caso.status === "DRAFT_READY" || caso.status === "SUBMITTED";
 
   const sinDecidir = (conciliacion?.partidas ?? []).filter((p) => !p.resolucion).length;
@@ -84,6 +87,11 @@ export default function EtapaPresentar({ caseId, caso, conciliacion, peticiones,
         ))}
       </ul>
 
+      {/* EL FORMULARIO QUE SE VA A RADICAR, y no los renglones que la exógena sugiere: eso es lo
+          que la DIAN pondría con lo que ella sabe, y esto es lo que queda tras decidir. En un caso
+          real la misma casilla traía cifras con millones de diferencia y nada lo decía. */}
+      {formulario.data?.length ? <Formulario casillas={formulario.data} /> : null}
+
       {todoListo && !yaLista ? (
         <div className="presentar-cerrar">
           <button
@@ -115,5 +123,50 @@ export default function EtapaPresentar({ caseId, caso, conciliacion, peticiones,
         </a>
       ) : null}
     </section>
+  );
+}
+
+
+/**
+ * El 210 casilla por casilla, plegado.
+ *
+ * Plegado porque es la evidencia, no la respuesta: quien presenta ya vio la cifra arriba. Y con
+ * los nombres oficiales, porque nadie deberia tener que saber que es "la casilla 97".
+ *
+ * Solo se muestran las casillas con cifra. Un formulario con treinta ceros esconde las seis que
+ * importan, y las vacias no se declaran.
+ */
+function Formulario({ casillas }) {
+  const [abierto, setAbierto] = useState(false);
+  const conCifra = casillas.filter((c) => c.valor);
+
+  return (
+    <div className="formulario">
+      <button className="enlace-suave" onClick={() => setAbierto((v) => !v)} aria-expanded={abierto}>
+        {abierto
+          ? "Ocultar el formulario"
+          : `Ver el formulario 210 que se va a radicar (${conCifra.length} casillas con cifra)`}
+      </button>
+      {abierto ? (
+        <table className="tabla formulario-tabla">
+          <thead>
+            <tr>
+              <th>Casilla</th>
+              <th>Concepto</th>
+              <th className="num">Valor</th>
+            </tr>
+          </thead>
+          <tbody>
+            {conCifra.map((c) => (
+              <tr key={c.numero}>
+                <td className="strong">{c.numero}</td>
+                <td>{c.nombre}</td>
+                <td className="num strong money">{formatMoney(c.valor)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      ) : null}
+    </div>
   );
 }
