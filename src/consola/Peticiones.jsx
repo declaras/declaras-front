@@ -137,10 +137,15 @@ function Peticion({ caseId, peticion, onCambio }) {
     setTimeout(() => setCopiado(false), 2000);
   };
 
-  // El ahorro solo se pinta cuando hay una cifra. Una columna de "$ 0" en verde repetida siete
-  // veces no informa nada y se lleva la posicion jerarquica de la cifra destacada.
+  // EL AHORRO SON PESOS DE IMPUESTO, NO REDUCCION DE LA BASE. Son dos numeros muy distintos: un
+  // dependiente baja la base en 72 UVT, pero lo que baja el impuesto depende de la tarifa
+  // marginal de ese contribuyente y puede ser cero.
+  //
+  // Y "$ 0" no es una cifra, son tres situaciones que llevan a decisiones opuestas: no baja nada
+  // (no vale la pena molestar al cliente), no se puede calcular todavia (hay que desbloquear el
+  // caso), o es el techo legal y no una medicion. El backend manda cual es en `ahorro_por_que`.
   const ahorro = peticion.ahorro_estimado
-    ? `${peticion.ahorro_es_techo ? "hasta " : ""}${formatMoney(peticion.ahorro_estimado)}`
+    ? `${peticion.ahorro_es_techo ? "hasta " : ""}${formatMoney(peticion.ahorro_estimado)} menos de impuesto`
     : null;
 
   return (
@@ -151,6 +156,12 @@ function Peticion({ caseId, peticion, onCambio }) {
         <p className="peticion-que">{peticion.pregunta_previa ?? peticion.copy_sugerido}</p>
         {ahorro ? <p className="peticion-ahorro">{ahorro}</p> : null}
       </div>
+
+      {/* Cuando no hay cifra, lo que importa es por qué no la hay: dice si vale la pena pedir
+          el documento o no. Sin esto era un silencio que se leía como un cero. */}
+      {!ahorro && peticion.ahorro_por_que ? (
+        <p className="peticion-sin-ahorro">{peticion.ahorro_por_que}</p>
+      ) : null}
 
       <p className="peticion-razon">{peticion.razon}</p>
 

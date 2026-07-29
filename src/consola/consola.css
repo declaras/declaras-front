@@ -1224,3 +1224,13 @@
 .respondida-que { color: var(--ink); }
 .respondida-quien { color: var(--muted); font-size: 12px; }
 .respondida .enlace-suave { margin-left: auto; }
+
+/* Cuando el beneficio no baja nada (o no se puede medir todavia), la razon ocupa el sitio de la
+   cifra: es lo que dice si vale la pena pedirle el documento al cliente. */
+.peticion-sin-ahorro {
+  margin: 6px 0 0;
+  color: #7d5806;
+  font-size: 13px;
+  line-height: 1.5;
+  max-width: 62ch;
+}
