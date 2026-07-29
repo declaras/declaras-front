@@ -21,7 +21,7 @@
 
 import { useCallback, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, RefreshCw, Upload } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronRight, RefreshCw, Upload } from "lucide-react";
 
 import { api } from "./api";
 import { useAction, useApi } from "./hooks";
@@ -30,6 +30,7 @@ import { Cargando, ErrorApi } from "./componentes";
 import Conciliacion from "./Conciliacion";
 import Documentos from "./Documentos";
 import Ganancia from "./Ganancia";
+import MesaDeTrabajo from "./MesaDeTrabajo";
 import Peticiones from "./Peticiones";
 import Resumen from "./Resumen";
 import Pendientes from "./Pendientes";
@@ -114,50 +115,78 @@ export default function DetalleExpediente() {
       ) : (
         <div className="declaracion">
           <div className="declaracion-narrativa">
-            {/* La cifra va primero: es la respuesta que el cliente vino a buscar y la que el
-                contador le va a decir. Solo aparece cuando ya hay una liquidación; antes de
-                conciliar no hay nada que prometer. */}
-            <Ganancia liquidacion={liquidacion.data} />
+            {/* DOS HISTORIAS DISTINTAS, NO UNA CON MAS DETALLE.
+                El cliente viene a enterarse: le toca declarar, por qué, y qué le falta mandar.
+                El contador viene a trabajar: qué falta para cerrar, en una sola cola, y si la
+                cifra se sostiene. Mostrarle a uno la historia del otro fue el error: al contador
+                le salía "lo que te ahorras", que es la respuesta a una pregunta que no hizo. */}
+            {profunda ? (
+              <>
+                <MesaDeTrabajo
+                  caso={caso}
+                  conciliacion={conciliacion.data}
+                  peticiones={peticiones.data}
+                  liquidacion={liquidacion.data}
+                  onCambio={recargar}
+                />
 
-            {/* La respuesta va antes que las preguntas. La ganancia de arriba solo aparece
-                cuando ya hay una liquidación; mientras no la haya, poner las peticiones aquí
-                dejaba siete preguntas como primera pantalla y el veredicto debajo, que es
-                justamente el orden que se corrigió antes con los pendientes. */}
-            {resumen.loading ? (
-              <Cargando filas={4} />
+                <div id="avisos">
+                  <Pendientes caso={caso} onCambio={recargar} />
+                </div>
+                <div id="peticiones">
+                  <Peticiones
+                    caseId={caseId}
+                    peticiones={peticiones.data}
+                    respuestas={respuestas.data}
+                    onCambio={recargar}
+                  />
+                </div>
+
+                {/* El respaldo de la cifra: se consulta cuando hay que defenderla, no se lee
+                    de arriba abajo. Plegado, deja de competir con el trabajo. */}
+                <Respaldo>
+                  <Ganancia liquidacion={liquidacion.data} />
+                  {resumen.loading ? <Cargando filas={3} /> : <Resumen resumen={resumen.data} />}
+                </Respaldo>
+              </>
             ) : (
-              <Resumen
-                resumen={resumen.data}
-                porRevisar={porRevisar}
-                // Lo que puede mover la respuesta va pegado a los topes que mueve: primero lo
-                // que hay que confirmar de lo que ya se sabe, después lo que hay que pedir.
-                antesDeFacturas={
-                  <>
-                    <Pendientes caso={caso} onCambio={recargar} />
-                    {/* `GET /peticiones` devuelve la LISTA pelada, no un objeto que la
-                        envuelva. Leer `.peticiones` de ahí daba undefined y la vista no
-                        pintaba nada — y sin error, porque la respuesta era 200. */}
-                    <Peticiones
-                      caseId={caseId}
-                      peticiones={peticiones.data}
-                      respuestas={respuestas.data}
-                      onCambio={recargar}
-                    />
-                  </>
-                }
-              />
+              <>
+                <Ganancia liquidacion={liquidacion.data} />
+                {resumen.loading ? (
+                  <Cargando filas={4} />
+                ) : (
+                  <Resumen
+                    resumen={resumen.data}
+                    porRevisar={porRevisar}
+                    antesDeFacturas={
+                      <>
+                        <Pendientes caso={caso} onCambio={recargar} />
+                        <Peticiones
+                          caseId={caseId}
+                          peticiones={peticiones.data}
+                          respuestas={respuestas.data}
+                          onCambio={recargar}
+                        />
+                      </>
+                    }
+                  />
+                )}
+              </>
             )}
           </div>
 
-          {/* La mesa de trabajo, al final de la narrativa y no en la columna lateral: es
-              ancha, se lee renglón por renglón y compite con todo lo demás si va arriba. */}
-          <div className="declaracion-narrativa declaracion-cruce">
-            <Conciliacion
-              caseId={caseId}
-              conciliacion={conciliacion.data}
-              onCambio={recargar}
-            />
-          </div>
+          {/* El cruce es la mesa de trabajo del contador: veintiséis renglones con decisiones
+              del tipo "usar la cifra de la DIAN". Al cliente no le toca decidir eso, y verlo lo
+              único que hace es sembrarle dudas sobre cifras que ya alguien resolvió. */}
+          {profunda ? (
+            <div className="declaracion-narrativa declaracion-cruce" id="cruce">
+              <Conciliacion
+                caseId={caseId}
+                conciliacion={conciliacion.data}
+                onCambio={recargar}
+              />
+            </div>
+          ) : null}
 
           <aside className="declaracion-material">
             <Documentos documentos={caso.documents} />
@@ -392,6 +421,26 @@ function SubirDocumento({ caso, onListo }) {
           </button>
         </div>
       </form>
+    </section>
+  );
+}
+
+/**
+ * Lo que sostiene la cifra: se abre cuando hay que defenderla.
+ *
+ * Los topes, los renglones del 210 y la comparacion con lo que la DIAN sugeria son la evidencia
+ * de la declaracion, no el trabajo del dia. Plegados dejan de competir con la cola; a un clic
+ * siguen estando completos.
+ */
+function Respaldo({ children }) {
+  const [abierto, setAbierto] = useState(false);
+  return (
+    <section className="bloque">
+      <button className="respaldo-abrir" onClick={() => setAbierto((v) => !v)} aria-expanded={abierto}>
+        {abierto ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
+        En qué se sostiene esta cifra
+      </button>
+      {abierto ? <div className="respaldo">{children}</div> : null}
     </section>
   );
 }

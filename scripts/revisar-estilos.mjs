@@ -24,7 +24,9 @@ const APLICACION = "src/consola/consola.css";
 const COMPONENTES = "src/consola";
 
 // Compartidas a proposito: la marca es una sola en las dos partes del producto.
-const COMPARTIDAS_A_PROPOSITO = new Set(["logo", "logo-word", "logo-dot", "logo-light"]);
+// `money` es una utilidad del sistema de diseño (numeros tabulares), no una pieza de una
+// pantalla: la usan las dos partes del producto a proposito.
+const COMPARTIDAS_A_PROPOSITO = new Set(["logo", "logo-word", "logo-dot", "logo-light", "money"]);
 
 const clasesDe = (ruta) => {
   const contenido = readFileSync(ruta, "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
