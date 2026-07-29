@@ -21,7 +21,7 @@
  */
 
 import { useState } from "react";
-import { AlertTriangle, UserX } from "lucide-react";
+import { AlertTriangle, ChevronDown, ChevronRight, UserX } from "lucide-react";
 
 import { api } from "./api";
 import { useAction } from "./hooks";
@@ -46,6 +46,19 @@ const DECISION = {
   CERRAR_SIN_SOPORTE: "Cerrar sin documento",
   LLEVAR_A_MANO: "Llevarlo a mano (el motor no lo liquida)",
 };
+
+/** Como se nombra cada decision cuando cabe en una sola linea de la fila cerrada. */
+const DECISION_CORTA = {
+  USAR_DIAN: "Se usa la DIAN",
+  USAR_DOCUMENTO: "Se usa el documento",
+  USAR_OTRO: "Cifra propia",
+  MARCAR_AJENO: "No es del cliente",
+  CERRAR_SIN_SOPORTE: "Sin documento",
+  LLEVAR_A_MANO: "Va a mano",
+};
+
+/** Decisiones que ponen una cifra en la declaracion; en las demas el valor es cero y no dice nada. */
+const PONE_CIFRA = new Set(["USAR_DIAN", "USAR_DOCUMENTO", "USAR_OTRO"]);
 
 const MOTIVO = {
   COINCIDEN: "las dos cifras coinciden",
@@ -104,21 +117,51 @@ export default function Conciliacion({ caseId, conciliacion, onCambio }) {
   );
 }
 
+/**
+ * Un renglon del cruce.
+ *
+ * COLAPSADO POR DEFECTO CUANDO YA ESTA DECIDIDO, y esa es la decision de diseno que ordena todo
+ * lo demas. Antes cada renglon era una tarjeta de 240 pixeles con dos sub-tarjetas, y como en la
+ * mayoria de los casos el cliente todavia no ha aportado nada, se pintaban veintiseis cajas
+ * vacias con borde punteado para decir que no hay nada. Veintiseis renglones ocupaban seis mil
+ * pixeles y la cifra de la DIAN iba en tamano de titular las veintiseis veces: cuando todo
+ * grita, no se oye nada.
+ *
+ * Ahora la fila dice lo minimo para decidir si hay que abrirla —quien reporto, cuanto, y en que
+ * quedo— y lo que falta esta a un clic. Lo que sigue abierto de entrada es lo que pide trabajo:
+ * un renglon sin decidir.
+ */
 function Partida({ caseId, partida, onCambio }) {
   const estado = ESTADO[partida.estado] ?? { texto: partida.estado, tono: "falta" };
   const ajena = Boolean(partida.reportado_a);
+  const resuelta = Boolean(partida.resolucion);
+  const [abierta, setAbierta] = useState(!resuelta);
+
+  const cifra = partida.version_dian?.monto ?? partida.version_documento?.monto;
 
   return (
     <li className={`partida partida-${estado.tono} ${ajena ? "partida-ajena" : ""}`}>
-      <div className="partida-top">
-        <div>
-          <p className="partida-tercero">{partida.nombre_tercero || partida.nit_tercero}</p>
-          <p className="partida-concepto">
+      <button className="partida-fila" onClick={() => setAbierta((v) => !v)} aria-expanded={abierta}>
+        <span className="partida-chevron">
+          {abierta ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
+        </span>
+        <span className="partida-quien">
+          <span className="partida-tercero">{partida.nombre_tercero || partida.nit_tercero}</span>
+          <span className="partida-concepto">
             {partida.concepto ?? partida.codigos_crudos.join(", ") ?? "sin clasificar"}
-          </p>
-        </div>
-        <span className={`chip chip-${estado.tono}`}>{estado.texto}</span>
-      </div>
+          </span>
+        </span>
+        {cifra !== undefined && cifra !== null ? (
+          <span className="partida-cifra money">{formatMoney(cifra)}</span>
+        ) : null}
+        <span className="partida-desenlace">
+          {resuelta ? (
+            <ResumenResolucion resolucion={partida.resolucion} />
+          ) : (
+            <span className={`chip chip-${estado.tono}`}>{estado.texto}</span>
+          )}
+        </span>
+      </button>
 
       {ajena ? (
         <p className="partida-aviso-ajena">
@@ -128,39 +171,61 @@ function Partida({ caseId, partida, onCambio }) {
         </p>
       ) : null}
 
-      <div className="partida-versiones">
-        <Version titulo="La DIAN" valor={partida.version_dian} />
-        <Version
-          titulo="El documento"
-          valor={partida.version_documento}
-          versiones={partida.versiones_documento}
-          rige={partida.version_que_rige}
-        />
-      </div>
+      {abierta ? (
+        <div className="partida-detalle">
+          <div className="partida-versiones">
+            <Version titulo="La DIAN" valor={partida.version_dian} />
+            {/* La columna del documento solo existe si hay documento. Una caja vacia repetida
+                en cada renglon no informa: dice lo mismo que su ausencia, ocupando el doble. */}
+            {partida.version_documento ? (
+              <Version
+                titulo="El documento"
+                valor={partida.version_documento}
+                versiones={partida.versiones_documento}
+                rige={partida.version_que_rige}
+              />
+            ) : (
+              <p className="partida-sin-documento">El cliente todavía no ha aportado nada.</p>
+            )}
+          </div>
 
-      {partida.diferencia_monto || partida.diferencia_retencion ? (
-        <p className="partida-diferencias">
-          {partida.diferencia_monto ? (
-            <span>Diferencia en el monto: {formatMoney(partida.diferencia_monto)}</span>
+          {partida.diferencia_monto || partida.diferencia_retencion ? (
+            <p className="partida-diferencias">
+              {partida.diferencia_monto ? (
+                <span>Diferencia en el monto: {formatMoney(partida.diferencia_monto)}</span>
+              ) : null}
+              {partida.diferencia_retencion ? (
+                <span>Diferencia en la retención: {formatMoney(partida.diferencia_retencion)}</span>
+              ) : null}
+            </p>
           ) : null}
-          {partida.diferencia_retencion ? (
-            <span>Diferencia en la retención: {formatMoney(partida.diferencia_retencion)}</span>
+
+          {partida.documentos_por_cruzar?.length ? (
+            <p className="bloque-nota">
+              Llegó un certificado que podría corresponder a este renglón y hay que cruzarlo a
+              mano.
+            </p>
           ) : null}
-        </p>
-      ) : null}
 
-      {partida.documentos_por_cruzar?.length ? (
-        <p className="bloque-nota">
-          Llegó un certificado que podría corresponder a este renglón y hay que cruzarlo a mano.
-        </p>
+          {resuelta ? (
+            <Resuelta resolucion={partida.resolucion} />
+          ) : (
+            <Decidir caseId={caseId} partida={partida} onCambio={onCambio} />
+          )}
+        </div>
       ) : null}
-
-      {partida.resolucion ? (
-        <Resuelta resolucion={partida.resolucion} />
-      ) : (
-        <Decidir caseId={caseId} partida={partida} onCambio={onCambio} />
-      )}
     </li>
+  );
+}
+
+/** En la fila cerrada cabe la decision, no su justificacion. */
+function ResumenResolucion({ resolucion }) {
+  const delSistema = resolucion.origen === "SISTEMA";
+  return (
+    <span className={`partida-decidida ${delSistema ? "por-sistema" : ""}`}>
+      {DECISION_CORTA[resolucion.decision] ?? resolucion.decision}
+      {delSistema ? " · provisional" : ""}
+    </span>
   );
 }
 
@@ -195,13 +260,22 @@ function Version({ titulo, valor, versiones, rige }) {
   );
 }
 
+/**
+ * La justificacion de una decision ya tomada.
+ *
+ * NO REPITE LA DECISION: esa ya se leyo en la fila. Antes la linea decia
+ * "No es del cliente · $ 0 · no es del cliente · contador" — la decision y el motivo son la
+ * misma frase dos veces, y el "$ 0" es el valor que esa decision pone en el 210, que para una
+ * exclusion es cero por definicion y no informa nada.
+ */
 function Resuelta({ resolucion }) {
   const delSistema = resolucion.origen === "SISTEMA";
   return (
     <p className={`partida-resuelta ${delSistema ? "por-sistema" : ""}`}>
-      {DECISION[resolucion.decision] ?? resolucion.decision} ·{" "}
-      {formatMoney(resolucion.valor)} · {MOTIVO[resolucion.motivo] ?? resolucion.motivo}
-      {delSistema ? " · provisional, se puede cambiar" : ` · ${resolucion.quien}`}
+      {MOTIVO[resolucion.motivo] ?? resolucion.motivo}
+      {PONE_CIFRA.has(resolucion.decision) ? ` · queda en ${formatMoney(resolucion.valor)}` : ""}
+      {delSistema ? " · lo puso el sistema y se puede cambiar" : ` · ${resolucion.quien}`}
+      {resolucion.nota ? ` · “${resolucion.nota}”` : ""}
     </p>
   );
 }

@@ -1031,7 +1031,8 @@
 .declaracion-cruce { margin-top: 8px; }
 .partidas { list-style: none; padding: 0; margin: 0; }
 .partida {
-  padding: 20px 0;
+  /* Sin relleno propio: el que se pulsa es `.partida-fila`, y el area pulsable tiene que
+     coincidir con el area que se ve. Con relleno en los dos, la fila medía el doble. */
   border-top: 1px solid var(--line);
 }
 .partida:last-child { border-bottom: 1px solid var(--line); }
@@ -1041,13 +1042,15 @@
   justify-content: space-between;
   gap: 16px;
 }
-.partida-tercero { margin: 0; font-size: 14.5px; font-weight: 500; }
-.partida-concepto { margin: 4px 0 0; color: var(--muted); font-size: 12.5px; }
+.partida-tercero { display: block; margin: 0; font-size: 14.5px; font-weight: 500; }
+/* En bloque y no en linea: dentro de la fila son dos `span`, y sin esto el concepto quedaba
+   pegado al nombre del tercero ("INVERSIONES MCN SAS2276"). */
+.partida-concepto { display: block; margin: 3px 0 0; color: var(--muted); font-size: 12.5px; }
 /* Un renglon de plata ajena se ve distinto ANTES de que nadie lea nada: si se pinta igual, el
    ingreso de un tercero vuelve a entrar a la declaracion del cliente. */
 .partida-ajena { background: rgba(214, 158, 46, 0.055); }
 .partida-aviso-ajena {
-  margin: 12px 0 0;
+  margin: 0 0 14px 29px;
   font-size: 13.5px;
   line-height: 1.6;
   color: var(--ink);
@@ -1154,3 +1157,55 @@
 .partida-ok { box-shadow: inset 2px 0 0 rgba(14, 159, 110, 0.4); }
 .partida-alerta { box-shadow: inset 2px 0 0 var(--red); }
 .partida-falta { box-shadow: inset 2px 0 0 rgba(22, 35, 29, 0.16); }
+
+/* ── el cruce: una fila por renglon, densa y abrible ──
+ * Antes cada renglon era una tarjeta de 240 pixeles con dos sub-tarjetas, y veintiseis renglones
+ * median seis mil pixeles. La fila cerrada dice lo minimo para decidir si hay que abrirla: quien
+ * reporto, cuanto, y en que quedo.
+ */
+.partida-fila {
+  display: grid;
+  grid-template-columns: 15px minmax(0, 1fr) auto auto;
+  gap: 14px;
+  align-items: baseline;
+  width: 100%;
+  padding: 13px 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+}
+.partida-chevron { color: var(--muted); align-self: center; }
+.partida-quien { min-width: 0; }
+.partida-cifra { font-size: 14.5px; font-weight: 600; white-space: nowrap; }
+.partida-desenlace { white-space: nowrap; }
+.partida-fila:hover .partida-tercero { color: var(--brand); }
+
+/* La decision ya tomada se dice en texto, no en etiqueta de color: no pide nada. */
+.partida-decidida { color: var(--muted); font-size: 13px; }
+.partida-decidida.por-sistema { font-style: italic; }
+
+.partida-detalle { padding: 4px 0 16px 29px; }
+.partida-sin-documento { margin: 0; color: var(--muted); font-size: 13px; align-self: center; }
+
+@media (max-width: 620px) {
+  .partida-fila { grid-template-columns: 15px minmax(0, 1fr); }
+  .partida-cifra, .partida-desenlace { grid-column: 2; }
+}
+
+/* ── que pedirle al cliente: la pregunta manda ──
+ * Antes cada peticion tenia la norma de titular y la pregunta debajo, diciendo dos veces lo
+ * mismo en 176 pixeles para una pregunta de si o no. La pregunta es lo que se le dice al
+ * cliente; la norma es por que existe la pregunta, y va en segundo plano.
+ */
+.peticion-que { font-size: 15px; font-weight: 500; line-height: 1.5; margin: 0; }
+.peticion-que + .peticion-ahorro { white-space: nowrap; }
+.peticion .peticion-razon {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+  max-width: 62ch;
+}
+.peticion-botones { margin-top: 12px; }

@@ -66,16 +66,22 @@ function Peticion({ caseId, peticion, onCambio }) {
     setTimeout(() => setCopiado(false), 2000);
   };
 
+  // El ahorro solo se pinta cuando hay una cifra. Una columna de "$ 0" en verde repetida siete
+  // veces no informa nada y se lleva la posicion jerarquica de la cifra destacada.
+  const ahorro = peticion.ahorro_estimado
+    ? `${peticion.ahorro_es_techo ? "hasta " : ""}${formatMoney(peticion.ahorro_estimado)}`
+    : null;
+
   return (
     <li className="peticion">
+      {/* LA PREGUNTA VA DE TITULAR, no la norma. Es lo que el contador le va a decir al cliente;
+          la norma es el respaldo de por que la pregunta existe, y se lee despues o no se lee. */}
       <div className="peticion-top">
-        <p className="peticion-razon">{peticion.razon}</p>
-        <p className="peticion-ahorro">
-          {/* "Hasta" cuando es un techo legal; la cifra sola cuando esta medida. */}
-          {peticion.ahorro_es_techo ? "hasta " : ""}
-          {formatMoney(peticion.ahorro_estimado)}
-        </p>
+        <p className="peticion-que">{peticion.pregunta_previa ?? peticion.copy_sugerido}</p>
+        {ahorro ? <p className="peticion-ahorro">{ahorro}</p> : null}
       </div>
+
+      <p className="peticion-razon">{peticion.razon}</p>
 
       {peticion.tercero?.nombre ? (
         <p className="peticion-tercero">{peticion.tercero.nombre}</p>
@@ -83,7 +89,6 @@ function Peticion({ caseId, peticion, onCambio }) {
 
       {peticion.pregunta_previa ? (
         <div className="peticion-pregunta">
-          <p>{peticion.pregunta_previa}</p>
           <div className="peticion-botones">
             <button
               className="btn-mini"
@@ -92,7 +97,7 @@ function Peticion({ caseId, peticion, onCambio }) {
                 if (await responder.run(true)) onCambio();
               }}
             >
-              <Check size={14} /> Sí tiene
+              <Check size={14} /> Sí
             </button>
             <button
               className="btn-mini"
@@ -103,7 +108,7 @@ function Peticion({ caseId, peticion, onCambio }) {
                 if (await responder.run(false)) onCambio();
               }}
             >
-              <X size={14} /> No tiene
+              <X size={14} /> No
             </button>
           </div>
           <ErrorApi error={responder.error} />
@@ -111,7 +116,6 @@ function Peticion({ caseId, peticion, onCambio }) {
       ) : (
         <>
           <div className="peticion-copy">
-            <p>{peticion.copy_sugerido}</p>
             <button className="btn-mini" onClick={copiar}>
               {copiado ? <Check size={14} /> : <Copy size={14} />}
               {copiado ? "Copiado" : "Copiar mensaje"}
