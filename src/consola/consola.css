@@ -95,6 +95,12 @@
     gap: 64px;
     align-items: start;
   }
+  /* La colocacion se declara, no se deja al orden de los hijos. Con la colocacion automatica,
+     agregar un tercer bloque de narrativa lo mandaba al hueco de la columna lateral (aplastado a
+     292 pixeles) y empujaba el material al fondo de la pagina. Asi cualquier cantidad de bloques
+     de narrativa se apila en la primera columna y el material siempre ocupa la segunda. */
+  .declaracion-narrativa { grid-column: 1; }
+  .declaracion-material { grid-column: 2; grid-row: 1 / -1; }
   /* El material acompania mientras se recorre la explicacion, sin volver a ella. */
   .declaracion-material { position: sticky; top: 96px; }
 }
