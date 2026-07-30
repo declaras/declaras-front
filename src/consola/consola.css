@@ -58,6 +58,7 @@
 
 /* El interruptor no es una pestana: no cambia de pantalla, agrega profundidad a la misma. */
 .interruptor {
+  white-space: nowrap;
   padding: 6px 13px;
   border: 1px solid var(--line);
   border-radius: 999px;
@@ -68,7 +69,6 @@
   cursor: pointer;
   transition: 0.15s;
 }
-.interruptor { white-space: nowrap; }
 .interruptor:hover { border-color: var(--muted); color: var(--ink); }
 .interruptor-activo {
   border-color: var(--forest);
@@ -97,27 +97,7 @@
     gap: 64px;
     align-items: start;
   }
-  /* La colocacion se declara, no se deja al orden de los hijos. Con la colocacion automatica,
-     agregar un tercer bloque de narrativa lo mandaba al hueco de la columna lateral (aplastado a
-     292 pixeles) y empujaba el material al fondo de la pagina. Asi cualquier cantidad de bloques
-     de narrativa se apila en la primera columna y el material siempre ocupa la segunda. */
-  .declaracion-narrativa { grid-column: 1; }
-  .declaracion-material { grid-column: 2; grid-row: 1 / -1; }
-  /* El material acompania mientras se recorre la explicacion, sin volver a ella. */
-  .declaracion-material { position: sticky; top: 96px; }
 }
-
-/* En la columna lateral todo baja de tono: es material de consulta, no la respuesta. */
-.declaracion-material .bloque { margin-bottom: 30px; }
-.declaracion-material .bloque-titulo { font-size: 14px; }
-.declaracion-material .bloque-nota { font-size: 12.5px; margin-top: 4px; }
-.declaracion-material .doc { padding: 11px 0; }
-.declaracion-material .doc-nombre { font-size: 13.5px; font-weight: 500; }
-.declaracion-material .doc-meta { font-size: 11.5px; }
-.declaracion-material .actividad li { grid-template-columns: 1fr; gap: 2px; font-size: 12.5px; }
-.declaracion-material .actividad-cuando { font-size: 11.5px; }
-.declaracion-material .agregar { flex-direction: column; align-items: flex-start; gap: 8px; }
-.declaracion-material .agregar-nota { font-size: 11.5px; }
 
 /* ── encabezado de una declaracion ── */
 .declaracion-top {
@@ -133,7 +113,6 @@
   .declaracion-top { flex-wrap: wrap; align-items: flex-start; }
   .declaracion-top .btn-mini { margin-left: 0; }
 }
-.declaracion-narrativa { max-width: 660px; }
 .declaracion-quien {
   color: var(--muted);
   font-size: 13px;
@@ -382,13 +361,29 @@
 }
 .btn-icono:hover { border-color: var(--line); background: var(--white); color: var(--ink); }
 
-.doc-tecnico { grid-column: 1 / -1; padding-top: 4px; }
-.doc-parser {
-  margin: 8px 0 0;
-  color: var(--muted);
-  font-size: 11.5px;
+/* El origen del archivo, junto al nombre del documento y no al final del despliegue. */
+.doc-origen {
   font-family: ui-monospace, monospace;
+  font-size: 11px;
+  color: #93a09a;
 }
+/* El control de plegado: chevron primero, para que se lea como algo que se abre y no como un
+   enlace. El texto no cambia entre estados, así que el bloque no salta al abrirlo. */
+.doc-plegable {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-size: 12.5px;
+  cursor: pointer;
+}
+.doc-plegable:hover { color: var(--ink); }
+.doc-plegable svg { flex: 0 0 auto; }
+
+.doc-tecnico { grid-column: 1 / -1; padding-top: 4px; }
 
 /* ── pares de dato y valor ── */
 .datos {
@@ -489,8 +484,11 @@
 .agregar { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 46px; }
 .agregar-nota { color: var(--muted); font-size: 12.5px; max-width: 52ch; }
 
-/* ── el visor ── */
-.visor-fondo {
+/* ── el cajón que entra por la derecha ── */
+/* Un solo cajón para todo lo que se abre encima: el visor de documentos y la memoria de cálculo.
+   El ancho lo pone cada uno por `style`, porque un PDF necesita 880 y una lista de pasos se lee
+   mejor en 620. */
+.cajon-fondo {
   position: fixed;
   inset: 0;
   z-index: 60;
@@ -500,7 +498,7 @@
   backdrop-filter: blur(3px);
   animation: aparecer 0.18s ease;
 }
-.visor {
+.cajon {
   display: flex;
   flex-direction: column;
   width: min(880px, 100%);
@@ -511,7 +509,7 @@
 @keyframes aparecer { from { opacity: 0; } }
 @keyframes entrar { from { transform: translateX(28px); opacity: 0.4; } }
 
-.visor-top {
+.cajon-top {
   display: flex;
   align-items: center;
   gap: 14px;
@@ -519,21 +517,24 @@
   border-bottom: 1px solid var(--line);
   background: var(--cream);
 }
-.visor-titulo {
+.cajon-identidad { min-width: 0; }
+.cajon-titulo {
   font: 600 16px/1.3 "Inter", sans-serif;
   margin: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.visor-sub {
+.cajon-sub {
   margin: 2px 0 0;
   color: var(--muted);
   font-size: 12.5px;
-  font-family: ui-monospace, monospace;
 }
-.visor-top .btn-mini { margin-left: auto; }
-.visor-cerrar {
+/* La monoespaciada era para el nombre de archivo del visor, no para prosa: el subtítulo de la
+   memoria salía escrito como una ruta. La pide quien la necesita. */
+.cajon-sub-archivo { font-family: ui-monospace, monospace; }
+.cajon-top .btn-mini { margin-left: auto; }
+.cajon-cerrar {
   display: grid;
   place-items: center;
   width: 34px;
@@ -544,9 +545,9 @@
   color: var(--muted);
   cursor: pointer;
 }
-.visor-cerrar:hover { background: rgba(22, 35, 29, 0.06); color: var(--ink); }
+.cajon-cerrar:hover { background: rgba(22, 35, 29, 0.06); color: var(--ink); }
 
-.visor-cuerpo { flex: 1; min-height: 0; overflow: auto; }
+.cajon-cuerpo { flex: 1; min-height: 0; overflow: auto; }
 /* El PDF lo muestra el visor del navegador: es mejor que cualquiera que hagamos nosotros. */
 .visor-marco { width: 100%; height: 100%; border: 0; display: block; background: #f3f1ec; }
 .visor-imagen { display: block; max-width: 100%; margin: 0 auto; }
@@ -1028,9 +1029,6 @@
 .resultados-subida li { padding: 5px 0; color: var(--muted); line-height: 1.5; }
 .resultado-emparejado strong { color: var(--forest); }
 .resultado-a_bandeja strong { color: var(--amber); }
-
-/* ── la mesa del cruce ── */
-.declaracion-cruce { margin-top: 8px; }
 .partidas { list-style: none; padding: 0; margin: 0; }
 .partida {
   /* Sin relleno propio: el que se pulsa es `.partida-fila`, y el area pulsable tiene que
@@ -1210,22 +1208,6 @@
   line-height: 1.55;
   max-width: 62ch;
 }
-.peticion-botones { margin-top: 12px; }
-
-/* ── lo ya preguntado: registro, no trabajo ── */
-.respondidas { list-style: none; padding: 0; margin: 12px 0 0; }
-.respondida {
-  display: flex;
-  align-items: baseline;
-  gap: 14px;
-  flex-wrap: wrap;
-  padding: 9px 0;
-  border-top: 1px solid rgba(231, 227, 218, 0.6);
-  font-size: 13px;
-}
-.respondida-que { color: var(--ink); }
-.respondida-quien { color: var(--muted); font-size: 12px; }
-.respondida .enlace-suave { margin-left: auto; }
 
 /* Cuando el beneficio no baja nada (o no se puede medir todavia), la razon ocupa el sitio de la
    cifra: es lo que dice si vale la pena pedirle el documento al cliente. */
@@ -1317,20 +1299,6 @@
   from { background: rgba(14, 159, 110, 0.09); }
   to { background: transparent; }
 }
-
-/* ── el respaldo, plegado ── */
-.respaldo-abrir {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--muted);
-  font-size: 14px;
-  cursor: pointer;
-}
-.respaldo-abrir:hover { color: var(--ink); }
 .respaldo { margin-top: 24px; }
 
 /* ── el indicador guiado de etapas ──
@@ -1550,7 +1518,10 @@
 .tope-si { color: var(--forest); font-weight: 500; }
 .tope-si .tope-veredicto { color: var(--forest); }
 
-.memoria { display: inline-flex; align-items: center; gap: 7px; }
+/* El enlace que abre la memoria. Tiene su propio nombre porque `.memoria` es el panel:
+   las dos reglas convivieron un rato y el `inline-flex` del enlace le caia al panel,
+   que salio con las etapas en columnas y centradas verticalmente. */
+.abrir-memoria { display: inline-flex; align-items: center; gap: 7px; }
 
 /* ── etapa 4: presentar ── */
 .presentar-cifra { display: flex; align-items: baseline; gap: 12px; margin: 0 0 28px; }
@@ -1580,6 +1551,18 @@
 .check-falta { color: #7d5806; }
 .check-falta .check-marca { background: rgba(229, 165, 10, 0.16); color: #7d5806; }
 
+/* El detalle de lo que falta, debajo del punto del checklist: un conteo no basta para saber qué
+   hay que ir a resolver. */
+.check-detalles { display: block; margin-top: 6px; }
+.check-detalle {
+  display: block;
+  color: var(--muted);
+  font-size: 12.5px;
+  line-height: 1.5;
+  max-width: 66ch;
+}
+.check-detalle + .check-detalle { margin-top: 3px; }
+
 .presentar-cerrar { margin-top: 8px; }
 .presentar-nota {
   margin: 16px 0 0;
@@ -1602,3 +1585,376 @@
 .formulario { margin: 8px 0 30px; }
 .formulario-tabla { margin-top: 16px; }
 .formulario-tabla td:first-child { width: 58px; font-variant-numeric: tabular-nums; }
+
+/* ── la memoria de cálculo ── */
+/* Es el documento que defiende la declaración, así que se lee como un documento: una columna,
+   etapas con aire entre ellas y la cifra alineada a la derecha para poder recorrerla en vertical. */
+.memoria { padding: 26px 30px 60px; }
+
+.memoria-etapa + .memoria-etapa { margin-top: 34px; }
+.memoria-etapa-top { margin-bottom: 12px; }
+.memoria-etapa-titulo {
+  font: 600 13px/1.3 "Inter", sans-serif;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--forest);
+  margin: 0;
+}
+/* Cuando el título de la etapa desaparece por repetir el único paso, la nota ocupa su lugar como
+   encabezado: sube de tono para que la etapa siga teniendo cabeza. */
+.memoria-etapa-titulo-nota {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--forest);
+  max-width: 52ch;
+}
+.memoria-etapa-nota {
+  margin: 5px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--muted);
+  max-width: 52ch;
+}
+
+.memoria-pasos { list-style: none; margin: 0; padding: 0; }
+.memoria-paso {
+  padding: 11px 0;
+  border-bottom: 1px solid var(--line);
+}
+.memoria-paso:last-child { border-bottom: 0; }
+/* Un paso en cero se atenúa entero: sigue estando (que no aplicó es información) pero no compite
+   con las cifras que sí mueven la declaración. */
+.memoria-paso-cero { opacity: 0.5; }
+
+.memoria-paso-linea {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+}
+.memoria-paso-etiqueta {
+  flex: 1;
+  min-width: 0;
+  font-size: 14.5px;
+  line-height: 1.45;
+  color: var(--ink);
+}
+.memoria-paso-valor {
+  font: 600 15px/1.3 "Inter", sans-serif;
+  /* Tabular para que las cifras se alineen dígito a dígito al recorrer la columna. */
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--ink);
+}
+
+.memoria-paso-formula {
+  margin: 6px 0 0;
+  font: 12px/1.5 ui-monospace, monospace;
+  color: var(--muted);
+  word-break: break-word;
+}
+.memoria-paso-regla {
+  margin: 5px 0 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--muted);
+  max-width: 58ch;
+}
+.memoria-paso-codigo {
+  display: inline-block;
+  margin-top: 6px;
+  font: 11px/1 ui-monospace, monospace;
+  letter-spacing: 0.02em;
+  color: #93a09a;
+}
+
+/* ── lo ya contestado ── */
+/* Va plegado, en gris y al final: es registro, no trabajo pendiente. Pero tiene que estar, porque
+   es la única puerta de vuelta para corregir un sí o un no dado por error. */
+.ya-contestado {
+  margin-top: 30px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+.contestadas { list-style: none; margin: 14px 0 0; padding: 0; }
+.contestada {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+.contestada:last-child { border-bottom: 0; }
+.contestada-linea {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+.contestada-que {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  color: var(--muted);
+}
+/* Una respuesta cabe en una frase, así que no se parte en dos líneas como las decisiones de
+   renglón: ahí el tercero y lo que se decidió son dos datos distintos. */
+.contestada-frase { color: var(--ink); }
+.contestada-dicho {
+  display: block;
+  margin-top: 3px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.contestada-monto {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.contestada-quien {
+  margin: 6px 0 0;
+  font: 11.5px/1.4 ui-monospace, monospace;
+  color: #93a09a;
+}
+
+/* El número del renglón del 210 al lado de su nombre: al contador le sirve para ir al formulario,
+   al titular no le dice nada, así que va en gris y pequeño y nunca solo. */
+.renglon-numero {
+  margin-left: 8px;
+  font: 11.5px/1 ui-monospace, monospace;
+  color: #93a09a;
+}
+
+
+/* ── las recomendaciones: cuánta plata hay en juego ── */
+/* La conclusión arriba y una sola vez; las filas debajo, con la cifra a la derecha para poder
+   recorrerlas en vertical. Lo que no mueve nada se atenúa entero en vez de desaparecer: que un
+   beneficio no sirva es información, y esconderla hace parecer que nadie lo miró. */
+.reco { margin-bottom: 34px; }
+.reco-top { margin-bottom: 18px; }
+.reco-titulo {
+  font: 400 21px/1.35 "Fraunces", Georgia, serif;
+  letter-spacing: -0.01em;
+  margin: 0;
+  color: var(--ink);
+}
+.reco-cifra {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--forest);
+}
+.reco-nota {
+  margin: 7px 0 0;
+  color: var(--muted);
+  font-size: 13.5px;
+  line-height: 1.55;
+  max-width: 62ch;
+}
+
+.reco-lista { list-style: none; margin: 0; padding: 0; }
+.reco-item { padding: 14px 0; border-bottom: 1px solid var(--line); }
+.reco-item:last-child { border-bottom: 0; }
+.reco-item-quieto { opacity: 0.62; }
+
+.reco-linea { display: flex; align-items: baseline; gap: 14px; }
+.reco-que { flex: 1; min-width: 0; font-size: 14.5px; line-height: 1.45; color: var(--ink); }
+.reco-marca {
+  margin-left: 9px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(22, 35, 29, 0.05);
+  color: var(--muted);
+  font-size: 11.5px;
+  white-space: nowrap;
+}
+.reco-monto {
+  font: 600 15px/1.3 "Inter", sans-serif;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--ink);
+}
+
+/* El porqué de un cero. Es la parte que distingue "no sirve" de "no se pudo calcular", así que no
+   va más pequeña que el resto: es la información, no una nota al pie. */
+.reco-porque {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+  max-width: 64ch;
+}
+.reco-razon {
+  margin: 8px 0 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--cream);
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+  max-width: 66ch;
+}
+.reco-item .doc-plegable { margin-top: 7px; }
+
+
+/* ── clasificar un ingreso que el motor no sabe ubicar ── */
+/* Es una pregunta con consecuencia fiscal, así que se ve como una pregunta y no como un menú: las
+   opciones son el HECHO que el titular afirma, y debajo de cada una dice a dónde va el ingreso. */
+.clasificar { margin-top: 18px; }
+.clasificar-opciones { list-style: none; margin: 0 0 16px; padding: 0; }
+.clasificar-opciones li + li { margin-top: 10px; }
+.clasificar-opcion {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 14.5px;
+  line-height: 1.45;
+  cursor: pointer;
+}
+.clasificar-opcion input { margin-top: 3px; flex: 0 0 auto; accent-color: var(--brand); }
+.clasificar-destino {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+/* La condición legal que hay que cumplir. Solo aparece en la opción elegida, porque es lo que
+   alguien está afirmando en ese momento. */
+.clasificar-nota {
+  margin: 7px 0 0 26px;
+  padding: 10px 13px;
+  border-radius: 9px;
+  background: var(--cream);
+  color: var(--muted);
+  font-size: 12.5px;
+  line-height: 1.5;
+  max-width: 56ch;
+}
+.clasificar .campo { margin-bottom: 16px; max-width: 380px; }
+
+
+/* ── lo que hay que leer antes de presentar ── */
+/* No bloquea, pero tampoco se esconde: cada línea dice sobre qué supuesto se calculó una cifra, y
+   el único momento en que eso sirve es justo antes de firmar. */
+.revisar {
+  margin: 30px 0;
+  padding: 18px 20px;
+  border-radius: 12px;
+  border: 1px solid rgba(229, 165, 10, 0.28);
+  background: rgba(229, 165, 10, 0.05);
+}
+.revisar-titulo { font: 600 14.5px/1.35 "Inter", sans-serif; margin: 0; color: var(--ink); }
+.revisar-nota {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+  max-width: 62ch;
+}
+.revisar-lista { margin: 12px 0 0; padding-left: 18px; }
+.revisar-lista li {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+  max-width: 68ch;
+}
+.revisar-lista li + li { margin-top: 8px; }
+
+
+/* ── el plazo ── */
+/* Va debajo del título del expediente, en una sola línea. En reposo es un dato más; cuando falta
+   poco o ya se venció, cambia de color entero en vez de agregar un adorno: lo que cambia es la
+   urgencia de todo el bloque, no un detalle suyo. */
+.plazo {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+.plazo-icono { display: inline-flex; align-self: center; flex: 0 0 auto; }
+.plazo-texto { display: inline-flex; align-items: baseline; gap: 7px; flex-wrap: wrap; }
+.plazo-cuando strong { color: var(--ink); font-weight: 600; }
+.plazo-cuanto { color: var(--muted); }
+.plazo-porque { color: #93a09a; font-size: 12px; }
+
+/* Quedan quince días o menos. */
+.plazo-cerca { color: #8a6d1f; }
+.plazo-cerca .plazo-cuando strong,
+.plazo-cerca .plazo-cuanto { color: #8a6d1f; }
+.plazo-cerca .plazo-porque { color: #a8894a; }
+
+/* El plazo ya pasó y hay sanción corriendo. No se disimula. */
+.plazo-vencido { color: var(--red); }
+.plazo-vencido .plazo-cuando strong,
+.plazo-vencido .plazo-cuanto { color: var(--red); font-weight: 600; }
+.plazo-vencido .plazo-porque { color: #c97b7e; }
+
+
+/* ── la comparación con el borrador de la DIAN ── */
+.comparacion { margin: 26px 0; }
+.comparacion-igual {
+  margin: 26px 0;
+  color: var(--muted);
+  font-size: 13.5px;
+  line-height: 1.55;
+  max-width: 64ch;
+}
+/* Lo que declaramos de MENOS se ve sin abrir la tabla: es lo que hay que poder explicar. */
+.comparacion-menores {
+  margin: 9px 0 0;
+  color: #8a6d1f;
+  font-size: 13px;
+  line-height: 1.55;
+  max-width: 68ch;
+}
+.comparacion-tabla { margin-top: 14px; }
+.comparacion-tabla .money { font-variant-numeric: tabular-nums; }
+/* La fila donde declaramos menos que la DIAN, marcada al margen y no con fondo: son varias y un
+   bloque de color entero se lee como error cuando muchas tienen razón registrada. */
+.comparacion-menor td:first-child { box-shadow: inset 2px 0 0 rgba(229, 165, 10, 0.55); }
+
+
+/* ── la pestaña de comparación ── */
+.comparar { padding-top: 2px; }
+/* Dos bloques separados por una línea, no una tabla con dos orígenes mezclados: la misma fila
+   significa cosas distintas según contra qué se compare. */
+.comparar-bloque { margin-top: 30px; }
+.comparar-bloque:first-of-type { margin-top: 22px; }
+.comparar-bloque + .comparar-bloque { padding-top: 30px; border-top: 1px solid var(--line); }
+.comparar-titulo {
+  font: 600 13px/1.3 "Inter", sans-serif;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--forest);
+  margin: 0;
+}
+.comparar-nota {
+  margin: 7px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+  max-width: 66ch;
+}
+
+
+/* ── abrir otro año de un cliente que ya está ── */
+/* Va como un año más en la lista del cliente, en gris: es una acción, no un expediente. */
+.otro-anio {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 0;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-size: 13px;
+  cursor: pointer;
+}
+.otro-anio:hover { color: var(--brand); }
+.otro-anio-abierto {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 6px 0;
+}

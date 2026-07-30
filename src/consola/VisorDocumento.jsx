@@ -13,10 +13,9 @@
  * El original queda a un clic para quien quiera confirmarlo.
  */
 
-import { useEffect } from "react";
-import { createPortal } from "react-dom";
-import { Download, X } from "lucide-react";
+import { Download } from "lucide-react";
 
+import Cajon from "./Cajon";
 import { useVista } from "./vista";
 import {
   campoLabel,
@@ -36,63 +35,40 @@ const CAMPOS_TECNICOS = new Set(["raw_text"]);
 
 export default function VisorDocumento({ doc, onCerrar }) {
   const { profunda } = useVista();
-
-  // Escape cierra: en un panel que tapa la pantalla, buscar la X con el mouse es un paso
-  // de mas cuando se estan revisando varios documentos seguidos.
-  useEffect(() => {
-    const alTeclear = (evento) => evento.key === "Escape" && onCerrar();
-    globalThis.addEventListener("keydown", alTeclear);
-    return () => globalThis.removeEventListener("keydown", alTeclear);
-  }, [onCerrar]);
-
   if (!doc) return null;
 
   const urlDescarga = `/api${doc.download_url}`;
   const urlVista = `${urlDescarga}&inline=true`;
 
-  return createPortal(
-    <div className="visor-fondo" onClick={onCerrar}>
-      <aside
-        className="visor"
-        onClick={(evento) => evento.stopPropagation()}
-        role="dialog"
-        aria-label={docLabel(doc.doc_type)}
-      >
-        <header className="visor-top">
-          <div style={{ minWidth: 0 }}>
-            <h2 className="visor-titulo">{docLabel(doc.doc_type)}</h2>
-            {/* Con un PDF el visor del navegador ya muestra el nombre del archivo justo debajo,
-                asi que repetirlo aqui es ruido. En los demas casos no aparece en ningun lado, y
-                en la vista de contador se muestra siempre porque ahi sirve para rastrear. */}
-            {!esPdf(doc.filename) || profunda ? (
-              <p className="visor-sub">{doc.filename}</p>
-            ) : null}
-          </div>
-          <a className="btn-mini" href={urlDescarga} target="_blank" rel="noreferrer">
-            <Download size={13} />
-            Descargar
-          </a>
-          <button className="visor-cerrar" onClick={onCerrar} aria-label="Cerrar">
-            <X size={18} />
-          </button>
-        </header>
-
-        <div className="visor-cuerpo">
-          {esPdf(doc.filename) ? (
-            <iframe className="visor-marco" src={urlVista} title={docLabel(doc.doc_type)} />
-          ) : esImagen(doc.filename) ? (
-            <img className="visor-imagen" src={urlVista} alt={docLabel(doc.doc_type)} />
-          ) : doc.reading ? (
-            <ContenidoLeido lectura={doc.reading} />
-          ) : (
-            <p className="estado">
-              Este archivo no se puede mostrar en el navegador. Descárgalo para verlo.
-            </p>
-          )}
-        </div>
-      </aside>
-    </div>,
-    document.body,
+  return (
+    <Cajon
+      titulo={docLabel(doc.doc_type)}
+      /* Con un PDF el visor del navegador ya muestra el nombre del archivo justo debajo, asi que
+         repetirlo aqui es ruido. En los demas casos no aparece en ningun lado, y en la vista de
+         contador se muestra siempre porque ahi sirve para rastrear. */
+      subtitulo={!esPdf(doc.filename) || profunda ? doc.filename : null}
+      mono
+      ancho={880}
+      accion={
+        <a className="btn-mini" href={urlDescarga} target="_blank" rel="noreferrer">
+          <Download size={13} />
+          Descargar
+        </a>
+      }
+      onCerrar={onCerrar}
+    >
+      {esPdf(doc.filename) ? (
+        <iframe className="visor-marco" src={urlVista} title={docLabel(doc.doc_type)} />
+      ) : esImagen(doc.filename) ? (
+        <img className="visor-imagen" src={urlVista} alt={docLabel(doc.doc_type)} />
+      ) : doc.reading ? (
+        <ContenidoLeido lectura={doc.reading} />
+      ) : (
+        <p className="estado">
+          Este archivo no se puede mostrar en el navegador. Descárgalo para verlo.
+        </p>
+      )}
+    </Cajon>
   );
 }
 

@@ -21,18 +21,33 @@
  */
 
 import { useState } from "react";
-import { ArrowRight, Check, X } from "lucide-react";
+import { ArrowRight, X } from "lucide-react";
 
 import { api } from "./api";
 import { useAction } from "./hooks";
 import { formatMoney } from "./formato";
 import { ErrorApi } from "./componentes";
+import {
+  CLASES_DE_INGRESO,
+  HECHOS_DE_CLASIFICACION,
+  claseEnFrase,
+  nombreDeClase,
+  nombreDeDecision,
+} from "./decisiones";
 import Conciliacion from "./Conciliacion";
 import Peticiones from "./Peticiones";
 import Pendientes from "./Pendientes";
+import YaContestado from "./YaContestado";
 
-/** Las decisiones que solo dependen de algo que el titular sabe: si esa plata es suya. */
-const DEL_TITULAR = new Set(["MARCAR_AJENO", "USAR_DIAN"]);
+/**
+ * Las decisiones que dependen de algo que solo el titular sabe.
+ *
+ * `CLASIFICAR` está acá y no es obvio: parece técnica (elegir una cédula del 210 lo es) pero lo que
+ * la determina es un hecho de la vida del titular — si ese pago fue por un trabajo suyo, un arriendo
+ * o un rendimiento, y si restó costos o tuvo empleados. El contador no lo puede saber solo. Así que
+ * la pregunta se le hace a él en su idioma y el sistema deriva la cédula.
+ */
+const DEL_TITULAR = new Set(["MARCAR_AJENO", "USAR_DIAN", "CLASIFICAR"]);
 
 export default function EtapaDecisiones({
   caseId,
@@ -47,10 +62,15 @@ export default function EtapaDecisiones({
   const [verTodas, setVerTodas] = useState(false);
   const partidas = conciliacion?.partidas ?? [];
   const sinDecidir = partidas.filter((p) => !p.resolucion);
+  // Las que decidió una persona. Las que resolvió el sistema no van aquí: nadie las contestó,
+  // así que presentarlas como "tu respuesta" sería atribuirle al titular algo que no dijo.
+  // `origen` viaja como el valor del enum del backend, en mayúsculas.
+  const decididas = partidas.filter((p) => p.resolucion?.origen === "CONTADOR");
   const porConfirmar = caso.flags.filter((f) => !f.resolved_at && f.severity !== "info");
 
   // Cuando no queda nada por decidir, la etapa se cierra sola y ofrece seguir.
-  if (!sinDecidir.length && !porConfirmar.length && !(peticiones ?? []).length) {
+  const nadaPendiente = !sinDecidir.length && !porConfirmar.length && !(peticiones ?? []).length;
+  if (nadaPendiente) {
     return (
       <section className="etapa-cuerpo">
         <h1 className="etapa-titulo">
@@ -64,6 +84,17 @@ export default function EtapaDecisiones({
         <button className="btn-grande" onClick={onSeguir}>
           Ver el borrador <ArrowRight size={16} />
         </button>
+
+        {/* Aunque no quede nada pendiente, lo contestado sigue accesible: es la única forma de
+            corregir un sí o un no dado por error. */}
+        <YaContestado
+          caseId={caseId}
+          partidas={decididas}
+          respuestas={respuestas ?? []}
+          profunda={profunda}
+          onCambio={onCambio}
+          Decision={Decision}
+        />
       </section>
     );
   }
@@ -104,13 +135,17 @@ export default function EtapaDecisiones({
       {porConfirmar.length ? <Pendientes caso={caso} onCambio={onCambio} /> : null}
 
       {(peticiones ?? []).length ? (
-        <Peticiones
-          caseId={caseId}
-          peticiones={peticiones}
-          respuestas={respuestas}
-          onCambio={onCambio}
-        />
+        <Peticiones caseId={caseId} peticiones={peticiones} onCambio={onCambio} />
       ) : null}
+
+      <YaContestado
+        caseId={caseId}
+        partidas={decididas}
+        respuestas={respuestas ?? []}
+        profunda={profunda}
+        onCambio={onCambio}
+        Decision={Decision}
+      />
     </section>
   );
 }
@@ -130,6 +165,9 @@ function Decision({ caseId, partida, profunda, onCambio }) {
   const dian = partida.version_dian;
   const doc = partida.version_documento;
   const ajena = Boolean(partida.reportado_a);
+  // Un renglón que el motor no sabe ubicar. La pregunta acá no es "¿es tuyo?" ni "¿cuál cifra?":
+  // es "¿qué fue esto?", y sin contestarla el ingreso no entra a la declaración.
+  const porClasificar = Boolean(partida.clases_posibles && claves.includes("CLASIFICAR"));
 
   // Para el cliente, una decisión técnica no es una pregunta: es algo que otro tiene que mirar.
   const soloTecnicas = claves.length > 0 && !claves.some((d) => DEL_TITULAR.has(d));
@@ -151,11 +189,15 @@ function Decision({ caseId, partida, profunda, onCambio }) {
       <p className="decision-tercero">{partida.nombre_tercero || partida.nit_tercero}</p>
 
       <p className="decision-pregunta">
-        {ajena
-          ? `¿Este dinero es tuyo?`
-          : doc
-            ? "¿Cuál cifra es la correcta?"
-            : `¿Reconoces este ingreso?`}
+        {porClasificar
+          ? profunda
+            ? "¿A qué cédula del 210 va este ingreso?"
+            : "¿Qué fue este pago?"
+          : ajena
+            ? `¿Este dinero es tuyo?`
+            : doc
+              ? "¿Cuál cifra es la correcta?"
+              : `¿Reconoces este ingreso?`}
       </p>
 
       <div className="decision-cifras">
@@ -179,6 +221,14 @@ function Decision({ caseId, partida, profunda, onCambio }) {
         </p>
       ) : null}
 
+      {porClasificar ? (
+        <p className="decision-nota">
+          {profunda
+            ? "La exógena lo reportó con un concepto que el motor no sabe ubicar. Sin clasificarlo, el ingreso queda por fuera de la liquidación."
+            : "Quien te lo pagó no dijo de qué se trataba. Si no lo dices, este ingreso no entra a tu declaración."}
+        </p>
+      ) : null}
+
       {profunda ? (
         <p className="decision-tecnico">
           {partida.concepto ?? "sin clasificar"} · {partida.estado}
@@ -186,11 +236,23 @@ function Decision({ caseId, partida, profunda, onCambio }) {
         </p>
       ) : null}
 
+      {porClasificar ? (
+        <Clasificar
+          caseId={caseId}
+          partida={partida}
+          profunda={profunda}
+          motivos={posibles.CLASIFICAR ?? []}
+          onListo={onCambio}
+        />
+      ) : null}
+
       <div className="decision-opciones">
         {/* Al titular, sobre una fila ajena, se le ofrecen las dos caras de SU pregunta y no las
             técnicas: "poner otra cifra" y "llevarlo a mano" son decisiones de contador, y
             mezclarlas con "¿es tuyo?" convierte una pregunta de sí o no en un formulario. */}
-        {(ajena && !profunda ? claves.filter((d) => DEL_TITULAR.has(d)) : claves).map((d) => (
+        {(ajena && !profunda ? claves.filter((d) => DEL_TITULAR.has(d)) : claves)
+          .filter((d) => d !== "CLASIFICAR")
+          .map((d) => (
           <Opcion
             key={d}
             caseId={caseId}
@@ -198,6 +260,7 @@ function Decision({ caseId, partida, profunda, onCambio }) {
             decision={d}
             motivos={posibles[d]}
             ajena={ajena}
+            profunda={profunda}
             abierta={abierta === d}
             onAbrir={() => setAbierta(abierta === d ? null : d)}
             onListo={onCambio}
@@ -208,30 +271,13 @@ function Decision({ caseId, partida, profunda, onCambio }) {
   );
 }
 
-/**
- * Como se llama cada decision cuando la pregunta es "es tuyo": si o no, sin jerga.
- *
- * El par lo da el backend y no hay que inventarlo: sobre una fila ajena ofrece `USAR_DIAN` (que
- * es aceptar la cifra reportada, o sea "si es mio") y `MARCAR_AJENO` ("no es mio"). Las otras dos
- * que ofrece son tecnicas y no se le muestran al titular como si fueran la misma pregunta.
- */
-const COMO_TITULAR = { USAR_DIAN: "Sí, es mío", MARCAR_AJENO: "No, no es mío" };
-const COMO_CONTADOR = {
-  USAR_DIAN: "Usar la de la DIAN",
-  USAR_DOCUMENTO: "Usar la del documento",
-  USAR_OTRO: "Poner otra cifra",
-  MARCAR_AJENO: "No es del cliente",
-  CERRAR_SIN_SOPORTE: "Cerrar sin documento",
-  LLEVAR_A_MANO: "Llevarlo a mano",
-};
-
-function Opcion({ caseId, partida, decision, motivos, ajena, abierta, onAbrir, onListo }) {
+function Opcion({ caseId, partida, decision, motivos, ajena, profunda, abierta, onAbrir, onListo }) {
   const [valor, setValor] = useState("");
   const resolver = useAction((payload) => api.resolverPartida(caseId, partida.id, payload));
   const pideCifra = decision === "USAR_OTRO";
   const esDelTitular = DEL_TITULAR.has(decision);
 
-  const texto = (ajena && COMO_TITULAR[decision]) || COMO_CONTADOR[decision] || decision;
+  const texto = nombreDeDecision(decision, { ajena, profunda });
 
   // Una decisión con un solo motivo válido y sin cifra no necesita formulario: se aplica directo.
   const directa = motivos.length === 1 && !pideCifra;
@@ -296,6 +342,111 @@ function Opcion({ caseId, partida, decision, motivos, ajena, abierta, onAbrir, o
           <ErrorApi error={resolver.error} />
         </form>
       ) : null}
+    </div>
+  );
+}
+
+
+
+/**
+ * Decirle al sistema qué fue ese ingreso, para que entre a la declaración.
+ *
+ * POR QUE NO ES UN SELECT LIBRE DE CEDULAS. La cedula cambia el impuesto: rentas de trabajo da
+ * acceso al 25% exento del art. 206 num. 10 y rentas de capital no. Un desplegable con las tres
+ * opciones seria, literalmente, un boton para bajar el impuesto. Lo que se pregunta es el HECHO
+ * (que fue ese pago, y si restaste costos o tuviste empleados) y el backend deriva la cedula: la
+ * tabla motivo→clases la manda `clases_posibles`, no una copia en el front.
+ *
+ * LA SUGERENCIA VIENE PRESELECCIONADA pero hay que confirmarla. `clase_sugerida` sale del concepto
+ * de la exogena — servicios y honorarios son, en la practica, el ingreso del independiente — y eso
+ * ahorra el trabajo en el caso mayoritario. Aplicarla sola no se puede: depende de un hecho que no
+ * esta en ningun documento, y regalarle el 25% exento a quien no tiene derecho es inexactitud,
+ * sancion del 100% del mayor impuesto mas mora.
+ */
+function Clasificar({ caseId, partida, profunda, motivos, onListo }) {
+  const porMotivo = partida.clases_posibles ?? {};
+  const sugerida = partida.clase_sugerida;
+
+  // El motivo que contiene la clase sugerida arranca elegido; si no hay sugerencia, ninguno.
+  const motivoInicial = sugerida
+    ? Object.keys(porMotivo).find((m) => porMotivo[m].includes(sugerida))
+    : null;
+  const [motivo, setMotivo] = useState(motivoInicial ?? "");
+  const [clase, setClase] = useState(sugerida ?? "");
+  const resolver = useAction((payload) => api.resolverPartida(caseId, partida.id, payload));
+
+  const clasesDelMotivo = porMotivo[motivo] ?? [];
+  // Con un solo destino posible, elegirlo aparte es un paso vacío.
+  const claseEfectiva = clasesDelMotivo.length === 1 ? clasesDelMotivo[0] : clase;
+  const listo = Boolean(motivo && claseEfectiva && clasesDelMotivo.includes(claseEfectiva));
+
+  const aplicar = async () => {
+    const ok = await resolver.run({
+      decision: "CLASIFICAR",
+      motivo,
+      clase: claseEfectiva,
+      quien: profunda ? "contador" : "cliente",
+    });
+    if (ok) onListo();
+  };
+
+  return (
+    <div className="clasificar">
+      <ul className="clasificar-opciones">
+        {motivos.map((m) => (
+          <li key={m}>
+            <label className="clasificar-opcion">
+              <input
+                type="radio"
+                name={`clase-${partida.id}`}
+                checked={motivo === m}
+                onChange={() => {
+                  setMotivo(m);
+                  const unica = porMotivo[m] ?? [];
+                  setClase(unica.length === 1 ? unica[0] : "");
+                }}
+              />
+              <span>
+                {HECHOS_DE_CLASIFICACION[m]?.[profunda ? "contador" : "titular"] ?? m}
+                {/* Con un solo destino se dice acá mismo: es la consecuencia de elegir esto. */}
+                {(porMotivo[m] ?? []).length === 1 ? (
+                  <span className="clasificar-destino">
+                    {profunda ? "va a " : "entra como "}
+                    {claseEnFrase(porMotivo[m][0], profunda)}
+                  </span>
+                ) : null}
+              </span>
+            </label>
+            {/* La nota legal, solo donde hay condición que cumplir. */}
+            {motivo === m && (porMotivo[m] ?? []).length === 1
+              ? (() => {
+                  const nota = CLASES_DE_INGRESO[porMotivo[m][0]]?.nota;
+                  return nota ? <p className="clasificar-nota">{nota}</p> : null;
+                })()
+              : null}
+          </li>
+        ))}
+      </ul>
+
+      {/* Cuando el hecho admite más de un destino ("en realidad fue otra cosa"), hay que decir cuál. */}
+      {motivo && clasesDelMotivo.length > 1 ? (
+        <label className="campo">
+          <span>{profunda ? "A qué cédula" : "¿Qué fue entonces?"}</span>
+          <select value={clase} onChange={(e) => setClase(e.target.value)}>
+            <option value="">Elegir…</option>
+            {clasesDelMotivo.map((c) => (
+              <option key={c} value={c}>
+                {nombreDeClase(c, profunda)}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : null}
+
+      <button className="btn-grande" disabled={!listo || resolver.running} onClick={aplicar}>
+        {resolver.running ? "Guardando…" : profunda ? "Clasificar" : "Confirmar"}
+      </button>
+      <ErrorApi error={resolver.error} />
     </div>
   );
 }

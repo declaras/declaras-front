@@ -14,9 +14,31 @@ export const formatMoney = (value) =>
 export const formatNumber = (value) =>
   value === null || value === undefined ? "—" : numero.format(value);
 
+// `YYYY-MM-DD` exacto, sin hora. Es un DÍA DE CALENDARIO, no un instante.
+const SOLO_FECHA = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+/**
+ * Una fecha como la lee una persona en Colombia.
+ *
+ * EL BUG QUE ARREGLA, medido: el vencimiento "2026-10-07" se mostraba como "06 de oct de 2026".
+ * `new Date("2026-10-07")` NO es medianoche local: el estándar manda interpretar una fecha sin hora
+ * como UTC, y al pasarla a la hora de Colombia (UTC−5) retrocede cinco horas, o sea al día
+ * anterior. Toda fecha sin hora del producto salía un día antes.
+ *
+ * En una fecha de vencimiento eso destruye la confianza: si decimos el 6 y el plazo es el 7, quien
+ * lo compare con el portal de la DIAN concluye que nuestras cifras tampoco sirven.
+ *
+ * Un instante CON hora sí se convierte a hora local, porque ahí la zona es parte del significado
+ * ("llegó a las 4 de la tarde"). La distinción es la del dominio: un día de calendario es el mismo
+ * en todas las zonas; un momento, no.
+ */
 export const formatDate = (iso) => {
   if (!iso) return "—";
-  return new Date(iso).toLocaleDateString("es-CO", {
+  const partes = SOLO_FECHA.exec(iso);
+  const fecha = partes
+    ? new Date(Number(partes[1]), Number(partes[2]) - 1, Number(partes[3]))
+    : new Date(iso);
+  return fecha.toLocaleDateString("es-CO", {
     day: "2-digit",
     month: "short",
     year: "numeric",

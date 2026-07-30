@@ -13,7 +13,7 @@ import { api } from "./api";
 import { useAction } from "./hooks";
 import { formatDate } from "./formato";
 import { ErrorApi } from "./componentes";
-import { SoloContador, useVista } from "./vista";
+import { useVista } from "./vista";
 
 /** Que hacer con cada aviso, en lenguaje de quien lo tiene que resolver. */
 const QUE_HACER = {

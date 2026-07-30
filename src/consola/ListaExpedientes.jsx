@@ -16,7 +16,7 @@
 
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Plus } from "lucide-react";
 
 import { api } from "./api";
 import { useAction, useApi } from "./hooks";
@@ -230,6 +230,16 @@ export default function ListaExpedientes() {
                   </button>
                 </li>
               ))}
+              <li>
+                <OtroAnio
+                  cliente={cliente}
+                  ocupados={suyos.map((c) => c.tax_year)}
+                  onListo={(caso) => {
+                    recargar();
+                    abrir(caso);
+                  }}
+                />
+              </li>
             </ul>
           </li>
         ))}
@@ -380,5 +390,72 @@ function QuienEres({ clientes, onElegir, onEmpezar, empezando, alAbrir, onCancel
         Soy alguien más
       </button>
     </section>
+  );
+}
+
+
+/**
+ * Abrir un ano viejo de un cliente que ya esta en el sistema.
+ *
+ * POR QUE ES UN ATAJO Y NO EL FORMULARIO NORMAL. Rehacer un ano pasado es el caso de uso principal
+ * de la comparacion contra lo que un contador presento, y con el formulario completo habia que
+ * volver a escribir cedula, nombre, telefono y correo de alguien que ya esta en el sistema. Con
+ * cuarenta clientes eso convierte una feature util en algo que nadie usa.
+ *
+ * SE OFRECEN SOLO LOS ANOS QUE FALTAN. El backend tiene un unico expediente por (cliente, ano), asi
+ * que ofrecer uno que ya existe termina en un error que el usuario no puede entender; y ofrecer
+ * anos anteriores a que la exogena exista tampoco sirve.
+ */
+function OtroAnio({ cliente, ocupados, onListo }) {
+  const [abierto, setAbierto] = useState(false);
+  const accion = useAction((anio) =>
+    api.openCase({
+      id_kind: cliente.id_kind,
+      id_number: cliente.id_number,
+      tax_year: anio,
+      full_name: cliente.full_name,
+      phone_number: cliente.phone_number,
+      email: cliente.email,
+    }),
+  );
+
+  // Cinco anos hacia atras: mas alla la declaracion ya quedo en firme (tres anos desde el
+  // vencimiento, art. 714) y rehacerla no sirve para corregir nada.
+  const disponibles = Array.from(
+    { length: 5 },
+    (_, i) => ANIO_GRAVABLE_POR_DEFECTO - i,
+  ).filter((a) => !ocupados.includes(a));
+
+  if (!disponibles.length) return null;
+
+  if (!abierto) {
+    return (
+      <button className="otro-anio" onClick={() => setAbierto(true)}>
+        <Plus size={14} />
+        otro año
+      </button>
+    );
+  }
+
+  return (
+    <div className="otro-anio-abierto">
+      {disponibles.map((anio) => (
+        <button
+          key={anio}
+          className="btn-mini"
+          disabled={accion.running}
+          onClick={async () => {
+            const caso = await accion.run(anio);
+            if (caso) onListo(caso);
+          }}
+        >
+          {anio}
+        </button>
+      ))}
+      <button className="enlace-suave" onClick={() => setAbierto(false)}>
+        cancelar
+      </button>
+      <ErrorApi error={accion.error} />
+    </div>
   );
 }

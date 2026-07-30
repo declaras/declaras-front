@@ -25,18 +25,11 @@ import { ArrowLeft, ArrowRight, RefreshCw, Upload } from "lucide-react";
 
 import { api } from "./api";
 import { useAction, useApi } from "./hooks";
-import { formatDate } from "./formato";
 import { Cargando, ErrorApi } from "./componentes";
-import Conciliacion from "./Conciliacion";
-import Documentos from "./Documentos";
-import Ganancia from "./Ganancia";
-import MesaDeTrabajo from "./MesaDeTrabajo";
-import Peticiones from "./Peticiones";
-import Resumen from "./Resumen";
-import Pendientes from "./Pendientes";
 import Actividad from "./Actividad";
 import Dialogo from "./Dialogo";
 import Etapas, { ETAPAS } from "./Etapas";
+import Plazo from "./Plazo";
 import EtapaBorrador from "./EtapaBorrador";
 import EtapaDecisiones from "./EtapaDecisiones";
 import EtapaPresentar from "./EtapaPresentar";
@@ -59,6 +52,11 @@ export default function DetalleExpediente() {
   const peticiones = useApi(() => api.listPeticiones(caseId), [caseId]);
   const respuestas = useApi(() => api.listRespuestas(caseId), [caseId]);
   const liquidacion = useApi(() => api.getLiquidacion(caseId), [caseId]);
+  const recomendaciones = useApi(() => api.getRecomendaciones(caseId), [caseId]);
+  const comparaciones = {
+    dian: useApi(() => api.getComparacionDian(caseId), [caseId]),
+    presentada: useApi(() => api.getComparacionPresentada(caseId), [caseId]),
+  };
   const [ultimaConsulta, setUltimaConsulta] = useState(null);
 
   const recargar = useCallback(() => {
@@ -68,7 +66,22 @@ export default function DetalleExpediente() {
     peticiones.reload();
     respuestas.reload();
     liquidacion.reload();
-  }, [expediente, resumen, conciliacion, peticiones, respuestas, liquidacion]);
+    recomendaciones.reload();
+    comparaciones.dian.reload();
+    comparaciones.presentada.reload();
+    // `comparaciones` se reconstruye en cada render (es un objeto literal), así que se listan sus
+    // dos miembros: ponerlo entero haría que el callback cambie siempre y recargue en bucle.
+  }, [
+    expediente,
+    resumen,
+    conciliacion,
+    peticiones,
+    respuestas,
+    liquidacion,
+    recomendaciones,
+    comparaciones.dian,
+    comparaciones.presentada,
+  ]);
 
   // Solo mientras no haya NADA que mostrar. Un refresco posterior no borra la pantalla: además
   // del parpadeo, desmontar el árbol se llevaba el estado de todo lo que hay dentro.
@@ -84,9 +97,6 @@ export default function DetalleExpediente() {
 
   const caso = expediente.data;
   const tieneDatos = caso.documents.length > 0;
-  // Solo lo que le pide algo a alguien. Las constancias (`info`) no son pendientes: existen
-  // para que quede registro, y contarlas aqui haria que la cifra no signifique nada.
-  const porRevisar = caso.flags.filter((f) => !f.resolved_at && f.severity !== "info").length;
 
   return (
     <>
@@ -98,6 +108,9 @@ export default function DetalleExpediente() {
             {caso.client.full_name ?? `${caso.client.id_kind} ${caso.client.id_number}`}
           </p>
           <h1 className="declaracion-anio">Declaración de renta {caso.tax_year}</h1>
+          {/* El plazo va en el encabezado y no dentro de una etapa: aplica a todo el expediente y
+              es lo primero que hay que saber, así que se ve desde cualquier paso. */}
+          <Plazo plazo={caso.plazo} />
         </div>
         {tieneDatos ? (
           <ConsultarDian
@@ -127,6 +140,8 @@ export default function DetalleExpediente() {
           peticiones={peticiones.data}
           respuestas={respuestas.data}
           liquidacion={liquidacion.data}
+          recomendaciones={recomendaciones.data}
+          comparaciones={comparaciones}
           resumen={resumen.data}
           profunda={profunda}
           onCambio={recargar}
@@ -148,7 +163,7 @@ export default function DetalleExpediente() {
  * ir a cualquiera ya alcanzada. Lo que no se puede es adelantarse a una que todavia no aplica:
  * leer el borrador antes de decidir los renglones es leer una cifra que va a cambiar.
  */
-function Flujo({ caseId, caso, conciliacion, peticiones, respuestas, liquidacion, resumen, profunda, onCambio }) {
+function Flujo({ caseId, caso, conciliacion, peticiones, respuestas, liquidacion, recomendaciones, comparaciones, resumen, profunda, onCambio }) {
   const sinDecidir = (conciliacion?.partidas ?? []).filter((p) => !p.resolucion).length;
   const porConfirmar = caso.flags.filter((f) => !f.resolved_at && f.severity !== "info").length;
   const porPedir = (peticiones ?? []).length;
@@ -217,6 +232,8 @@ function Flujo({ caseId, caso, conciliacion, peticiones, respuestas, liquidacion
             caso={caso}
             resumen={resumen}
             liquidacion={liquidacion}
+            recomendaciones={recomendaciones}
+            comparaciones={comparaciones}
           />
         ) : null}
         {actual === "presentar" ? (
@@ -468,26 +485,6 @@ function SubirDocumento({ caso, onListo }) {
           </button>
         </div>
       </form>
-    </section>
-  );
-}
-
-/**
- * Lo que sostiene la cifra: se abre cuando hay que defenderla.
- *
- * Los topes, los renglones del 210 y la comparacion con lo que la DIAN sugeria son la evidencia
- * de la declaracion, no el trabajo del dia. Plegados dejan de competir con la cola; a un clic
- * siguen estando completos.
- */
-function Respaldo({ children }) {
-  const [abierto, setAbierto] = useState(false);
-  return (
-    <section className="bloque">
-      <button className="respaldo-abrir" onClick={() => setAbierto((v) => !v)} aria-expanded={abierto}>
-        {abierto ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
-        En qué se sostiene esta cifra
-      </button>
-      {abierto ? <div className="respaldo">{children}</div> : null}
     </section>
   );
 }

@@ -15,10 +15,14 @@ import { api } from "./api";
 import { useAction, useApi } from "./hooks";
 import { ErrorApi } from "./componentes";
 import { formatMoney } from "./formato";
+import Comparacion from "./Comparacion";
+import { useVista } from "./vista";
 
 export default function EtapaPresentar({ caseId, caso, conciliacion, peticiones, liquidacion, onIr, onCambio }) {
+  const { profunda } = useVista();
   const cerrar = useAction(() => api.cerrarLiquidacion(caseId));
   const formulario = useApi(() => api.getFormulario(caseId), [caseId]);
+  const comparacion = useApi(() => api.getComparacionDian(caseId), [caseId]);
   const yaLista = caso.status === "DRAFT_READY" || caso.status === "SUBMITTED";
 
   const sinDecidir = (conciliacion?.partidas ?? []).filter((p) => !p.resolucion).length;
@@ -26,32 +30,79 @@ export default function EtapaPresentar({ caseId, caso, conciliacion, peticiones,
   const porPedir = (peticiones ?? []).length;
   const bloqueo = conciliacion?.falta_para_liquidar;
   const actual = liquidacion?.actual;
+  // Los avisos que impiden dar la declaración por buena. `cerrar_borrador` se niega si hay uno
+  // solo, así que sin mirarlos esta pantalla decía "todo listo", ofrecía el botón, y el backend
+  // devolvía un error: la pantalla que existe para responder "¿está todo?" contestaba mal.
+  const bloqueantes = actual?.bloqueantes ?? [];
+  // Las advertencias no impiden presentar, pero este es su único momento útil: dicen sobre qué
+  // supuesto se calculó una cifra (un ingreso clasificado a mano, unos dividendos sin desagregar) y
+  // si el supuesto no se cumple, el impuesto es otro. Enterrarlas en la memoria de cálculo es
+  // enterrarlas: nadie las abre justo antes de firmar.
+  const porRevisar = (actual?.flags ?? []).filter((f) => f.severidad === "advertencia");
 
+  // Es la última pantalla antes de dar la declaración por lista, así que es la que menos puede
+  // hablar en lenguaje de contador: "Todos los renglones decididos" y "Soportes completos" son
+  // frases que solo confirman algo a quien ya sabe qué es un renglón y qué es un soporte.
   const puntos = [
     {
       listo: !porConfirmar,
       texto: porConfirmar
-        ? `Falta confirmar ${porConfirmar} ${porConfirmar === 1 ? "cosa" : "cosas"} del reporte`
-        : "Información del reporte confirmada",
+        ? profunda
+          ? `Falta confirmar ${porConfirmar} ${porConfirmar === 1 ? "cosa" : "cosas"} del reporte`
+          : `Falta que confirmes ${porConfirmar} ${porConfirmar === 1 ? "cosa" : "cosas"}`
+        : profunda
+          ? "Información del reporte confirmada"
+          : "Revisamos lo que la DIAN tiene de ti",
       ir: "decisiones",
     },
     {
       listo: !sinDecidir,
       texto: sinDecidir
-        ? `Faltan ${sinDecidir} ${sinDecidir === 1 ? "renglón" : "renglones"} por decidir`
-        : "Todos los renglones decididos",
+        ? profunda
+          ? `Faltan ${sinDecidir} ${sinDecidir === 1 ? "renglón" : "renglones"} por decidir`
+          : `Faltan ${sinDecidir} ${sinDecidir === 1 ? "pregunta" : "preguntas"} por contestar`
+        : profunda
+          ? "Todos los renglones decididos"
+          : "Contestaste todo lo que te preguntamos",
       ir: "decisiones",
     },
     {
       listo: !porPedir,
       texto: porPedir
-        ? `${porPedir} ${porPedir === 1 ? "documento" : "documentos"} por pedirle al cliente`
-        : "Soportes completos",
+        ? profunda
+          ? `${porPedir} ${porPedir === 1 ? "documento" : "documentos"} por pedirle al cliente`
+          : `Falta que mandes ${porPedir} ${porPedir === 1 ? "documento" : "documentos"}`
+        : profunda
+          ? "Soportes completos"
+          : "Están todos los documentos que hacen falta",
       ir: "decisiones",
     },
     {
+      // Que la declaración se pueda calcular y que esté completa son dos cosas distintas: con un
+      // ingreso por fuera el cálculo SÍ sale (se publica la liquidación con las elecciones por
+      // defecto), y justamente por eso hace falta un punto aparte que diga que no está completa.
+      listo: !bloqueantes.length,
+      texto: bloqueantes.length
+        ? profunda
+          ? `${bloqueantes.length} ${bloqueantes.length === 1 ? "ingreso quedó" : "ingresos quedaron"} por fuera de la liquidación`
+          : `Hay ${bloqueantes.length} ${bloqueantes.length === 1 ? "ingreso" : "ingresos"} que todavía no ${bloqueantes.length === 1 ? "está" : "están"} en tu declaración`
+        : profunda
+          ? "Ningún ingreso quedó por fuera"
+          : "Todos tus ingresos están en la declaración",
+      ir: "decisiones",
+      detalles: bloqueantes.map((f) => f.mensaje),
+    },
+    {
       listo: Boolean(actual) && !bloqueo,
-      texto: bloqueo || (actual ? "Borrador calculado" : "El borrador todavía no se puede calcular"),
+      texto:
+        bloqueo ||
+        (actual
+          ? profunda
+            ? "Borrador calculado"
+            : "Tu declaración está calculada"
+          : profunda
+            ? "El borrador todavía no se puede calcular"
+            : "Todavía no podemos calcular tu declaración"),
       ir: "borrador",
     },
   ];
@@ -77,7 +128,20 @@ export default function EtapaPresentar({ caseId, caso, conciliacion, peticiones,
             <span className="check-marca">
               {p.listo ? <Check size={13} /> : <AlertCircle size={13} />}
             </span>
-            <span>{p.texto}</span>
+            <span>
+              {p.texto}
+              {/* Cuál ingreso quedó por fuera, no solo cuántos: "2 ingresos" no le dice a nadie
+                  qué tiene que ir a resolver. */}
+              {!p.listo && p.detalles?.length ? (
+                <span className="check-detalles">
+                  {p.detalles.map((d) => (
+                    <span className="check-detalle" key={d}>
+                      {d}
+                    </span>
+                  ))}
+                </span>
+              ) : null}
+            </span>
             {p.listo ? null : (
               <button className="enlace-suave" onClick={() => onIr(p.ir)}>
                 resolver
@@ -86,6 +150,30 @@ export default function EtapaPresentar({ caseId, caso, conciliacion, peticiones,
           </li>
         ))}
       </ul>
+
+      {/* Antes del formulario: la pregunta "¿en qué difiere de lo que la DIAN espera?" se contesta
+          antes de mirar las casillas una por una. */}
+      <Comparacion comparacion={comparacion.data} />
+
+      {porRevisar.length ? (
+        <section className="revisar">
+          <h3 className="revisar-titulo">
+            {porRevisar.length === 1
+              ? "Una cosa para revisar antes de presentar"
+              : `${porRevisar.length} cosas para revisar antes de presentar`}
+          </h3>
+          <p className="revisar-nota">
+            {profunda
+              ? "No bloquean el cierre, pero cada una dice sobre qué supuesto se calculó una cifra."
+              : "No impiden presentar. Léelas: si algo de esto no es como dice, tu impuesto cambia."}
+          </p>
+          <ul className="revisar-lista">
+            {porRevisar.map((f) => (
+              <li key={f.codigo + f.mensaje.slice(0, 24)}>{f.mensaje}</li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       {/* EL FORMULARIO QUE SE VA A RADICAR, y no los renglones que la exógena sugiere: eso es lo
           que la DIAN pondría con lo que ella sabe, y esto es lo que queda tras decidir. En un caso
@@ -137,6 +225,7 @@ export default function EtapaPresentar({ caseId, caso, conciliacion, peticiones,
  * importan, y las vacias no se declaran.
  */
 function Formulario({ casillas }) {
+  const { profunda } = useVista();
   const [abierto, setAbierto] = useState(false);
   const conCifra = casillas.filter((c) => c.valor);
 
@@ -145,7 +234,9 @@ function Formulario({ casillas }) {
       <button className="enlace-suave" onClick={() => setAbierto((v) => !v)} aria-expanded={abierto}>
         {abierto
           ? "Ocultar el formulario"
-          : `Ver el formulario 210 que se va a radicar (${conCifra.length} casillas con cifra)`}
+          : profunda
+            ? `Ver el formulario 210 que se va a radicar (${conCifra.length} casillas con cifra)`
+            : "Ver el formulario que se va a radicar"}
       </button>
       {abierto ? (
         <table className="tabla formulario-tabla">

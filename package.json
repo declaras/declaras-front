@@ -6,9 +6,10 @@
   "scripts": {
     "dev": "vite",
     "estilos": "node scripts/revisar-estilos.mjs",
-    "prebuild": "node scripts/revisar-estilos.mjs",
+    "prebuild": "node scripts/revisar-estilos.mjs && eslint .",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "lint": "eslint ."
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.11",
@@ -20,5 +21,11 @@
     "tailwindcss": "^4.1.11",
     "typescript": "~5.7.2",
     "vite": "^6.0.5"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.8.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.8.0"
   }
 }

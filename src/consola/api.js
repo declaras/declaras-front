@@ -9,8 +9,12 @@ const BASE = "/api";
 
 /** Error con el codigo estable que devuelve el backend, para poder ramificar en la UI. */
 export class ApiError extends Error {
-  constructor({ code, message, retryable, details, status }) {
-    super(message ?? "Error inesperado");
+  // `cause` se encadena y no se descarta: el mensaje que ve la persona tiene que ser el de arriba
+  // ("no se pudo contactar el servicio"), pero quien depura necesita el error original de `fetch`,
+  // que es el que distingue un backend caido de un CORS o de una peticion abortada. Se estaba
+  // capturando y tirando.
+  constructor({ code, message, retryable, details, status, cause }) {
+    super(message ?? "Error inesperado", { cause });
     this.name = "ApiError";
     this.code = code ?? "UNKNOWN";
     this.retryable = Boolean(retryable);
@@ -28,6 +32,7 @@ async function request(path, options = {}) {
       code: "NETWORK_ERROR",
       message: "No se pudo contactar el servicio. ¿Está corriendo el backend?",
       retryable: true,
+      cause,
     });
   }
 
@@ -112,6 +117,15 @@ export const api = {
 
   getLiquidacion: (caseId) => request(`/v1/cases/${caseId}/liquidacion`),
   getFormulario: (caseId) => request(`/v1/cases/${caseId}/formulario`),
+  // El catálogo completo de beneficios con lo que cada uno ahorra. A diferencia de `peticiones`,
+  // no desaparece cuando el cliente contesta que no lo tiene.
+  getRecomendaciones: (caseId) => request(`/v1/cases/${caseId}/recomendaciones`),
+  // El borrador que la DIAN precargó contra el nuestro, casilla por casilla.
+  getComparacionDian: (caseId) => request(`/v1/cases/${caseId}/comparacion-con-la-dian`),
+  // Contra la declaración que de verdad se presentó ese año, que en un año viejo es lo que hizo
+  // un contador. Es la segunda opinión.
+  getComparacionPresentada: (caseId) =>
+    request(`/v1/cases/${caseId}/comparacion-con-lo-presentado`),
   cerrarLiquidacion: (caseId) =>
     request(`/v1/cases/${caseId}/liquidacion/cerrar`, { method: "POST" }),
 };
