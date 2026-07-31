@@ -1,5 +1,9 @@
 import { useEffect } from "react";
 
+import { SITIO } from "./paginas";
+
+export { SITIO };
+
 /**
  * Los metadatos de cada pagina.
  *
@@ -13,8 +17,6 @@ import { useEffect } from "react";
  * paso a NO reescribirlo.
  */
 
-/** La base de las URL absolutas. Se cambia en un solo lugar, o por variable de entorno al montar. */
-export const SITIO = (import.meta.env?.VITE_SITIO_URL ?? "https://declaras.co").replace(/\/$/, "");
 
 export const MARCA = "Clara";
 const IMAGEN_POR_DEFECTO = `${SITIO}/clara-og.jpg`;

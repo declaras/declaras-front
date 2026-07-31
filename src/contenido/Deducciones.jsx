@@ -56,7 +56,7 @@ const FUERA = [
    "Sale del reporte de factura electrónica de la DIAN, así que no hay que juntar papeles."],
 ];
 
-const PREGUNTAS = [
+export const PREGUNTAS = [
   ["¿Qué deducciones puedo aplicar en la declaración de renta?",
    `Las principales son la medicina prepagada (${pesos(192 * UVT_2025)} al año), los intereses del crédito de vivienda, los aportes a AFC y pensión voluntaria, el crédito del Icetex, 72 UVT por cada dependiente hasta cuatro y el 1% de las compras con factura electrónica. Casi todas compiten por un mismo cupo del 40% del ingreso, así que sumarlas no siempre baja más el impuesto.`],
   ["¿Cuánto puedo descontar como máximo?",

@@ -1,22 +1,38 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "installCommand": "pnpm install --frozen-lockfile && PLAYWRIGHT_BROWSERS_PATH=0 pnpm exec playwright install chromium || true",
-  "buildCommand": "PLAYWRIGHT_BROWSERS_PATH=0 pnpm run build",
+  "installCommand": "pnpm install --frozen-lockfile",
+  "buildCommand": "pnpm run build",
   "outputDirectory": "dist",
   "cleanUrls": true,
   "trailingSlash": false,
   "rewrites": [
-    { "source": "/consola", "destination": "/index.html" },
-    { "source": "/consola/:ruta*", "destination": "/index.html" }
+    {
+      "source": "/consola",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/consola/:ruta*",
+      "destination": "/index.html"
+    }
   ],
   "headers": [
     {
       "source": "/assets/(.*)",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
     },
     {
       "source": "/sitemap.xml",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }]
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
     }
   ]
 }

@@ -7,7 +7,7 @@
     "dev": "vite",
     "estilos": "node scripts/revisar-estilos.mjs",
     "prebuild": "node scripts/revisar-estilos.mjs && eslint .",
-    "build": "node scripts/sitemap.mjs && vite build && node scripts/prerender.mjs && node scripts/auditar-seo.mjs",
+    "build": "node scripts/sitemap.mjs && vite build && vite build --ssr src/entrada-servidor.jsx --outDir dist-ssr && node scripts/prerender.mjs && node scripts/auditar-seo.mjs",
     "preview": "vite preview",
     "lint": "eslint .",
     "sitemap": "node scripts/sitemap.mjs",

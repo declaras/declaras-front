@@ -78,7 +78,7 @@ const FALLOS = [
    "El formulario liquida un anticipo del impuesto del año siguiente. Es una casilla que sorprende a quien esperaba pagar solo lo del año declarado."],
 ];
 
-const PREGUNTAS = [
+export const PREGUNTAS = [
   ["¿Qué se necesita para hacer la declaración de renta por internet?",
    "El RUT, la clave del portal transaccional de la DIAN y la firma electrónica activa. Además, los certificados de ingresos y retenciones de tus empleadores, los certificados de bancos y de cesantías, y los soportes de los beneficios que vayas a pedir."],
   ["¿Cómo hago la declaración en la página de la DIAN?",

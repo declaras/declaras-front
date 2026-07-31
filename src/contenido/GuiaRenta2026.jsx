@@ -73,7 +73,7 @@ const ERRORES = [
 ];
 
 /** Las preguntas que Google muestra en "otras preguntas de los usuarios" para estas consultas. */
-const FAQ = [
+export const FAQ = [
   ["¿Cómo saber si tengo que declarar renta en 2026?",
    `Compara tus cifras del año 2025 contra los cinco topes de la DIAN. Con superar uno solo ya estás obligado. Los dos que más se pasan por alto son ingresos brutos por ${pesos(1400 * UVT_2025)} y consignaciones o depósitos por ${pesos(1400 * UVT_2025)}, porque en las consignaciones cuentan los traslados entre tus propias cuentas.`],
   ["¿Cuánto debe ganar una persona para declarar renta en Colombia en 2026?",

@@ -12,18 +12,24 @@ y la portada se veia bien, pero las cuatro guias y el sitemap devolvian 404: ni 
 repositorio, y `robots.txt` y las imagenes porque `public/` se copia sola. Nada avisaba, que es la
 peor forma de fallar.
 
-## El navegador del prerenderizado
+## El prerenderizado no usa navegador
 
-`prerender.mjs` abre cada ruta en un navegador real y guarda el HTML resultante. Ese navegador NO
-viene con el paquete de npm: vive en una cache aparte, asi que `pnpm install` lo deja fuera. Por eso
-el `installCommand` lo descarga.
+`prerender.mjs` renderiza cada ruta con React en el servidor y escribe el HTML. Antes abria Chromium
+y guardaba el DOM: funcionaba en un portatil y no aca. La imagen de construccion de Vercel no trae
+las librerias de sistema que Chromium necesita y fallaba con `libnspr4.so: cannot open shared object
+file`, que no se pueden instalar sin permisos de administrador. El despliegue salia en verde y las
+cuatro guias devolvian 404, sin que nada avisara.
 
-`PLAYWRIGHT_BROWSERS_PATH=0` lo instala dentro de `node_modules` en vez de en la cache del usuario,
-que es lo que garantiza que siga ahi cuando corre el build.
+Renderizando con React no hay navegador que instalar, funciona en cualquier parte y se ahorran
+95 MB de descarga en cada build.
 
-El `|| true` del final es a proposito: si la descarga falla, el despliegue continua. El
-prerenderizado detecta que no hay navegador, avisa y publica el sitio como aplicacion de cliente.
-Para quien entra sigue funcionando; lo que se pierde es el HTML servido, y el aviso queda en el log.
+Como los efectos no corren al renderizar en el servidor, el `<head>` de cada ruta se arma aparte,
+desde `src/seo/paginas.js`. Esa tabla la leen el prerenderizado y el navegador, asi que un titulo no
+puede quedar distinto en el HTML servido y en la pagina ya cargada.
+
+El HTML servido NO se hidrata: el navegador vuelve a montar la aplicacion encima. Eso evita toda la
+clase de errores por diferencias entre servidor y cliente, al precio de un repintado que no se nota.
+Lo que importa para un buscador es que el contenido venga en la respuesta.
 
 ## Las rutas
 

@@ -84,21 +84,15 @@ export function Relacionadas({ items }) {
   );
 }
 
-export default function Pagina({
-  titulo,
-  descripcion,
-  ruta,
-  imagen,
-  h1,
-  bajada,
-  publicado,
-  migaja,
-  secciones,
-  preguntas = [],
-  cta = "Averigua gratis si debes declarar",
-  children,
-}) {
-  const datos = {
+/**
+ * Los datos estructurados de una pagina de contenido.
+ *
+ * Es una funcion aparte y no algo que arme el componente porque el prerenderizado los necesita sin
+ * renderizar nada: los efectos no corren en el servidor, asi que el `<head>` se construye por fuera.
+ * Al ser la misma funcion en los dos lados, no pueden discrepar.
+ */
+export function construirDatos({ ruta, h1, descripcion, publicado, migaja, preguntas = [] }) {
+  return {
     "@context": "https://schema.org",
     "@graph": [
       {
@@ -136,6 +130,23 @@ export default function Pagina({
       },
     ],
   };
+}
+
+export default function Pagina({
+  titulo,
+  descripcion,
+  ruta,
+  imagen,
+  h1,
+  bajada,
+  publicado,
+  migaja,
+  secciones,
+  preguntas = [],
+  cta = "Averigua gratis si debes declarar",
+  children,
+}) {
+  const datos = construirDatos({ ruta, h1, descripcion, publicado, migaja, preguntas });
 
   return (
     <div className="post">

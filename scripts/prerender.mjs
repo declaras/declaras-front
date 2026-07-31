@@ -2,95 +2,51 @@
  * Convierte cada ruta publica en HTML estatico despues de construir.
  *
  * POR QUE HACE FALTA: el sitio es una sola pagina de React. El HTML que sale del build trae un
- * <div id="root"> vacio, y todo el contenido, los encabezados y los datos estructurados aparecen
- * solo cuando el navegador ejecuta el JavaScript. Google suele renderizar, pero lo hace en una
- * segunda pasada, con retraso y sin garantia, y el resto de los rastreadores (los de WhatsApp,
- * X o LinkedIn, que son los que arman la tarjeta al compartir un enlace) NO ejecutan JavaScript.
- * Sin este paso, compartir la guia por WhatsApp mostraba el titulo de la portada.
+ * <div id="root"> vacio, y todo el contenido aparece solo cuando el navegador ejecuta JavaScript.
+ * Google suele renderizar, pero en una segunda pasada, con retraso y sin garantia; y los rastreadores
+ * de WhatsApp, X o LinkedIn, que son los que arman la tarjeta al compartir un enlace, no ejecutan
+ * nada. Sin este paso, compartir la guia por WhatsApp mostraba el titulo de la portada.
  *
- * Lo que hace es abrir cada ruta en un navegador real contra los archivos ya construidos, esperar
- * a que React termine, y guardar el HTML resultante en su propia carpeta. El JavaScript se sigue
- * cargando despues, asi que la pagina queda igual de interactiva: la calculadora de la fecha
- * funciona lo mismo. La diferencia es que el contenido ya venia en la respuesta.
+ * ANTES ESTO ABRIA UN NAVEGADOR y guardaba el DOM. Funcionaba en un portatil y no en el servidor de
+ * construccion: la imagen de Vercel no trae las librerias de sistema de Chromium y fallaba con
+ * "libnspr4.so: cannot open shared object file". El despliegue salia en verde y las cuatro guias
+ * devolvian 404, sin que nada avisara. Ahora se renderiza con React directamente, que funciona en
+ * cualquier parte, es mas rapido y ahorra 95 MB de descarga en cada build.
  */
-import { createServer } from "node:http";
-import { readFileSync, mkdirSync, writeFileSync, existsSync } from "node:fs";
-import { join, extname } from "node:path";
-import { chromium } from "playwright";
+import { readFileSync, mkdirSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 
 import { RUTAS } from "./rutas.mjs";
 
 const DIST = "dist";
-const TIPOS = {
-  ".html": "text/html; charset=utf-8",
-  ".js": "text/javascript",
-  ".css": "text/css",
-  ".json": "application/json",
-  ".svg": "image/svg+xml",
-  ".png": "image/png",
-  ".jpg": "image/jpeg",
-  ".webp": "image/webp",
-  ".woff2": "font/woff2",
-  ".xml": "application/xml",
-  ".txt": "text/plain",
-};
+const SERVIDOR = "dist-ssr/entrada-servidor.js";
 
-/** Un servidor minimo sobre dist, porque un `file://` no permite rutas de History API. */
-const servidor = createServer((peticion, respuesta) => {
-  const limpia = decodeURIComponent(peticion.url.split("?")[0]);
-  const candidato = join(DIST, limpia);
-  const archivo = existsSync(candidato) && extname(candidato) ? candidato : join(DIST, "index.html");
-  respuesta.writeHead(200, { "Content-Type": TIPOS[extname(archivo)] ?? "application/octet-stream" });
-  respuesta.end(readFileSync(archivo));
-});
+const { render } = await import(pathToFileURL(SERVIDOR).href);
 
-const puerto = await new Promise((listo) => {
-  servidor.listen(0, () => listo(servidor.address().port));
-});
-
-let navegador;
-try {
-  navegador = await chromium.launch();
-} catch (error) {
-  // El motivo se escribe al sitio publicado. En un servidor de construccion ajeno no hay forma de
-  // leer el log desde aca, y sin el motivo solo se puede adivinar por que no hubo prerenderizado.
-  // Es un archivo de texto, sin nada sensible, y se quita cuando esto quede resuelto.
-  try {
-    writeFileSync(
-      join(DIST, "_prerender.txt"),
-      `sin prerenderizado\n${new Date().toISOString()}\n\n${String(error)}\n`,
-    );
-  } catch {
-    /* si ni eso se puede escribir, el aviso del log tendra que bastar */
-  }
-  // Pasa cuando el navegador no esta descargado, que es lo que ocurre en un servidor de
-  // construccion recien creado: el paquete de npm no lo trae, vive en una cache aparte.
-  console.warn(
-    "\n  AVISO: no se pudo abrir el navegador, asi que NO hay prerenderizado.\n" +
-      `  ${String(error).split("\n")[0]}\n` +
-      "  El sitio se publica igual, pero las paginas llegaran vacias a un rastreador.\n" +
-      "  Instala el navegador en el despliegue con: pnpm exec playwright install chromium\n",
-  );
-  servidor.close();
-  process.exit(0);
-}
-const pagina = await navegador.newPage();
+const plantilla = readFileSync(join(DIST, "index.html"), "utf8");
 const problemas = [];
-pagina.on("pageerror", (e) => problemas.push(String(e)));
 
 for (const { ruta } of RUTAS) {
-  await pagina.goto(`http://127.0.0.1:${puerto}${ruta}`, { waitUntil: "networkidle" });
-  // El componente de SEO escribe el head en un efecto, asi que hay que esperarlo.
-  await pagina.waitForFunction(() => !!document.querySelector('link[rel="canonical"]'), { timeout: 15000 });
-  await pagina.waitForTimeout(400);
+  const { cuerpo, cabeza } = render(ruta);
 
-  const html = await pagina.content();
-  const encabezados = await pagina.evaluate(() => document.querySelectorAll("h1").length);
-  // SE ESCRIBEN LAS DOS FORMAS, y no es redundancia. Los alojamientos estaticos se reparten entre
-  // dos convenciones para una URL sin extension: unos buscan `ruta/index.html` y otros `ruta.html`.
-  // Con solo la primera, pedir `/declaracion-de-renta-2026` (que es justo la URL canonica) devolvia
-  // el HTML de la portada, con su titulo y su contenido. Un rastreador habria visto dos direcciones
-  // sirviendo lo mismo y ninguna de las dos habria sido la guia.
+  // La cabeza de la ruta reemplaza la del index.html, que es la de la portada. Sin esto, las cinco
+  // paginas saldrian con el mismo titulo y la misma canonica.
+  let html = plantilla.replace(
+    /<title>[\s\S]*?<\/title>/,
+    () => cabeza.split("\n")[0],
+  );
+  const resto = cabeza.split("\n").slice(1).join("\n");
+  html = html
+    // Fuera las etiquetas de la portada que la ruta vuelve a declarar, para no duplicarlas.
+    .replace(/\s*<meta name="description"[^>]*>/g, "")
+    .replace(/\s*<meta name="robots"[^>]*>/g, "")
+    .replace(/\s*<link rel="canonical"[^>]*>/g, "")
+    .replace(/\s*<meta property="og:[^>]*>/g, "")
+    .replace(/\s*<meta name="twitter:[^>]*>/g, "")
+    .replace("</head>", `${resto}\n  </head>`)
+    .replace('<div id="root"></div>', `<div id="root">${cuerpo}</div>`);
+
   const destinos =
     ruta === "/"
       ? [join(DIST, "index.html")]
@@ -100,13 +56,12 @@ for (const { ruta } of RUTAS) {
     writeFileSync(salida, html);
   }
 
-  const kb = Math.round(html.length / 1024);
+  const encabezados = (html.match(/<h1[ >]/g) ?? []).length;
   if (encabezados !== 1) problemas.push(`${ruta}: ${encabezados} etiquetas h1 (debe haber una)`);
-  console.log(`  ${ruta.padEnd(30)} ${String(kb).padStart(4)} kB   h1=${encabezados}`);
+  console.log(
+    `  ${ruta.padEnd(34)} ${String(Math.round(html.length / 1024)).padStart(4)} kB   h1=${encabezados}`,
+  );
 }
-
-await navegador.close();
-servidor.close();
 
 if (problemas.length) {
   console.error("\nprerender: problemas encontrados");

@@ -37,7 +37,7 @@ const SECCIONES = [
   ["preguntas", "Preguntas frecuentes"],
 ];
 
-const PREGUNTAS = [
+export const PREGUNTAS = [
   ["¿Cuánto es la multa por no declarar renta en Colombia?",
    `Si presentas tarde por tu cuenta, la sanción es del 5% del impuesto a cargo por cada mes o fracción de mes de retraso, sin pasar del 100% del impuesto. Si no te resultaba impuesto a cargo, es el 0,5% de tus ingresos brutos por mes. Ninguna sanción puede quedar por debajo de la mínima, que en 2026 es ${pesos(MINIMA)}.`],
   ["¿Qué pasa si no declaro renta y la DIAN se da cuenta?",

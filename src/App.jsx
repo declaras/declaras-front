@@ -388,19 +388,20 @@ function ClaraWorkspace({ start }) {
   );
 }
 
+export const FAQS_PORTADA = [
+  ["¿Es seguro darle mi clave de la DIAN?", "Sí. La conexión va cifrada, tu clave nunca pasa por WhatsApp y puedes pedir que la borremos al terminar."],
+  ["¿Clara presenta por mí?", "No. Clara prepara todo, pero la firma y la presentación siempre las haces tú."],
+  ["¿Qué pasa si no estoy obligado a declarar?", "Te lo decimos gratis y te damos una constancia que puedes usar con tu banco."],
+  ["¿Y si ya tengo contador?", "Puedes usar Clara para comparar, organizar tus soportes o llegar a tu contador con un borrador claro."],
+  ["¿Cuánto cuesta y qué incluye?", "$50.000, un solo pago, sea que seas asalariado o independiente. Incluye la consulta de tu información, la búsqueda de ahorros con soporte y el formulario diligenciado. Solo pagas si decides presentar."],
+  ["¿Todo se hace por WhatsApp?", "Sí. Contestas por chat y ahí mismo recibes tu resultado. Solo se abre una página segura para dos cosas: escribir tu clave de la DIAN y pagar. Nunca vas a tener que crear un usuario ni recordar otra contraseña."],
+  ["¿Qué pasa si la DIAN me hace un requerimiento?", "Te ayudamos a entenderlo. Si ocurrió por un error nuestro, la corrección va por nuestra cuenta."],
+  ];
+
 function Landing({ goTo }) {
   const [faqOpen, setFaqOpen] = useState(0);
   const [headerSolid, setHeaderSolid] = useState(false);
   const heroRef = useRef(null);
-  const faqs = [
-    ["¿Es seguro darle mi clave de la DIAN?", "Sí. La conexión va cifrada, tu clave nunca pasa por WhatsApp y puedes pedir que la borremos al terminar."],
-    ["¿Clara presenta por mí?", "No. Clara prepara todo, pero la firma y la presentación siempre las haces tú."],
-    ["¿Qué pasa si no estoy obligado a declarar?", "Te lo decimos gratis y te damos una constancia que puedes usar con tu banco."],
-    ["¿Y si ya tengo contador?", "Puedes usar Clara para comparar, organizar tus soportes o llegar a tu contador con un borrador claro."],
-    ["¿Cuánto cuesta y qué incluye?", "$50.000, un solo pago, sea que seas asalariado o independiente. Incluye la consulta de tu información, la búsqueda de ahorros con soporte y el formulario diligenciado. Solo pagas si decides presentar."],
-    ["¿Todo se hace por WhatsApp?", "Sí. Contestas por chat y ahí mismo recibes tu resultado. Solo se abre una página segura para dos cosas: escribir tu clave de la DIAN y pagar. Nunca vas a tener que crear un usuario ni recordar otra contraseña."],
-    ["¿Qué pasa si la DIAN me hace un requerimiento?", "Te ayudamos a entenderlo. Si ocurrió por un error nuestro, la corrección va por nuestra cuenta."],
-  ];
 
   const start = () => goTo("whatsapp");
   useEffect(() => {
@@ -433,7 +434,7 @@ function Landing({ goTo }) {
     "@context": "https://schema.org",
     "@type": "FAQPage",
     "@id": `${SITIO}/#preguntas`,
-    mainEntity: faqs.map(([pregunta, respuesta]) => ({
+    mainEntity: FAQS_PORTADA.map(([pregunta, respuesta]) => ({
       "@type": "Question",
       name: pregunta,
       acceptedAnswer: { "@type": "Answer", text: respuesta },
@@ -619,7 +620,7 @@ function Landing({ goTo }) {
               <div className="faq-help"><MessageCircle size={20} /><div><strong>¿Te quedó otra duda?</strong><p>Pregúntale directamente a Clara por WhatsApp.</p></div><ArrowRight size={18} /></div>
             </div>
             <div className="accordion">
-              {faqs.map(([q, a], i) => (
+              {FAQS_PORTADA.map(([q, a], i) => (
                 <button className={`faq-item ${faqOpen === i ? "open" : ""}`} key={q} onClick={() => setFaqOpen(faqOpen === i ? -1 : i)}>
                   <small>0{i + 1}</small><span>{q}</span><ChevronDown size={20} />
                   <p>{a}</p>
