@@ -52,6 +52,17 @@ let navegador;
 try {
   navegador = await chromium.launch();
 } catch (error) {
+  // El motivo se escribe al sitio publicado. En un servidor de construccion ajeno no hay forma de
+  // leer el log desde aca, y sin el motivo solo se puede adivinar por que no hubo prerenderizado.
+  // Es un archivo de texto, sin nada sensible, y se quita cuando esto quede resuelto.
+  try {
+    writeFileSync(
+      join(DIST, "_prerender.txt"),
+      `sin prerenderizado\n${new Date().toISOString()}\n\n${String(error)}\n`,
+    );
+  } catch {
+    /* si ni eso se puede escribir, el aviso del log tendra que bastar */
+  }
   // Pasa cuando el navegador no esta descargado, que es lo que ocurre en un servidor de
   // construccion recien creado: el paquete de npm no lo trae, vive en una cache aparte.
   console.warn(
