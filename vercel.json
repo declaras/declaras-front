@@ -1,0 +1,38 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+
+  "//": [
+    "Sin este archivo Vercel adivinaba: detectaba Vite y corria 'vite build' a secas, asi que ni el",
+    "sitemap ni el prerenderizado se ejecutaban. El resultado era un despliegue en verde con las",
+    "cuatro guias y el sitemap devolviendo 404, que es la peor forma de fallar porque nada avisa.",
+    "",
+    "installCommand tambien baja el navegador que usa el prerenderizado. No viene con el paquete de",
+    "npm: vive en una cache aparte, asi que 'pnpm install' lo deja fuera.",
+    "",
+    "cleanUrls hace que /declaracion-de-renta-2026 sirva declaracion-de-renta-2026.html, que es una",
+    "de las dos formas que escribe el prerenderizado.",
+    "",
+    "El rewrite final es para las rutas que SI son de cliente, como /consola, que no tienen archivo.",
+    "Vercel revisa el sistema de archivos antes de aplicar rewrites, asi que no le pisa el turno a",
+    "las paginas prerenderizadas."
+  ],
+
+  "installCommand": "pnpm install --frozen-lockfile && pnpm exec playwright install chromium",
+  "buildCommand": "pnpm run build",
+  "outputDirectory": "dist",
+  "cleanUrls": true,
+  "trailingSlash": false,
+
+  "rewrites": [{ "source": "/((?!.*\\.[a-zA-Z0-9]+$).*)", "destination": "/index.html" }],
+
+  "headers": [
+    {
+      "source": "/assets/(.*)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+    },
+    {
+      "source": "/sitemap.xml",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }]
+    }
+  ]
+}

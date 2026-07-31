@@ -48,7 +48,21 @@ const puerto = await new Promise((listo) => {
   servidor.listen(0, () => listo(servidor.address().port));
 });
 
-const navegador = await chromium.launch();
+let navegador;
+try {
+  navegador = await chromium.launch();
+} catch (error) {
+  // Pasa cuando el navegador no esta descargado, que es lo que ocurre en un servidor de
+  // construccion recien creado: el paquete de npm no lo trae, vive en una cache aparte.
+  console.warn(
+    "\n  AVISO: no se pudo abrir el navegador, asi que NO hay prerenderizado.\n" +
+      `  ${String(error).split("\n")[0]}\n` +
+      "  El sitio se publica igual, pero las paginas llegaran vacias a un rastreador.\n" +
+      "  Instala el navegador en el despliegue con: pnpm exec playwright install chromium\n",
+  );
+  servidor.close();
+  process.exit(0);
+}
 const pagina = await navegador.newPage();
 const problemas = [];
 pagina.on("pageerror", (e) => problemas.push(String(e)));

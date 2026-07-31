@@ -43,8 +43,15 @@ if (!process.env.VITE_WHATSAPP) {
 }
 const dato = (html, re) => html.match(re)?.[1]?.trim() ?? null;
 
+let sinPrerender = 0;
 for (const { ruta } of RUTAS) {
   const archivo = ruta === "/" ? "dist/index.html" : join("dist", ruta, "index.html");
+  // Sin prerenderizado no hay nada que auditar en esa ruta. Se cuenta y se sigue: el aviso ya lo
+  // dio el prerenderizador, y frenar aca solo impediria publicar.
+  if (!existsSync(archivo)) {
+    sinPrerender += 1;
+    continue;
+  }
   // Las dos convenciones de los alojamientos estaticos. Sin la plana, pedir la URL canonica
   // devolvia el HTML de la portada.
   if (ruta !== "/" && !existsSync(join("dist", `${ruta}.html`))) {
@@ -73,6 +80,14 @@ for (const { ruta } of RUTAS) {
       fallas.push(`${ruta}: hay datos estructurados que no son JSON valido`);
     }
   }
+  // La cascara sin prerenderizar: el HTML que sale de Vite trae un <div id="root"> vacio, asi que
+  // no tiene encabezados ni texto. Auditarla no dice nada util y frenaria el despliegue por algo
+  // que ya se aviso arriba.
+  if (h1.length === 0 && palabras < 60) {
+    sinPrerender += 1;
+    continue;
+  }
+
   const sinAlt = [...html.matchAll(/<img(?![^>]*\balt=)[^>]*>/g)].length;
 
   // La barra de pantallas del prototipo no puede quedar en el HTML indexable: era lo primero que
@@ -112,6 +127,12 @@ for (const { ruta } of RUTAS) {
   if (sinEtiqueta) fallas.push(`${ruta}: ${sinEtiqueta} campo(s) sin etiqueta asociada`);
   if (proto) fallas.push(`${ruta}: el HTML trae la barra de pantallas del prototipo`);
   if (marcador) fallas.push(`${ruta}: hay texto de marcador de posicion "[IMAGEN: ...]" en el HTML`);
+}
+
+if (sinPrerender) {
+  console.warn(
+    `\n  AVISO: ${sinPrerender} ruta(s) sin prerenderizar, asi que llegan vacias a un rastreador.\n`,
+  );
 }
 
 if (fallas.length) {
