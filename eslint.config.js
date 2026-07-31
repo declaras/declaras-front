@@ -46,7 +46,9 @@ export default [
     },
   },
   {
-    files: ["scripts/**/*.mjs", "*.config.js"],
+    // `server.mjs` es el servidor de produccion: corre en Node, no en el navegador. Va con los
+    // scripts y no aparte porque comparte exactamente esa condicion.
+    files: ["scripts/**/*.mjs", "server.mjs", "*.config.js"],
     languageOptions: { globals: { ...globals.node } },
   },
   {
