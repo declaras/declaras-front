@@ -7,3 +7,4 @@ dist-ssr
 # El sitemap se genera en cada build con las fechas reales de los archivos. Versionarlo solo
 # produciria ruido en cada commit y, peor, se quedaria viejo si alguien lo edita a mano.
 public/sitemap.xml
+package-lock.json
