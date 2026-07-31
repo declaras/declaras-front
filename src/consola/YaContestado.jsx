@@ -28,7 +28,7 @@
  */
 
 import { useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router";
 
 import { api } from "./api";
 import { useAction } from "./hooks";

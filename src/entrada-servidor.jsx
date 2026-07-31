@@ -1,6 +1,6 @@
 import { renderToString } from "react-dom/server";
-// En react-router 7, StaticRouter sale del paquete principal, no de un subcamino /server.
-import { StaticRouter } from "react-router-dom";
+// StaticRouter sale del paquete principal, no de un subcamino /server.
+import { StaticRouter } from "react-router";
 
 import App, { FAQS_PORTADA } from "./App";
 import Consola from "./consola/Consola";

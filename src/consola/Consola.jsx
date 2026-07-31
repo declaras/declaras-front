@@ -7,7 +7,7 @@
  * cada vez que se le agrega algo a la del contador.
  */
 
-import { NavLink, Route, Routes } from "react-router-dom";
+import { NavLink, Route, Routes } from "react-router";
 
 import { api } from "./api";
 import { useApi } from "./hooks";

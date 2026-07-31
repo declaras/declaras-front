@@ -20,7 +20,7 @@
  */
 
 import { useCallback, useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router";
 import { ArrowLeft, ArrowRight, RefreshCw, Upload } from "lucide-react";
 
 import { api } from "./api";

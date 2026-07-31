@@ -15,7 +15,7 @@
  */
 
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { ArrowRight, Plus } from "lucide-react";
 
 import { api } from "./api";
