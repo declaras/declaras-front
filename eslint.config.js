@@ -46,9 +46,9 @@ export default [
     },
   },
   {
-    // `server.mjs` es el servidor de produccion: corre en Node, no en el navegador. Va con los
-    // scripts y no aparte porque comparte exactamente esa condicion.
-    files: ["scripts/**/*.mjs", "server.mjs", "*.config.js"],
+    // La funcion de `api/` corre en Node (en Vercel), no en el navegador. Va con los scripts
+    // porque comparte exactamente esa condicion.
+    files: ["scripts/**/*.mjs", "api/**/*.js", "*.config.js"],
     languageOptions: { globals: { ...globals.node } },
   },
   {
