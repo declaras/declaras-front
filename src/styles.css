@@ -1,4 +1,3 @@
-@import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600&display=swap");
 @import "tailwindcss";
 
 :root {
@@ -40,8 +39,6 @@ h3, p { margin-top: 0; }
 .screen-transition { animation: screen-fade .45s ease both; }
 @keyframes screen-fade { from { opacity:0; } to { opacity:1; } }
 @keyframes screen-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-.reveal { animation: reveal .75s cubic-bezier(.2,.8,.2,1) both; }
-.reveal-delay { animation-delay: .12s; }
 @keyframes reveal { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: none; } }
 
 .logo { border:0;padding:0;display:inline-flex;align-items:center;gap:9px;color:var(--ink);background:transparent;font:600 29px/1 "Fraunces",serif;letter-spacing:-.04em;cursor:pointer; }
@@ -74,26 +71,105 @@ h3, p { margin-top: 0; }
 .nav-inner nav a:hover { color: white; }
 .nav-inner .button { min-height: 44px; }
 
-.hero-story { --story:0;height:215vh;position:relative;color:white;background:#071712; }
+.hero-story { --story:0;height:132vh;position:relative;color:white;background:#071712; }
 .hero-sticky { height: calc(100vh - 50px); position: sticky; top: 0; overflow: hidden; }
 .workspace-scene { width: 100%; height: 100%; position: relative; overflow: hidden; isolation: isolate; background: #0a211a; }
-.workspace-camera { position: absolute; z-index: -9; left: 50%; top: 50%; width: max(100vw,150vh); aspect-ratio: 3 / 2; transform: translate(-50%,-50%) scale(calc(1 + var(--story) * 2)); transform-origin: 52.8% 59%; will-change: transform; }
-.workspace-camera picture { display:block;width:100%;height:100%; }
-.workspace-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: brightness(calc(.63 + var(--story) * .18)) saturate(calc(.88 + var(--story) * .12)); }
-.workspace-vignette { position: absolute; z-index: -3; inset: 0; background:
-  linear-gradient(to bottom, rgba(7,20,16,.48) 0%, rgba(7,20,16,.2) 37%, rgba(7,20,16,.1) 62%, rgba(7,20,16,.36) 100%),
-  radial-gradient(ellipse at 50% 30%, transparent 28%, rgba(4,15,11,.25) 100%);
-  opacity: clamp(.2, calc(1 - var(--story) * .7), 1);
+.workspace-camera { position: absolute; z-index: -9; inset: 0; overflow: hidden; }
+/* El fondo es una franja de montañas al amanecer anclada arriba, que se desvanece hacia el verde
+   oscuro con una máscara. Solo atmósfera: no hay ningún objeto que el titular tenga que desmentir.
+   Con el scroll sube el brillo, así que entrar al sitio equivale a que amanezca. */
+.workspace-photo {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 62%;
+  object-fit: cover;
+  object-position: 50% 38%;
+  transform: translateY(calc(var(--story) * -22px));
+  will-change: transform;
+  filter: brightness(calc(.72 + var(--story) * .18)) saturate(calc(.92 + var(--story) * .12));
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,.95) 0%, rgba(0,0,0,.8) 42%, transparent 100%);
+  mask-image: linear-gradient(to bottom, rgba(0,0,0,.95) 0%, rgba(0,0,0,.8) 42%, transparent 100%);
 }
-.workspace-copy { position: absolute; z-index: 6; top: clamp(56px, 7vh, 76px); left: 50%; width: min(840px, calc(100% - 40px)); text-align: center; transform: translateX(-50%) translateY(calc(var(--story) * -90px)); opacity: clamp(0, calc(1 - var(--story) * 2.5), 1); }
-.workspace-copy .eyebrow { display:flex;align-items:center;justify-content:center;gap:11px;margin-bottom:10px; }
+/* El velo que asienta el texto sobre el horizonte. */
+.workspace-vignette { position: absolute; z-index: -3; inset: 0; background:
+  linear-gradient(to bottom, rgba(5,17,13,.3) 0%, rgba(5,17,13,.24) 26%, rgba(5,17,13,.5) 62%, rgba(5,17,13,.82) 100%);
+  opacity: clamp(.4, calc(1 - var(--story) * .4), 1);
+}
+/* Es el protagonista: el canal del producto es WhatsApp y esta es la primera cosa que se ve. El
+   recorte ya trae sus etiquetas de certificados y ahorro, así que no hace falta agregar nada. */
+.hero-fono {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 3vh 0;
+}
+.hero-fono picture { display: contents; }
+.hero-fono img {
+  max-height: 100%;
+  max-width: 100%;
+  width: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 40px 70px rgba(0, 0, 0, 0.45));
+  /* Entra con el scroll, un poco más despacio que el texto: da profundidad sin pelear con él. */
+  transform: translateY(calc(var(--story) * -34px));
+}
+
+/* ── el gancho del hero: precio y canal, en el titular ── */
+.workspace-hooks {
+  list-style: none;
+  margin: 20px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+}
+/* Cada gancho lleva su propio velo: van sobre el horizonte y sin fondo el texto se pierde
+   contra el cielo, que es la zona más clara de la imagen. */
+.workspace-hooks li {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(6, 26, 20, 0.5);
+  backdrop-filter: blur(6px);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 13.5px;
+  line-height: 1.3;
+}
+.workspace-hooks svg { color: #36d49a; flex: 0 0 auto; }
+
+/* ── el hero en dos columnas ── */
+/* El texto a un lado y el teléfono al otro. Centrado sobre la foto, el subtítulo caía sobre la
+   pantalla del aparato y se volvía ilegible. */
+.hero-dos {
+  position: absolute;
+  z-index: 6;
+  inset: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.82fr);
+  align-items: center;
+  gap: 40px;
+  width: min(1240px, calc(100% - 80px));
+  margin-inline: auto;
+  padding-top: 40px;
+  transform: translateY(calc(var(--story) * -70px));
+  /* NO baja hasta cero. Un sticky que se despega todavia tiene que recorrer su propio alto para
+     salir de pantalla, asi que con el contenido ya invisible quedaban 850 px de scroll mostrando el
+     fondo pelado. Se atenua un poco y nada mas: el hero sale con su contenido puesto. */
+  opacity: calc(1 - var(--story) * 0.28);
+}
+.workspace-copy { text-align: left; }
+.workspace-copy .eyebrow { display:flex;align-items:center;gap:11px;margin-bottom:12px; }
 .workspace-copy .eyebrow::before,.workspace-copy .eyebrow::after { content:"";width:28px;height:1px;background:rgba(137,220,191,.48); }
-.workspace-copy h1 { font-size:clamp(56px,6.8vw,92px);line-height:.92;text-wrap:balance;text-shadow:0 2px 35px rgba(0,0,0,.28); }
+.workspace-copy h1 { font-size:clamp(44px,5.4vw,74px);line-height:.96;text-wrap:balance;text-shadow:0 2px 35px rgba(0,0,0,.28); }
 .workspace-copy h1 em { color: #d9f1e7; font-weight: 400; }
-.workspace-copy > p { max-width:820px;margin:0 auto 25px;color:rgba(255,255,255,.78);font-size:15px;text-shadow:0 2px 18px rgba(0,0,0,.3); }
-.hero-actions { display: flex; flex-wrap: wrap; gap: 12px; }
-.workspace-copy .hero-actions { justify-content: center; }
-.workspace-actions { position:absolute;z-index:9;left:50%;bottom:clamp(76px,11vh,96px);display:flex;align-items:center;justify-content:center;gap:14px;transform:translateX(-50%) translateY(calc(var(--story) * 35px));opacity:clamp(0,calc(1 - var(--story) * 3),1);white-space:nowrap; }
+.workspace-copy > p { max-width:520px;margin:18px 0 0;color:rgba(255,255,255,.84);font-size:16px;line-height:1.62;text-shadow:0 2px 18px rgba(0,0,0,.34); }
+.workspace-actions { display:flex;align-items:center;gap:16px;margin-top:30px;flex-wrap:wrap; }
 .workspace-actions .button { box-shadow:0 14px 35px rgba(3,20,14,.32); }
 .text-action { min-height: 52px; display: inline-flex; align-items: center; gap: 8px; padding: 0 12px; color: rgba(255,255,255,.82); font-size: 14px; font-weight: 600; }
 .text-action span { animation: cue-bounce 1.8s ease-in-out infinite; }
@@ -122,15 +198,9 @@ h3, p { margin-top: 0; }
 .audit-events strong { font-size:11px; }.audit-events p{margin:4px 0 0;color:#829f94;font-size:9px}
 .audit-footer { display:flex;gap:12px;align-items:center;margin:0 24px 24px;padding:15px 17px;border-radius:13px;color:#8eaaa0;background:rgba(255,255,255,.055);font-size:9px; }
 .audit-footer svg{color:#72dcb3}.audit-footer span,.audit-footer b{display:block}.audit-footer b{margin-bottom:3px;color:#d9e8e2;font-size:10px}
-.logo-placeholder { color: #8c9791; letter-spacing: .05em; }
-.kinetic-strip { overflow: hidden; padding: 20px 0; color: #d8efe6; background: var(--forest); }
-.kinetic-strip > div { width: max-content; display: flex; align-items: center; gap: 30px; animation: strip-move 24s linear infinite; }
-.kinetic-strip span { font: 500 clamp(22px,3vw,36px)/1 "Fraunces",serif; letter-spacing: -.02em; }
-.kinetic-strip i { color: #6dd8ae; font-style: normal; font-size: 13px; }
 @keyframes strip-move { to { transform: translateX(-50%); } }
 .section { padding: 110px 0; }
 .section-heading { text-align: center; max-width: 700px; margin: 0 auto 52px; }
-.section-heading.wide { max-width: 800px; }
 .section-heading h2, .magic h2, .security h2, .faq h2, .final-cta h2 { font-size: clamp(36px, 4vw, 45px); }
 .section-heading > p { max-width: 720px; margin: 22px auto 0; color: var(--muted); font-size: 17px; }
 .problem,.honest,.security,.faq { position:relative;overflow:clip;isolation:isolate; }
@@ -148,7 +218,7 @@ h3, p { margin-top: 0; }
 .compare-icon { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 12px; color: #78857f; background: #f2f1ed; }
 .good .compare-icon { color: var(--brand); background: #e8f8f2; }
 .compare-metric { display: flex; align-items: baseline; gap: 8px; text-align: right; }
-.compare-metric strong { color: #a6afa9; font: 500 56px/.8 "Fraunces",serif; letter-spacing: -.06em; }
+.compare-metric strong { color: #a6afa9; font: 500 40px/.9 "Fraunces",serif; letter-spacing: -.045em; white-space: nowrap; }
 .good .compare-metric strong { color: var(--brand); }
 .compare-metric span { width: 72px; color: var(--muted); font-size: 9px; line-height: 1.15; text-transform: uppercase; letter-spacing: .06em; }
 .compare-card h3 { margin: 24px 0; font-size: 21px; }
@@ -161,12 +231,10 @@ h3, p { margin-top: 0; }
 .process-intro { display:grid;grid-template-columns:1.25fr .75fr;gap:70px;align-items:end;margin-bottom:60px; }
 .process-intro h2 { max-width: 700px; font-size: clamp(42px,5vw,62px); }
 .process-intro > p { max-width:350px;margin:0 0 6px;color:var(--muted);font-size:16px; }
-.process-showcase { display:grid;grid-template-columns:.9fr 1.1fr;gap:65px;align-items:center; }
-.process-phone-stage { min-height:620px;position:relative;display:grid;place-items:center; }
-.process-phone-stage::before { content:"";position:absolute;width:82%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle,rgba(58,211,153,.16),rgba(38,161,117,.045) 44%,transparent 70%);filter:blur(14px);animation:halo-breathe 5s ease-in-out infinite; }
+/* Un solo bloque desde que esta sección dejó de tener fotografía: la única disponible mostraba un
+   portátil, justo al lado del paso que dice "hablas por WhatsApp, no llenas formularios". */
+.process-showcase { display:grid;grid-template-columns:1fr;max-width:920px; }
 @keyframes halo-breathe {50%{transform:scale(1.06);opacity:.65}}
-.process-phone-art { position:relative;z-index:2;width:125%;height:780px;object-fit:contain;filter:drop-shadow(0 32px 48px rgba(9,43,31,.2));transition:transform .6s cubic-bezier(.2,.75,.2,1); }
-.process-phone-stage:hover .process-phone-art { transform:translateY(-9px) scale(1.015); }
 .process-chapters { border-top:1px solid var(--line); }
 .process-chapter { min-height:155px;display:grid;grid-template-columns:55px 1fr auto;gap:22px;align-items:center;border-bottom:1px solid var(--line);transition:padding .35s,background .35s; }
 .process-chapter:hover { padding-inline:18px;background:rgba(14,159,110,.035); }
@@ -189,63 +257,7 @@ h3, p { margin-top: 0; }
 .magic-chapter p { max-width:410px;margin:0;color:#a9c2b8;font-size:15px;line-height:1.7; }
 .magic-payment-note { display:flex;align-items:center;gap:8px;margin:10vh 0 0;color:#8faea2;font-size:11px; }
 .magic-visual-column { position:sticky;top:50px;height:100vh;display:flex;align-items:center; }
-.magic-product { width:100%;min-height:590px;overflow:hidden;border:1px solid rgba(255,255,255,.15);border-radius:28px;background:rgba(5,24,18,.72);box-shadow:0 50px 100px rgba(0,0,0,.3);backdrop-filter:blur(18px); }
-.magic-product-top { height:78px;display:grid;grid-template-columns:1fr auto auto;gap:22px;align-items:center;padding:0 28px;border-bottom:1px solid rgba(255,255,255,.08); }
-.magic-product-top .logo { pointer-events:none; }
-.magic-product-top .brand-mark { width:23px;height:23px; }
-.magic-product-top .logo-word { font-size:21px; }
-.magic-product-top > div { display:flex;align-items:center;gap:8px;color:#a8c1b7;font-size:10px; }
-.magic-product-top > div i { width:7px;height:7px;border-radius:50%;background:#36d49a;box-shadow:0 0 0 5px rgba(54,212,154,.12);animation:magic-pulse 1.8s ease-in-out infinite; }
-.magic-product-top > small { color:#6f9184;font-size:9px; }
-.magic-progress { height:2px;background:rgba(255,255,255,.06); }
-.magic-progress span { height:100%;display:block;background:linear-gradient(90deg,#28c78e,#7ce1bb);transition:width .65s cubic-bezier(.2,.75,.2,1); }
-.magic-screen { position:relative;min-height:510px; }
-.magic-panel { position:absolute;inset:0;display:flex;flex-direction:column;padding:54px;color:var(--ink);background:#f7f6f1;opacity:0;transform:translateY(35px) scale(.96);filter:blur(7px);pointer-events:none;transition:opacity .5s ease,transform .65s cubic-bezier(.2,.8,.2,1),filter .45s ease; }
-.magic-panel.active { opacity:1;transform:none;filter:none;pointer-events:auto; }
-.panel-kicker { display:flex;align-items:center;gap:8px;color:var(--brand);font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase; }
-.magic-panel > h3 { margin:15px 0 30px;font:500 36px/1.05 "Fraunces",serif; }
-.source-summary { display:grid;grid-template-columns:.55fr 1fr;gap:12px;margin-bottom:25px; }
-.source-summary span { min-height:105px;display:flex;flex-direction:column;justify-content:space-between;padding:19px;border:1px solid #dce7e1;border-radius:16px;background:white; }
-.source-summary small { color:var(--muted);font-size:10px; }
-.source-summary strong { font:600 27px/1 "Inter",sans-serif; }
-.source-files { border-top:1px solid var(--line); }
-.source-files span { min-height:51px;display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;border-bottom:1px solid var(--line);color:#53645c;font-size:12px; }
-.source-files svg { color:var(--brand); }
-.source-files b { color:var(--brand);font-size:10px; }
-.opportunity-list { display:grid;gap:11px; }
-.opportunity-list > span { min-height:82px;display:grid;grid-template-columns:auto 1fr auto;gap:13px;align-items:center;padding:17px;border:1px solid #dce7e1;border-radius:15px;background:white; }
-.opportunity-list > span > svg { color:var(--brand); }
-.opportunity-list i { display:flex;flex-direction:column;gap:4px;font-style:normal; }
-.opportunity-list b { font-size:12px; }
-.opportunity-list small { color:var(--muted);font-size:9px; }
-.opportunity-list strong { color:var(--brand);font-size:12px; }
-.opportunity-list .rejected { border-color:#eaded9;background:#fcf8f5; }
-.opportunity-list .rejected > svg,.opportunity-list .rejected > strong { color:#a56957; }
-.magic-form { padding:38px 48px; }
-.magic-form > h3 { margin:12px 0 18px;font-size:34px; }
-.form-preview { overflow:hidden;border:1px solid #dce7e1;border-radius:16px;background:white;box-shadow:0 18px 35px rgba(25,62,47,.06); }
-.form-preview-top { height:38px;display:flex;align-items:center;justify-content:space-between;padding:0 17px;color:#52655c;background:#edf3f0;font-size:10px; }
-.form-preview-top b { color:var(--brand);letter-spacing:.08em; }
-.form-field { min-height:48px;display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:center;padding:8px 17px;border-top:1px solid var(--line); }
-.form-field small { color:var(--muted);font-size:9px; }
-.form-field strong { font-size:13px; }
-.form-field svg { color:var(--brand); }
-.magic-form.active .form-field { animation:form-fill .45s both ease-out; }
-.magic-form.active .form-field:nth-child(3) { animation-delay:.12s; }
-.magic-form.active .form-field:nth-child(4) { animation-delay:.24s; }
-.form-ready { display:flex;align-items:center;gap:11px;margin:9px;padding:10px;border-radius:11px;color:var(--brand);background:#e5f5ee; }
-.form-ready span,.form-ready b,.form-ready small { display:block; }
-.form-ready b { font-size:11px; }
-.form-ready small { margin-top:2px;color:#668076;font-size:8px; }
-.form-control-note { display:flex;align-items:center;gap:7px;margin:16px 2px 0;color:#65776e;font-size:10px; }
 @keyframes form-fill { from { opacity:.2;transform:translateX(-14px); } to { opacity:1;transform:none; } }
-.magic-result { justify-content:center; }
-.magic-result > h3 { margin-bottom:38px; }
-.result-row { display:flex;justify-content:space-between;align-items:center;padding:13px 0;color:var(--muted);font-size:13px; }
-.result-row strong { color:var(--ink);font-size:18px; }
-.result-total { display:flex;justify-content:space-between;align-items:end;margin-top:20px;padding-top:26px;border-top:1px solid var(--line);color:var(--brand);font-weight:700; }
-.result-total strong { font-size:36px;line-height:1; }
-.result-check { display:flex;align-items:center;gap:8px;margin-top:35px;padding:13px 16px;border-radius:12px;color:#3a6757;background:#e5f5ee;font-size:11px; }
 @keyframes magic-pulse { 50% { opacity:.45;transform:scale(.8); } }
 .savings-card { width: min(510px, 100%); margin-top: 42px; padding: 29px 32px; color: var(--ink); text-align: left; border-radius: 20px; background: white; box-shadow: 0 28px 60px rgba(0,0,0,.2); }
 .savings-row, .savings-total { display: flex; justify-content: space-between; gap: 20px; align-items: baseline; }
@@ -295,7 +307,6 @@ h3, p { margin-top: 0; }
 .pricing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; max-width: 880px; margin: auto; }
 .price-card { position: relative; padding: 36px; border-radius: 20px; background: white; box-shadow: var(--shadow); }
 .price-card.featured { border: 1.5px solid var(--brand); transform: translateY(-10px); }
-.featured-label { position:absolute;top:0;right:24px;padding:7px 14px 8px;border-radius:0 0 12px 12px;color:white;background:var(--brand);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em; }
 .price-card h3 { min-height: 48px; font-size: 20px; }
 .price { margin-top: 14px; font: 500 38px/1 "Fraunces", serif; }
 .once { color: var(--muted); font-size: 11px; }
@@ -457,12 +468,10 @@ footer { position:relative;padding:0;color:#d6ded9;background:#07130f; }
 .wa-stage-copy .logo { display: block; margin-bottom: 90px; }
 .wa-stage-copy h1 { font-size: clamp(46px, 5vw, 66px); }
 .wa-stage-copy > p { margin: 24px 0 32px; color: #b8cec5; font-size: 17px; }
+.wa-phone-wrap picture { display: contents; }
 .wa-phone-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 50px; background: rgba(255,255,255,.025); }
 .wa-generated-art { width:min(520px,90%); max-height:calc(100vh - 110px); object-fit:contain; filter:drop-shadow(0 35px 65px rgba(0,0,0,.32)); animation:art-float 5s ease-in-out infinite; }
 @keyframes art-float{50%{transform:translateY(-9px)}}
-.phone-full { width: 360px; max-height: calc(100vh - 120px); transform: rotate(-1.5deg); }
-.phone-full .whatsapp { font-size: 11.5px; }
-.phone-full .wa-body { overflow-y: auto; }
 .wa-phone-wrap > span { margin-top: 20px; color: #8fb4a6; font-size: 9px; letter-spacing: .05em; }
 
 @supports (animation-timeline: view()) {
@@ -499,15 +508,11 @@ footer { position:relative;padding:0;color:#d6ded9;background:#07130f; }
   .nav-inner nav { display: none; }
   .comparison-grid, .pricing-grid, .security-grid, .faq-grid { grid-template-columns: 1fr; }
   .magic-story { grid-template-columns:minmax(280px,.75fr) minmax(420px,1.25fr);gap:36px; }
-  .magic-product { min-height:540px; }
-  .magic-screen { min-height:462px; }
-  .magic-panel { padding:38px; }
   .security-grid, .faq-grid { gap: 40px; }
   .traffic-grid { gap: 14px; }
   .process-intro { gap: 35px; }
   .credibility-editorial { gap:45px; }
   .process-showcase { grid-template-columns:.85fr 1.15fr; gap:38px; }
-  .process-phone-stage { min-height:650px; }
   .wa-screen { grid-template-columns: .8fr 1.2fr; }
   .wa-stage-copy { padding: 50px 30px; }
   .final-cta-grid { gap:45px; }
@@ -520,21 +525,40 @@ footer { position:relative;padding:0;color:#d6ded9;background:#07130f; }
   .screen-tabs button { padding-inline: 11px; }
   .nav-inner { height: 64px; }
   .nav-inner .button { min-height: 40px; padding: 0 13px; font-size: 12px; }
-  .hero-story { height: 185vh; }
+  .hero-story { height: 128vh; }
   .hero-sticky { height: calc(100vh - 50px); }
-  .workspace-camera { left:50%;width:100%;height:100%;aspect-ratio:auto;transform:translate(-50%,-50%) scale(calc(1 + var(--story) * 1.2));transform-origin:50% 54%; }
-  .workspace-photo { object-position:50% 50%;filter:brightness(calc(.58 + var(--story) * .2)) saturate(calc(.86 + var(--story) * .14)); }
-  .workspace-vignette { background:linear-gradient(to bottom,rgba(5,15,12,.66) 0%,rgba(5,15,12,.26) 33%,rgba(5,15,12,.04) 55%,rgba(5,15,12,.42) 100%),radial-gradient(ellipse at 50% 32%,transparent 24%,rgba(4,15,11,.22) 100%); }
-  .workspace-copy { top: 72px; }
-  .workspace-copy h1 { font-size: clamp(45px, 13vw, 61px); }
-  .workspace-copy > p { max-width: 340px; margin-block: 17px 20px; font-size: 13px; }
-  .workspace-copy .hero-actions { flex-direction: column; align-items: center; }
+  /* Aquí sí se carga: la franja pesa 37 KB, no los 2,2 MB de la toma completa. Ocupa menos alto
+     porque el teléfono y el texto van apilados y necesitan el resto. */
+  .workspace-photo { height: 40%; }
+  .workspace-copy h1 { font-size: clamp(36px, 10.5vw, 46px); }
+  .workspace-copy > p { max-width: none; margin: 14px 0 0; font-size: 14.5px; }
   .workspace-copy .button { min-height: 46px; font-size: 13px; }
   .workspace-copy .text-action { min-height: 34px; font-size: 12px; }
-  .workspace-actions { width:calc(100% - 28px);bottom:58px;flex-direction:column;gap:3px; }
-  .workspace-actions .button { width:100%;min-height:46px;font-size:13px; }
+  .workspace-actions { margin-top: 20px; gap: 12px; }
+  .workspace-actions .button { width:100%;justify-content:center;min-height:46px;font-size:13px; }
   .workspace-actions .text-action { min-height:32px;font-size:11px; }
   .scroll-cue { display:none; }
+  .workspace-scene {
+    background:
+      radial-gradient(ellipse at 78% 8%, rgba(14, 159, 110, 0.16), transparent 58%),
+      linear-gradient(170deg, #0c2b21 0%, #08201a 52%, #061711 100%);
+  }
+  .hero-dos {
+    /* Una sola columna: el texto arriba y el teléfono debajo.
+       El encabezado es fijo y arranca a 50 px (la barra del prototipo va encima), así que ocupa
+       hasta unos 112 px. Con menos espacio, el logo se montaba sobre el "todo por WhatsApp". */
+    grid-template-columns: 1fr;
+    width: calc(100% - 40px);
+    padding-top: 124px;
+    padding-bottom: 20px;
+    align-content: start;
+    gap: 4px;
+    overflow: hidden;
+  }
+
+  .workspace-hooks { display: none; }
+  .hero-fono { margin-top: 10px; padding: 0; height: auto; align-items: flex-start; }
+  .hero-fono img { height: 42vh; max-height: none; }
   .credibility { padding:76px 0; }
   .credibility-editorial { grid-template-columns:1fr;gap:42px; }
   .section { padding: 76px 0; }
@@ -557,41 +581,38 @@ footer { position:relative;padding:0;color:#d6ded9;background:#07130f; }
   .process-intro { grid-template-columns: 1fr; gap: 22px; margin-bottom: 50px; }
   .process-intro h2 { font-size: 40px; }
   .process-showcase { grid-template-columns:1fr; gap:55px; }
-  .process-phone-stage { min-height:590px; }
-  .process-phone-art { width:138%;height:680px; }
   .process-chapter { min-height:165px; grid-template-columns:40px 1fr auto; gap:13px; }
   .process-chapter h3 { font-size:29px; }
   .price-card.featured { transform: none; }
+  /* El aparato se va ABAJO y el texto pasa por encima. Antes iba pegado arriba, y eso ponia la
+     ilustracion antes del titulo de la seccion y dejaba el texto en la mitad baja de la pantalla.
+     Leyendo de arriba hacia abajo, primero va lo que se lee y despues lo que responde.
+
+     La bandeja lleva fondo propio porque los capitulos siguientes pasan por detras mientras suben,
+     y sin el se veian cruzar el aparato. Por eso en telefono el fondo de la seccion es plano: con
+     el degradado el color de la franja baja cambiaba segun el scroll y la bandeja no podia
+     empatarlo. */
+  .magic { background: #063a2b; }
   .magic-story { display:flex;flex-direction:column;gap:0; }
-  .magic-visual-column { position:sticky;z-index:5;top:54px;order:-1;width:100%;height:52vh;min-height:430px;margin-top:28px; }
-  .magic-product { min-height:0;height:430px;border-radius:20px; }
-  .magic-product-top { height:56px;padding-inline:18px;grid-template-columns:1fr auto; }
-  .magic-product-top > div { display:none; }
-  .magic-screen { min-height:372px; }
-  .magic-panel { padding:22px; }
-  .magic-panel > h3 { margin:10px 0 18px;font-size:25px; }
-  .source-summary { margin-bottom:12px; }
-  .source-summary span { min-height:72px;padding:13px; }
-  .source-summary strong { font-size:19px; }
-  .source-files span { min-height:38px;font-size:10px; }
-  .opportunity-list { gap:7px; }
-  .opportunity-list > span { min-height:63px;padding:11px; }
-  .magic-form > h3 { margin-bottom:13px; }
-  .form-preview-top { height:34px; }
-  .form-field { min-height:44px;padding:7px 12px; }
-  .form-ready { margin:8px;padding:9px; }
-  .form-control-note { margin-top:9px; }
-  .result-row { padding:9px 0; }
-  .result-total { margin-top:12px;padding-top:18px; }
-  .result-total strong { font-size:28px; }
-  .result-check { margin-top:22px; }
-  .magic-copy { width:100%;padding:38px 0 80px; }
-  .magic-heading { margin:0 0 20vh;padding-top:30px; }
+  .magic-visual-column {
+    position: sticky;
+    top: auto;
+    bottom: 0;
+    z-index: 5;
+    width: 100%;
+    height: 46vh;
+    min-height: 320px;
+    align-items: flex-end;
+    padding-bottom: 12px;
+    background: linear-gradient(to bottom, rgba(6,58,43,0) 0%, rgba(6,58,43,.93) 22%, #063a2b 44%);
+  }
+  .magic-copy { width:100%;padding:38px 0 6vh; }
+  .magic-heading { margin:0 0 12vh;padding-top:30px; }
   .magic-heading h2 { font-size:38px; }
-  .magic-chapter { min-height:50vh;grid-template-columns:40px 1fr;gap:14px;opacity:.34; }
-  .magic-chapter h3 { font-size:31px; }
-  .magic-chapter p { font-size:13px; }
-  .magic-payment-note { margin-top:4vh; }
+  .magic-chapter { min-height:27vh;grid-template-columns:40px 1fr;gap:14px;opacity:.34; }
+  .magic-chapter h3 { font-size:27px;margin:10px 0 12px; }
+  .magic-chapter p { font-size:13px;line-height:1.55; }
+  .magic-payment-note { margin-top:14vh;padding-bottom:6vh; }
   .savings-card { padding: 24px 20px; }
   .savings-row strong { font-size: 17px; }
   .savings-total strong { font-size: 28px; }
@@ -644,6 +665,518 @@ footer { position:relative;padding:0;color:#d6ded9;background:#07130f; }
   .wa-stage-copy h1 { font-size: 42px; }
   .wa-stage-copy > p { font-size: 14px; }
   .wa-phone-wrap { padding: 20px 16px; }
-  .phone-full { width: min(350px, 91vw); max-height: none; }
 }
 
+
+/* ── el canal, en la comparación ── */
+/* Va sobre la lista y con su propio peso: "por WhatsApp" contra "otra página en la que
+   registrarse" es la diferencia que se entiende sin leer nada más, y como bullet se perdía. */
+.compare-canal {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0 0 20px;
+  padding: 11px 14px;
+  border-radius: 11px;
+  background: rgba(22, 35, 29, 0.04);
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 500;
+}
+.compare-canal svg { flex: 0 0 auto; color: #9aa39f; }
+.good .compare-canal {
+  background: rgba(14, 159, 110, 0.09);
+  color: var(--forest);
+}
+.good .compare-canal svg { color: var(--brand); }
+
+/* ── el celular con la conversación ── */
+/* Reemplaza el panel de producto que había: el canal es WhatsApp, y una interfaz de escritorio
+   obligaba a traducir mentalmente qué se estaba viendo. Un hilo de mensajes no hay que explicarlo. */
+.fono { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+.fono-marco {
+  position: relative;
+  width: min(340px, 100%);
+  height: min(640px, 74vh);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 42px;
+  /* El marco del aparato: un borde grueso oscuro y un halo claro que insinúa el brillo del vidrio. */
+  border: 9px solid #05100c;
+  box-shadow:
+    0 0 0 1.5px rgba(255, 255, 255, 0.16),
+    0 60px 110px rgba(0, 0, 0, 0.42);
+  /* El fondo de un chat de WhatsApp, no el blanco de una app. */
+  background: #ece5dd;
+}
+/* La isla del sensor. Es lo que hace que el rectángulo se lea como un teléfono. */
+.fono-isla {
+  position: absolute;
+  z-index: 3;
+  top: 9px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 86px;
+  height: 21px;
+  border-radius: 999px;
+  background: #05100c;
+}
+
+/* La cabecera del chat: quién escribe y por dónde. */
+.chat-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 34px 15px 11px;
+  background: #075e54;
+  color: white;
+}
+.chat-avatar {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  color: #d9f1e7;
+}
+.chat-top div { display: flex; flex-direction: column; line-height: 1.2; min-width: 0; }
+.chat-top b { font-size: 14.5px; font-weight: 600; }
+.chat-top small { font-size: 11.5px; color: rgba(255, 255, 255, 0.72); }
+.chat-canal {
+  margin-left: auto;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 10.5px;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+/* El hilo. El marco recorta y el hilo se traslada hacia arriba conforme llegan mensajes. */
+.chat-hilo-marco { position: relative; flex: 1; min-height: 0; overflow: hidden; }
+.chat-hilo {
+  position: absolute;
+  inset: 0 0 auto 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 12px;
+  transition: transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* Una burbuja. Entra desde abajo cuando su capítulo llega. */
+.chat-msg {
+  max-width: 82%;
+  opacity: 1;
+  transform: none;
+  transition: opacity 0.45s ease, transform 0.55s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+/* Los mensajes que todavía no llegaron siguen ocupando su sitio en el flujo (así el hilo no salta
+   de alto) pero no se ven ni cuentan para el desplazamiento. */
+.chat-msg.oculto { opacity: 0; transform: translateY(14px); }
+.chat-msg p {
+  margin: 0;
+  padding: 8px 11px;
+  border-radius: 9px;
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: #0d1c16;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.08);
+}
+.chat-msg.suyo { align-self: flex-start; }
+.chat-msg.suyo p { background: white; border-top-left-radius: 2px; }
+.chat-msg.mio { align-self: flex-end; }
+.chat-msg.mio p { background: #d9fdd3; border-top-right-radius: 2px; }
+
+/* Una tarjeta dentro del chat: lo que Clara manda cuando hay cifras que mostrar. */
+.chat-tarjeta {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 12px 13px;
+  border-radius: 9px;
+  border-top-left-radius: 2px;
+  background: white;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.08);
+}
+.chat-tarjeta > small {
+  color: #5b6b63;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.chat-tarjeta-monto {
+  font: 600 25px/1 "Inter", sans-serif;
+  letter-spacing: -0.02em;
+  color: var(--brand);
+}
+.chat-tarjeta span {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 7px;
+  border-top: 1px solid #eceae4;
+  font-size: 13px;
+}
+.chat-tarjeta i { font-style: normal; color: #5b6b63; }
+.chat-tarjeta b { font-weight: 600; color: #0d1c16; }
+.chat-tarjeta em {
+  font-style: normal;
+  color: #5b6b63;
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+
+/* La barra de escribir. No es funcional: cierra el encuadre del aparato. */
+.chat-barra {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 12px 13px;
+  background: #f0f0f0;
+}
+.chat-barra span {
+  flex: 1;
+  padding: 8px 13px;
+  border-radius: 999px;
+  background: white;
+  color: #9aa39f;
+  font-size: 13px;
+}
+.chat-barra i {
+  width: 33px;
+  height: 33px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: #00a884;
+}
+
+@media (max-width: 680px) {
+  /* En telefono NO se dibuja un telefono. Con `height: 100%` el marco quedaba de 340 por 337, o
+     sea cuadrado, cuando un aparato es 1 a 2, y se veia aplastado. Recortarlo por abajo tampoco
+     servia: la ventana del hilo es `flex: 1`, asi que su alto se mide contra el marco y los mensajes
+     se irian a desplazar a la parte que no se ve.
+
+     La conversacion va a sangre, como si fuera el chat de quien mira. Quien esta en un telefono no
+     necesita que le dibujen uno, y sin marco no hay proporcion que respetar: el alto lo pone la
+     bandeja y el ancho la pantalla. */
+  .fono-marco {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -14px 34px rgba(0, 0, 0, 0.3);
+  }
+  .fono-isla { display: none; }
+  .chat-top { padding-top: 14px; border-radius: 20px 20px 0 0; }
+}
+
+/* Un solo plan: la rejilla de dos columnas dejaba la tarjeta en trescientos píxeles. */
+.pricing-unico { grid-template-columns: 1fr; max-width: 760px; }
+/* Precio a un lado, lo que incluye al otro. */
+.price-card-ancha {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1fr);
+  gap: 40px;
+  align-items: start;
+  padding: 40px 44px;
+  border: 1.5px solid rgba(14, 159, 110, 0.3);
+}
+.price-card-ancha h3 { min-height: 0; margin-bottom: 6px; }
+.price-card-ancha .price { line-height: 1; }
+.price-card-ancha ul { margin: 0; }
+.price-card-ancha .button { width: 100%; margin-top: 22px; }
+.price-extra {
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+@media (max-width: 680px) {
+  .price-card-ancha { grid-template-columns: 1fr; gap: 26px; padding: 30px 24px; }
+  .price-card-ancha .button { margin-top: 18px; }
+}
+
+/* ── el teléfono del hero ── */
+
+/* Tablet, y SOLO tablet. Con `max-width` a secas este bloque también aplicaba en teléfono, y como
+   va después del bloque de 680 px le pisaba el espacio superior del hero. */
+@media (min-width: 681px) and (max-width: 980px) {
+  .hero-dos {
+    grid-template-columns: 1fr;
+    align-content: center;
+    gap: 18px;
+    width: calc(100% - 44px);
+    padding-top: 64px;
+  }
+  .hero-fono { padding: 0; height: auto; }
+  .hero-fono img { max-height: 40vh; }
+}
+
+
+/* ══ la guia de renta: una pagina de lectura larga, no una de venta ══ */
+/* Es la puerta de entrada desde un buscador, asi que manda la legibilidad: una sola columna
+   angosta, tipografia de cuerpo grande y tablas que se pueden recorrer con el pulgar. */
+.post { background: var(--cream); color: var(--ink); }
+.post-ancho { max-width: 760px; }
+.post-top { padding: 128px 0 0; }
+.post-migas { display: flex; align-items: center; gap: 9px; margin-bottom: 20px; color: var(--muted); font-size: 12px; }
+.post-migas a { color: var(--brand); font-weight: 600; }
+.post-top h1 { margin: 0; font: 500 clamp(31px, 4.6vw, 48px)/1.1 "Fraunces", serif; letter-spacing: -0.01em; text-wrap: balance; }
+.post-bajada { margin: 20px 0 0; color: #4d5a54; font-size: 17px; line-height: 1.65; }
+.post-fecha { margin: 18px 0 0; color: var(--muted); font-size: 12.5px; }
+
+/* El recuadro de arriba responde la consulta antes de que haya que leer nada. Un buscador suele
+   tomar de aca el fragmento que muestra en el resultado. */
+.post-resumen { margin: 46px 0 0; padding: 28px 30px; border-radius: 18px; border: 1px solid rgba(14,159,110,.22); background: rgba(14,159,110,.055); }
+.post-resumen h2 { margin: 0 0 16px; font: 600 12px/1 "Inter", sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--forest); }
+.post-resumen ul { margin: 0; padding-left: 20px; display: grid; gap: 12px; }
+.post-resumen li { font-size: 15.5px; line-height: 1.6; }
+
+/* ── la rejilla de la guia: indice fijo y columna de lectura ── */
+/* La columna de texto es angosta A PROPOSITO. Un parrafo de 1.400 pixeles de ancho no se lee: al
+   terminar el renglon el ojo no encuentra el siguiente. El rango legible esta entre 60 y 80
+   caracteres, y eso son unos 700 pixeles con este cuerpo. Lo que estaba mal no era la columna sino
+   dejar el resto de la pantalla vacio, que hacia ver la pagina descuadrada. El indice ocupa ese
+   espacio con algo util, y de paso vuelve recorrible una guia larga. */
+.post-cuerpo { display: grid; grid-template-columns: 236px minmax(0, 1fr); gap: 60px; align-items: start; max-width: 1120px; }
+.post-columna { min-width: 0; max-width: 720px; }
+
+.post-indice { position: sticky; top: 96px; padding: 0 0 0 2px; }
+.post-indice h2 { margin: 0 0 15px; font: 600 11px/1 "Inter", sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.post-indice ol { margin: 0; padding: 0; list-style: none; display: grid; gap: 1px; counter-reset: sec; }
+.post-indice li { counter-increment: sec; border-left: 2px solid rgba(22,35,29,.1); }
+.post-indice a { display: block; padding: 7px 0 7px 13px; color: #6b7873; font-size: 13.5px; line-height: 1.4; transition: color .2s; }
+.post-indice a:hover { color: var(--ink); }
+.post-indice li.activa { border-left-color: var(--brand); }
+.post-indice li.activa a { color: var(--forest); font-weight: 600; }
+.post-indice a.post-indice-cta { display: inline-flex; align-items: center; gap: 7px; margin-top: 26px; padding: 11px 15px; border-radius: 11px; background: var(--brand); color: white; font-size: 12.5px; font-weight: 600; line-height: 1.3; }
+.post-indice a.post-indice-cta:hover { background: var(--forest); color: white; }
+
+.post-seccion { padding: 58px 0 0; scroll-margin-top: 104px; }
+.post-seccion h2 { margin: 0 0 22px; font: 500 clamp(25px, 3.2vw, 34px)/1.15 "Fraunces", serif; }
+.post-seccion h3 { margin: 36px 0 12px; font: 600 18.5px/1.3 "Inter", sans-serif; display: flex; align-items: center; gap: 9px; }
+.post-seccion p { margin: 0 0 17px; font-size: 16.5px; line-height: 1.72; color: #3b4741; }
+.post-seccion b { color: var(--ink); font-weight: 650; }
+.post-seccion ul { margin: 0 0 17px; padding-left: 21px; display: grid; gap: 9px; font-size: 16px; line-height: 1.6; color: #3b4741; }
+
+/* Las tablas se desbordan a lo ancho en telefono en vez de encogerse hasta romperse. */
+.post-tabla-marco { margin: 26px 0 30px; overflow-x: auto; border: 1px solid rgba(22,35,29,.1); border-radius: 14px; }
+.post-tabla-alta { max-height: 460px; overflow-y: auto; }
+.post-tabla { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+.post-tabla caption { padding: 15px 18px; color: var(--muted); font-size: 12.5px; line-height: 1.5; text-align: left; border-bottom: 1px solid rgba(22,35,29,.08); }
+.post-tabla thead th { position: sticky; top: 0; padding: 12px 18px; background: #f2efe8; color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; text-align: left; }
+.post-tabla tbody th { padding: 14px 18px; font-weight: 600; text-align: left; color: var(--ink); }
+.post-tabla tbody th small { display: block; margin-top: 4px; color: var(--muted); font-size: 12px; font-weight: 400; line-height: 1.5; }
+.post-tabla td { padding: 14px 18px; color: #3b4741; vertical-align: top; }
+.post-tabla tbody tr + tr { border-top: 1px solid rgba(22,35,29,.07); }
+.post-cifra { font-variant-numeric: tabular-nums; font-weight: 600; color: var(--ink); white-space: nowrap; }
+.post-fila-total { background: rgba(14,159,110,.06); }
+.post-fila-total th, .post-fila-total td { color: var(--forest); }
+.post-tabla-calculo tbody th { font-weight: 500; }
+
+/* ── el campo que dice cuando vence ── */
+/* Es lo mas concreto que se puede dar antes de pedir nada, asi que aparece en dos sitios: arriba en
+   la guia y en el hero. Los colores van explicitos y con el padre delante, porque `.post-seccion p`
+   es 0,1,1 y le gana a una clase suelta; sin eso el texto salia verde oscuro sobre verde oscuro. */
+.vence { margin: 30px 0 34px; padding: 26px 28px; border-radius: 18px; background: var(--forest); color: white; }
+.vence label { display: flex; align-items: center; gap: 9px; margin-bottom: 14px; color: white; font-size: 14px; font-weight: 600; }
+.vence label svg { color: #6ee7b7; flex: 0 0 auto; }
+.vence-fila { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.vence input { flex: 1 1 220px; min-width: 0; min-height: 52px; padding: 0 18px; border: 1px solid rgba(255,255,255,.2); border-radius: 12px; background: rgba(255,255,255,.07); color: white; font: 600 17px/1 "Inter", sans-serif; font-variant-numeric: tabular-nums; letter-spacing: .04em; }
+.vence input::placeholder { color: rgba(255,255,255,.42); font-weight: 400; letter-spacing: 0; }
+.vence input:focus-visible { outline: 2px solid #34d399; outline-offset: 2px; }
+.vence .vence-r { margin: 16px 0 0; color: rgba(255,255,255,.92); font-size: 17px; line-height: 1.5; }
+.vence .vence-r b { color: #6ee7b7; }
+.vence .vence-r small { display: block; margin-top: 7px; color: rgba(255,255,255,.62); font-size: 12.5px; line-height: 1.55; }
+.vence .vence-r.vence-vacia small { margin-top: 0; }
+
+/* La variante del hero: una linea, sin caja, para no competir con el titular ni con el boton. */
+.vence-compacta { margin: 26px 0 0; padding: 16px 18px; border-radius: 15px; border: 1px solid rgba(255,255,255,.14); background: rgba(4,20,15,.42); backdrop-filter: blur(7px); max-width: 470px; }
+.vence-compacta label { margin-bottom: 10px; font-size: 12.5px; }
+.vence-compacta input { min-height: 44px; flex: 1 1 130px; font-size: 15.5px; }
+.vence-compacta .vence-r { margin: 0; font-size: 14.5px; line-height: 1.35; }
+.vence-compacta .vence-pie { margin: 9px 0 0; }
+.vence-compacta .vence-pie small { color: rgba(255,255,255,.5); font-size: 11.5px; }
+.vence-siguiente { display: inline-flex; align-items: center; gap: 7px; margin-top: 12px; padding: 0; border: 0; background: none; color: #6ee7b7; font-size: 12.5px; font-weight: 600; cursor: pointer; }
+.vence-siguiente:hover { color: white; }
+
+/* El aviso que manda al campo del comienzo, en la seccion del calendario. */
+.post-nota-arriba { background: rgba(14,159,110,.08); color: var(--forest); }
+.post-nota-arriba svg { color: var(--brand); }
+
+.post-lista-def { margin: 24px 0 0; display: grid; gap: 2px; }
+.post-lista-def > div { padding: 17px 0; border-top: 1px solid rgba(22,35,29,.09); }
+.post-lista-def dt { font-size: 15.5px; font-weight: 650; color: var(--ink); }
+.post-lista-def dd { margin: 5px 0 0; font-size: 15px; line-height: 1.6; color: #4d5a54; }
+
+.post-pasos { margin: 26px 0 0; padding: 0; list-style: none; display: grid; gap: 4px; }
+.post-pasos li { display: grid; grid-template-columns: 46px 1fr; gap: 16px; padding: 19px 0; border-top: 1px solid rgba(22,35,29,.09); }
+.post-pasos li > span { font: 500 15px/1 "Fraunces", serif; color: var(--brand); padding-top: 3px; }
+.post-pasos h3 { margin: 0 0 7px; font-size: 17.5px; }
+.post-pasos p { margin: 0; font-size: 15.5px; }
+
+.post-errores { margin: 26px 0 0; padding: 0; list-style: none; counter-reset: err; display: grid; gap: 20px; }
+.post-errores li { padding: 22px 24px; border-radius: 16px; border: 1px solid rgba(214,69,69,.18); background: rgba(214,69,69,.04); counter-increment: err; }
+.post-errores h3 { margin: 0 0 9px; font-size: 17px; }
+.post-errores h3::before { content: counter(err) ". "; color: #c0453f; }
+.post-errores p { margin: 0; font-size: 15.5px; }
+
+.post-nota { display: flex; align-items: flex-start; gap: 11px; margin: 26px 0 0; padding: 17px 20px; border-radius: 13px; background: rgba(214,158,46,.09); font-size: 15px; line-height: 1.6; color: #6b5320; }
+.post-nota svg { flex: 0 0 auto; margin-top: 2px; color: #b8860b; }
+
+.post-dos-columnas { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin: 26px 0 22px; }
+.post-dos-columnas h3 { margin: 0 0 13px; font-size: 15.5px; }
+.post-dos-columnas h3 svg { color: var(--brand); }
+.post-dos-columnas > div:last-child h3 svg { color: #c0453f; }
+.post-dos-columnas ul { margin: 0; padding-left: 19px; gap: 8px; font-size: 15px; }
+
+/* Las preguntas van plegadas y con el marcado FAQPage: es lo que un buscador puede citar. */
+.post-faq { margin: 24px 0 0; display: grid; gap: 2px; }
+.post-faq details { border-top: 1px solid rgba(22,35,29,.09); }
+.post-faq summary { display: flex; align-items: center; gap: 12px; padding: 19px 0; cursor: pointer; list-style: none; }
+.post-faq summary::-webkit-details-marker { display: none; }
+.post-faq summary::after { content: "+"; margin-left: auto; color: var(--brand); font-size: 21px; font-weight: 300; line-height: 1; }
+.post-faq details[open] summary::after { content: "−"; }
+.post-faq summary h3 { margin: 0; font-size: 16.5px; font-weight: 600; }
+.post-faq details p { margin: 0 0 22px; font-size: 15.5px; line-height: 1.7; color: #4d5a54; }
+
+.post-cierre { margin: 66px 0 0; padding: 38px 36px; border-radius: 22px; background: var(--forest); color: white; text-align: center; }
+.post-cierre h2 { margin: 0 0 14px; font: 500 clamp(23px, 3vw, 30px)/1.2 "Fraunces", serif; }
+.post-cierre p { margin: 0 auto 24px; max-width: 520px; color: rgba(255,255,255,.8); font-size: 15.5px; line-height: 1.65; }
+
+.post-fuentes { margin: 54px 0 0; padding: 30px 0 80px; border-top: 1px solid rgba(22,35,29,.1); }
+.post-fuentes h2 { margin: 0 0 14px; font: 600 11px/1 "Inter", sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.post-fuentes ul { margin: 0; padding-left: 20px; display: grid; gap: 10px; color: var(--muted); font-size: 13px; line-height: 1.7; }
+.post-fuentes a { color: var(--forest); text-decoration: underline; text-decoration-color: rgba(11,79,58,.3); text-underline-offset: 2px; }
+.post-fuentes a:hover { text-decoration-color: var(--brand); }
+.post-fuentes p { margin: 0 0 14px; max-width: 640px; color: #4d5a54; font-size: 14.5px; line-height: 1.7; }
+.post-fuentes h3 { margin: 22px 0 12px; font: 600 11px/1 "Inter", sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+
+@media (max-width: 980px) {
+  /* Una sola columna. El indice deja de ser lateral y pasa a ser un bloque al comienzo, que es
+     donde sirve cuando no se puede tener a la vista todo el tiempo. */
+  .post-cuerpo { grid-template-columns: 1fr; gap: 0; max-width: 760px; }
+  .post-indice { position: static; margin: 38px 0 0; padding: 24px 26px; border-radius: 18px; background: rgba(22,35,29,.04); }
+  .post-indice-cta { display: none; }
+}
+
+@media (max-width: 680px) {
+  .post-top { padding: 96px 0 0; }
+  .post-resumen { padding: 22px 20px; }
+  .post-indice { padding: 20px 18px; }
+  .vence { padding: 22px 20px; }
+  .vence-compacta { padding: 14px 15px; margin-top: 20px; max-width: none; }
+  .post-seccion { padding: 46px 0 0; }
+  .post-seccion p { font-size: 16px; }
+  .post-dos-columnas { grid-template-columns: 1fr; gap: 26px; }
+  .post-cierre { padding: 30px 22px; }
+  .post-tabla-alta { max-height: 380px; }
+}
+
+
+/* ══ piezas de las paginas del racimo ══ */
+/* Los simuladores comparten la caja verde del campo de vencimiento, y solo cambian el interior. */
+.sancion-campos { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 13px; }
+.sancion-campos span { display: block; min-width: 0; }
+.sancion-campos span.corto { max-width: 130px; }
+.sancion-campos label { display: block; margin-bottom: 6px; color: rgba(255,255,255,.62); font-size: 11.5px; letter-spacing: .01em; }
+.sancion-campos input { width: 100%; min-height: 48px; padding: 0 15px; border: 1px solid rgba(255,255,255,.2); border-radius: 11px; background: rgba(255,255,255,.07); color: white; font: 600 16px/1 "Inter", sans-serif; font-variant-numeric: tabular-nums; }
+.sancion-campos input::placeholder { color: rgba(255,255,255,.34); font-weight: 400; }
+.sancion-campos input:focus-visible { outline: 2px solid #34d399; outline-offset: 2px; }
+.sancion-r { margin-top: 20px; padding-top: 18px; border-top: 1px solid rgba(255,255,255,.14); }
+.vence .sancion-total { margin: 0 0 12px; color: white; font: 500 24px/1.2 "Fraunces", serif; }
+.vence .sancion-total b { color: #6ee7b7; font-weight: 500; }
+.vence .sancion-r ul { margin: 0; padding-left: 18px; display: grid; gap: 7px; color: rgba(255,255,255,.76); font-size: 13.5px; line-height: 1.55; }
+.vence .sancion-r b { color: white; }
+
+/* El diagrama del cupo. Va en SVG dentro del marcado: pesa nada, se puede leer con un lector de
+   pantalla y el texto queda indexable, que con una imagen no pasaria. */
+.cupo-figura { margin: 30px 0 26px; padding: 24px 26px; border-radius: 18px; border: 1px solid rgba(22,35,29,.1); background: white; }
+.cupo-figura figcaption { margin-top: 16px; color: var(--muted); font-size: 13px; line-height: 1.6; }
+.cupo-fondo { fill: rgba(14,159,110,.13); }
+.cupo-usado { fill: var(--forest); }
+.cupo-t { fill: #6b7873; font: 500 11.5px "Inter", sans-serif; }
+.cupo-t-suave { fill: #93a09b; }
+.cupo-et { fill: white; font: 600 13px "Inter", sans-serif; }
+.cupo-et-libre { fill: var(--forest); }
+.cupo-guia { stroke: rgba(22,35,29,.22); stroke-width: 1; stroke-dasharray: 3 3; }
+
+/* Los enlaces a las otras paginas del tema. Sin esto cada una queda aislada, y una pagina que nadie
+   enlaza tampoco se descubre. */
+.post-relacionadas { margin: 60px 0 0; padding: 30px 0 0; border-top: 1px solid rgba(22,35,29,.1); }
+.post-relacionadas h2 { margin: 0 0 18px; font: 600 11px/1 "Inter", sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.post-relacionadas ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+.post-relacionadas a { display: block; padding: 17px 20px; border-radius: 14px; border: 1px solid rgba(22,35,29,.1); background: white; transition: border-color .2s, transform .2s; }
+.post-relacionadas a:hover { border-color: var(--brand); transform: translateX(3px); }
+.post-relacionadas b { display: block; color: var(--ink); font-size: 15.5px; font-weight: 650; }
+.post-relacionadas small { display: block; margin-top: 4px; color: var(--muted); font-size: 13.5px; line-height: 1.55; }
+
+/* Los pasos con vinetas dentro, en la pagina del paso a paso. */
+.post-pasos-largos li { padding: 22px 0; }
+.post-pasos-largos ul { margin: 12px 0 0; padding-left: 19px; display: grid; gap: 6px; color: #6b7873; font-size: 14px; line-height: 1.55; }
+
+@media (max-width: 680px) {
+  .cupo-figura { padding: 18px 16px; }
+  .sancion-campos { grid-template-columns: 1fr; }
+  .sancion-campos span.corto { max-width: none; }
+  .post-relacionadas a { padding: 15px 16px; }
+}
+
+
+/* ══ las guias, en la portada ══ */
+/* POR QUE ESTA SECCION EXISTE: las paginas de contenido solo se alcanzaban entrando a la guia y
+   bajando hasta el final. En telefono ni eso, porque el menu del encabezado no se muestra en
+   pantallas angostas, asi que el unico camino era el pie. Desde la portada, que es la pagina con
+   mas autoridad, cada guia queda a un clic. */
+.guias { background: var(--cream); }
+.guias-cabeza { max-width: 620px; margin-bottom: 40px; }
+.guias-cabeza h2 { margin: 0; font: 500 clamp(29px, 3.6vw, 44px)/1.12 "Fraunces", serif; }
+.guias-cabeza p { margin: 16px 0 0; color: #4d5a54; font-size: 16.5px; line-height: 1.68; }
+.guias-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(258px, 1fr)); gap: 18px; }
+.guia-tarjeta { display: flex; flex-direction: column; padding: 26px 26px 22px; border-radius: 18px; border: 1px solid rgba(22,35,29,.1); background: white; transition: border-color .2s, transform .2s, box-shadow .2s; }
+.guia-tarjeta:hover { border-color: var(--brand); transform: translateY(-3px); box-shadow: 0 16px 40px rgba(3,20,14,.08); }
+.guia-tarjeta h3 { margin: 0 0 11px; color: var(--ink); font: 500 20px/1.25 "Fraunces", serif; }
+.guia-tarjeta p { margin: 0 0 20px; color: var(--muted); font-size: 14.5px; line-height: 1.6; flex: 1; }
+.guia-tarjeta span { display: inline-flex; align-items: center; gap: 7px; color: var(--brand); font-size: 13px; font-weight: 650; }
+
+@media (max-width: 680px) {
+  .guias-cabeza { margin-bottom: 28px; }
+  .guias-grid { grid-template-columns: 1fr; gap: 14px; }
+  .guia-tarjeta { padding: 21px 20px 18px; }
+}
+
+
+/* ══ el menu de guias del encabezado ══ */
+/* El panel cuelga del boton y se queda dentro del encabezado, que es fijo, asi que no necesita
+   posicionamiento global ni portal. El hueco entre el boton y el panel lo cubre un pseudoelemento
+   transparente: sin el, bajar el mouse hacia el panel lo cerraba a mitad de camino. */
+.menu-guias { position: relative; display: flex; align-items: center; }
+.menu-guias-boton { display: inline-flex; align-items: center; gap: 6px; color: #b5c1bc; font: 500 14px/1 "Inter", sans-serif; cursor: pointer; transition: color .2s; }
+.menu-guias-boton svg { transition: transform .2s; }
+.menu-guias:hover .menu-guias-boton, .menu-guias.abierto .menu-guias-boton { color: white; }
+.menu-guias.abierto .menu-guias-boton svg { transform: rotate(180deg); }
+.menu-guias-boton:focus-visible { outline: 2px solid var(--brand); outline-offset: 5px; border-radius: 3px; }
+
+.menu-guias-panel { position: absolute; z-index: 40; top: calc(100% + 16px); right: -18px; width: 372px; padding: 20px; border-radius: 18px; border: 1px solid rgba(255,255,255,.1); background: #0b1f18; box-shadow: 0 26px 60px rgba(0,0,0,.45); }
+.menu-guias-panel::before { content: ""; position: absolute; left: 0; right: 0; top: -18px; height: 18px; }
+.menu-guias-titulo { display: block; margin-bottom: 12px; color: #6ee7b7; font-size: 10px; font-weight: 700; letter-spacing: .11em; }
+
+.menu-guias-panel a { display: block; padding: 12px 14px; border-radius: 12px; transition: background .18s; }
+.menu-guias-panel a:hover { background: rgba(255,255,255,.06); }
+.menu-guias-panel b { display: block; color: white; font-size: 14px; font-weight: 600; line-height: 1.35; }
+.menu-guias-panel small { display: block; margin-top: 4px; color: #92a8a0; font-size: 12.5px; line-height: 1.5; }
+.menu-guias-principal { border: 1px solid rgba(110,231,183,.28); background: rgba(14,159,110,.1); }
+.menu-guias-principal:hover { background: rgba(14,159,110,.16); }
+.menu-guias-panel ul { margin: 6px 0 0; padding: 0; list-style: none; }
+
+/* En telefono el menu del encabezado no se muestra, asi que el desplegable tampoco tendria sentido.
+   Ahi las guias se alcanzan desde la seccion de la portada y desde el pie, que si aparecen. */
+@media (max-width: 900px) {
+  .menu-guias-panel { right: 0; width: min(340px, calc(100vw - 40px)); }
+}

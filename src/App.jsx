@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import {
   ArrowRight,
   BadgeCheck,
@@ -6,20 +6,22 @@ import {
   CheckCircle2,
   ChevronDown,
   CircleDollarSign,
-  Eye,
-  EyeOff,
   FileCheck2,
+  Globe,
   HelpCircle,
   LockKeyhole,
   MessageCircle,
-  Paperclip,
   ShieldCheck,
   Sparkles,
-  Upload,
 } from "lucide-react";
-import heroWorkspace from "./assets/clara-hero-final.png";
-import heroWorkspaceMobile from "./assets/clara-hero-mobile.png";
+import heroHorizonte from "./assets/clara-hero-montanas.jpg";
+import Seo, { SITIO } from "./seo/Seo";
+import { Cabecera, Pie } from "./comun/Marco";
+import { Avatar, Button } from "./comun/piezas";
+import Vencimiento from "./comun/Vencimiento";
+import { RACIMO } from "./contenido/datos";
 import phoneArtwork from "./assets/clara-phone-cutout.png";
+import phoneArtworkWebp from "./assets/clara-phone-cutout.webp";
 
 const SCREENS = [
   ["landing", "Landing"],
@@ -30,47 +32,9 @@ const SCREENS = [
   ["whatsapp", "WhatsApp"],
 ];
 
-const money = (value) => <span className="money">{value}</span>;
 
-function Logo({ light = false }) {
-  return (
-    <button className={`logo ${light ? "logo-light" : ""}`} onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
-      <svg className="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
-        <g stroke="currentColor" strokeWidth="3.3" strokeLinecap="round">
-          <path d="M16 3.5v5" /><path d="M16 23.5v5" />
-          <path d="M3.5 16h5" /><path d="M23.5 16h5" />
-          <path d="m7.2 7.2 3.5 3.5" /><path d="m21.3 21.3 3.5 3.5" />
-          <path d="m24.8 7.2-3.5 3.5" /><path d="m10.7 21.3-3.5 3.5" />
-        </g>
-      </svg>
-      <span className="logo-word">Clara<span className="logo-dot">.</span></span>
-    </button>
-  );
-}
 
-function Avatar({ size = "md" }) {
-  return (
-    <div className={`avatar avatar-${size}`} aria-label="[IMAGEN: avatar de Clara]">
-      <svg viewBox="0 0 32 32" aria-hidden="true">
-        <g stroke="currentColor" strokeWidth="3.3" strokeLinecap="round">
-          <path d="M16 3.5v5" /><path d="M16 23.5v5" />
-          <path d="M3.5 16h5" /><path d="M23.5 16h5" />
-          <path d="m7.2 7.2 3.5 3.5" /><path d="m21.3 21.3 3.5 3.5" />
-          <path d="m24.8 7.2-3.5 3.5" /><path d="m10.7 21.3-3.5 3.5" />
-        </g>
-      </svg>
-      <span className="online-dot" />
-    </div>
-  );
-}
 
-function Button({ children, variant = "primary", className = "", onClick, type = "button" }) {
-  return (
-    <button type={type} className={`button button-${variant} ${className}`} onClick={onClick}>
-      {children}
-    </button>
-  );
-}
 
 function ScreenTabs({ active, onChange }) {
   return (
@@ -93,24 +57,49 @@ function ScreenTabs({ active, onChange }) {
   );
 }
 
-function SavingsCard({ compact = false }) {
-  return (
-    <div className={`savings-card ${compact ? "savings-compact" : ""}`}>
-      <div className="savings-row">
-        <span>Según la DIAN</span>
-        <strong className={compact ? "" : "strike"}>{money("$2.480.000")}</strong>
-      </div>
-      <div className="savings-row">
-        <span>Optimizada</span>
-        <strong>{money("$1.190.000")}</strong>
-      </div>
-      <div className="savings-total">
-        <span>Te ahorras</span>
-        <strong>{money("$1.290.000")}</strong>
-      </div>
-    </div>
-  );
-}
+
+/**
+ * La conversacion que se ve en el celular, mensaje por mensaje.
+ *
+ * POR QUE UN CHAT Y NO UNA PANTALLA DE PRODUCTO. Antes esta seccion mostraba un panel de aplicacion
+ * con tarjetas y tablas: era bonito y contaba la historia equivocada. El canal es WhatsApp y eso es
+ * lo que la gente ya tiene en la cabeza, asi que ver una interfaz de escritorio obliga a traducir
+ * mentalmente ("¿entonces tengo que entrar a una pagina?"). Un hilo de mensajes no hay que
+ * explicarlo.
+ *
+ * `paso` amarra cada mensaje al capitulo del scroll que ya existia, asi que el texto de la izquierda
+ * y la conversacion avanzan juntos y no hay dos fuentes de verdad sobre en que punto va la historia.
+ *
+ * `mio` es el mensaje del usuario. Van pocos y cortos a proposito: la promesa es que casi no hay que
+ * hacer nada, y un hilo donde el usuario escribe parrafos la contradice.
+ */
+const CHAT = [
+  { paso: 0, texto: "Hola 👋 Soy Clara. ¿Miramos tu declaración de renta?" },
+  { paso: 0, mio: true, texto: "hola, sí" },
+  { paso: 0, texto: "Ya consulté lo que la DIAN tiene a tu nombre. No tienes que buscar nada." },
+  {
+    paso: 0,
+    tarjeta: { titulo: "Lo que reportaron a tu nombre", filas: [["Certificados", "5"], ["Ingresos", "$96.718.600"]] },
+  },
+  { paso: 1, texto: "Revisé 3 oportunidades de ahorro. Dos tienen soporte, así que las apliqué." },
+  {
+    paso: 1,
+    tarjeta: {
+      titulo: "Lo que encontré",
+      filas: [["Retenciones", "−$450.000"], ["Aporte AFC", "−$840.000"], ["Dependiente", "sin soporte"]],
+    },
+  },
+  { paso: 1, texto: "La del dependiente la dejé por fuera: sin el registro civil no la podríamos defender ante la DIAN." },
+  { paso: 2, mio: true, texto: "y el formulario?" },
+  { paso: 2, texto: "Ya lo llené. Cada valor en su casilla del 210, listo para que lo revises." },
+  { paso: 2, texto: "La firma y la presentación siempre las haces tú 🔒" },
+  { paso: 3, texto: "Según la DIAN pagarías $2.480.000. Con lo que encontré, quedas en $1.190.000." },
+  {
+    paso: 3,
+    tarjeta: { titulo: "Te ahorras", monto: "$1.290.000", pie: "Cada peso con su explicación y su soporte" },
+  },
+  { paso: 3, mio: true, texto: "listo, lo reviso 🙌" },
+];
 
 function MagicStory() {
   const [activeStep, setActiveStep] = useState(0);
@@ -148,7 +137,12 @@ function MagicStory() {
       frame = 0;
       const chapters = storyRef.current?.querySelectorAll(".magic-chapter");
       if (!chapters?.length) return;
-      const focus = window.innerHeight * (window.innerWidth < 760 ? 0.72 : 0.5);
+      // Donde se considera que el lector esta mirando. En pantalla ancha es el centro. En telefono
+      // es la franja alta, porque el aparato va pegado ABAJO y el texto pasa por encima: con el
+      // punto en la zona baja (que es donde estaba cuando el aparato iba arriba) el capitulo que se
+      // marcaba activo era el que quedaba tapado por el aparato.
+      const FOCO = window.innerWidth < 760 ? 0.34 : 0.5;
+      const focus = window.innerHeight * FOCO;
       let closest = 0;
       let distance = Infinity;
       chapters.forEach((chapter, index) => {
@@ -197,88 +191,199 @@ function MagicStory() {
         </div>
 
         <div className="magic-visual-column">
-          <div className="magic-product">
-            <div className="magic-product-top">
-              <Logo light />
-              <div><i /><span>Análisis en vivo</span></div>
-              <small>{activeStep + 1} de 4</small>
-            </div>
-            <div className="magic-progress"><span style={{ width: `${((activeStep + 1) / 4) * 100}%` }} /></div>
-            <div className="magic-screen">
-              <div className={`magic-panel magic-source ${activeStep === 0 ? "active" : ""}`}>
-                <div className="panel-kicker"><FileCheck2 size={17} /> Información encontrada</div>
-                <h3>Esto reportaron a tu nombre</h3>
-                <div className="source-summary">
-                  <span><small>Certificados</small><strong>5</strong></span>
-                  <span><small>Ingresos</small><strong className="money">$96.718.600</strong></span>
-                </div>
-                <div className="source-files">
-                  <span><Check size={15} /> Certificado laboral <b>Listo</b></span>
-                  <span><Check size={15} /> Retenciones en la fuente <b>Listo</b></span>
-                  <span><Check size={15} /> Información bancaria <b>Listo</b></span>
-                </div>
-              </div>
-
-              <div className={`magic-panel magic-opportunities ${activeStep === 1 ? "active" : ""}`}>
-                <div className="panel-kicker"><Sparkles size={17} /> Optimización honesta</div>
-                <h3>Revisamos 3 oportunidades</h3>
-                <div className="opportunity-list">
-                  <span className="approved"><CheckCircle2 size={19} /><i><b>Retenciones verificadas</b><small>Aplicadas automáticamente</small></i><strong className="money">-$450.000</strong></span>
-                  <span className="approved"><CheckCircle2 size={19} /><i><b>Aporte AFC</b><small>Soporte encontrado</small></i><strong className="money">-$840.000</strong></span>
-                  <span className="rejected"><ShieldCheck size={19} /><i><b>Dependiente</b><small>Sin soporte suficiente</small></i><strong>No aplicado</strong></span>
-                </div>
-              </div>
-
-              <div className={`magic-panel magic-form ${activeStep === 2 ? "active" : ""}`}>
-                <div className="panel-kicker"><FileCheck2 size={17} /> Borrador en preparación</div>
-                <h3>Clara diligencia el formulario</h3>
-                <div className="form-preview">
-                  <div className="form-preview-top"><span>Formulario 210</span><b>DIAN</b></div>
-                  <div className="form-field"><small>Casilla 33 · Ingresos brutos</small><strong className="money">$96.718.600</strong><Check size={14} /></div>
-                  <div className="form-field"><small>Casilla 58 · Rentas exentas</small><strong className="money">$12.400.000</strong><Check size={14} /></div>
-                  <div className="form-field"><small>Casilla 121 · Retenciones</small><strong className="money">$3.120.000</strong><Check size={14} /></div>
-                  <div className="form-ready"><BadgeCheck size={18} /><span><b>Borrador diligenciado</b><small>Listo para que lo revises</small></span></div>
-                </div>
-                <p className="form-control-note"><LockKeyhole size={14} /> La firma y la presentación siempre las haces tú.</p>
-              </div>
-
-              <div className={`magic-panel magic-result ${activeStep === 3 ? "active" : ""}`}>
-                <div className="panel-kicker"><BadgeCheck size={17} /> Resultado listo para revisar</div>
-                <h3>Tu declaración, optimizada</h3>
-                <div className="result-row"><span>Según la DIAN</span><strong className="strike money">$2.480.000</strong></div>
-                <div className="result-row"><span>Después de optimizar</span><strong className="money">$1.190.000</strong></div>
-                <div className="result-total"><span>Te ahorras</span><strong className="money">$1.290.000</strong></div>
-                <div className="result-check"><Check size={16} /> Cada beneficio tiene respaldo</div>
-              </div>
-            </div>
-          </div>
+          <Telefono paso={activeStep} />
         </div>
       </div>
     </section>
   );
 }
 
+/**
+ * El celular con la conversacion, que avanza con el scroll.
+ *
+ * EL HILO SE ACUMULA, NO SE REEMPLAZA. Los mensajes de los capitulos anteriores se quedan y el hilo
+ * sube: es como se lee un chat de verdad, y ademas deja ver lo que ya paso. La version de paneles
+ * que habia antes cambiaba la pantalla entera en cada capitulo, asi que lo anterior desaparecia.
+ *
+ * SE MUEVE CON `transform` Y NO CON `scrollTop`. Un scroll programatico dentro de un elemento que
+ * ya se esta moviendo con el scroll de la pagina pelea con el del usuario en movil y da saltos. Con
+ * una traslacion, el navegador la compone en el hilo grafico y no hay conflicto.
+ */
+function Telefono({ paso }) {
+  const hiloRef = useRef(null);
+  const [desplazamiento, setDesplazamiento] = useState(0);
+
+  // Cuanto hay que subir el hilo para que el ultimo mensaje visible quede al fondo de la pantalla.
+  useEffect(() => {
+    const hilo = hiloRef.current;
+    if (!hilo) return;
+    const medir = () => {
+      const visibles = hilo.querySelectorAll(".chat-msg:not(.oculto)");
+      const ultimo = visibles[visibles.length - 1];
+      if (!ultimo) return setDesplazamiento(0);
+      const alto = hilo.parentElement?.clientHeight ?? 0;
+      const fin = ultimo.offsetTop + ultimo.offsetHeight;
+      setDesplazamiento(Math.max(0, fin - alto + 16));
+    };
+    // Dos cuadros: el primero deja al navegador aplicar la clase, el segundo mide ya con el
+    // mensaje nuevo ocupando su alto real.
+    const id = requestAnimationFrame(() => requestAnimationFrame(medir));
+    return () => cancelAnimationFrame(id);
+  }, [paso]);
+
+  return (
+    <div className="fono" aria-label="Conversación con Clara por WhatsApp">
+      <div className="fono-marco">
+        <div className="fono-isla" />
+        <header className="chat-top">
+          <span className="chat-avatar">
+            <Sparkles size={15} />
+          </span>
+          <div>
+            <b>Clara</b>
+            <small>en línea</small>
+          </div>
+          <span className="chat-canal">WhatsApp</span>
+        </header>
+
+        <div className="chat-hilo-marco">
+          <div
+            className="chat-hilo"
+            ref={hiloRef}
+            style={{ transform: `translateY(-${desplazamiento}px)` }}
+          >
+            {CHAT.map((m, i) => (
+              <div
+                key={i}
+                className={[
+                  "chat-msg",
+                  m.mio ? "mio" : "suyo",
+                  m.paso > paso ? "oculto" : "",
+                ].join(" ")}
+              >
+                {m.tarjeta ? (
+                  <div className="chat-tarjeta">
+                    <small>{m.tarjeta.titulo}</small>
+                    {m.tarjeta.monto ? (
+                      <strong className="chat-tarjeta-monto money">{m.tarjeta.monto}</strong>
+                    ) : null}
+                    {m.tarjeta.filas?.map(([k, v]) => (
+                      <span key={k}>
+                        <i>{k}</i>
+                        <b className="money">{v}</b>
+                      </span>
+                    ))}
+                    {m.tarjeta.pie ? <em>{m.tarjeta.pie}</em> : null}
+                  </div>
+                ) : (
+                  <p>{m.texto}</p>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="chat-barra">
+          <span>Escribe un mensaje</span>
+          <i />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * El hero.
+ *
+ * ANTES ERA UNA FOTO DE UN PORTATIL, y era el problema: el mensaje entero del producto es "todo por
+ * WhatsApp" y la primera imagen que veia alguien era una pantalla de escritorio. La foto estaba
+ * bonita y contaba la historia de otro producto.
+ *
+ * Ahora el protagonista es el telefono con la conversacion, que es el canal. El asset ya existia
+ * (`clara-phone-cutout`) y estaba enterrado en una seccion de mas abajo; trae encima las etiquetas
+ * de "5 certificados encontrados" y "ahorro estimado", que es justo lo que hay que reforzar.
+ *
+ * LA FOTO SE QUEDA COMO AMBIENTE, DESPLAZADA. El paisaje al atardecer es lo que le da calidez al
+ * sitio, asi que no se bota: se corre el encuadre (`object-position`) para que el portatil quede
+ * fuera y solo entren montanas, niebla y la planta. Asi no hay dos aparatos compitiendo.
+ *
+ * DOS COLUMNAS, Y ESO RESUELVE OTRA COSA: con el copy centrado encima de la foto, el subtitulo y los
+ * ganchos aterrizaban sobre la pantalla del portatil y se volvian ilegibles. Con el texto a un lado
+ * y el telefono al otro, cada uno tiene su sitio.
+ */
+
 function ClaraWorkspace({ start }) {
   return (
-    <div className="workspace-scene" aria-label="Escena animada de Clara preparando una declaración">
+    <div className="workspace-scene" aria-label="Clara preparando una declaración por WhatsApp">
+      {/* Del fondo solo queda el horizonte. La toma completa tenía un portátil, formularios
+          impresos y una carpeta rotulada "Declaración de renta 2024": tres cosas que niegan el
+          mensaje justo detrás del titular que lo afirma. La banda de montañas no dice nada que
+          haya que desmentir, y bajó de 2,2 MB a 37 KB, que en móvil se nota. */}
       <div className="workspace-camera">
-        <picture>
-          <source media="(max-width: 680px)" srcSet={heroWorkspaceMobile} />
-          <img className="workspace-photo" src={heroWorkspace} alt="" />
-        </picture>
+        <img
+          className="workspace-photo"
+          src={heroHorizonte}
+          alt="Amanecer sobre las montañas de Colombia"
+          width="1600"
+          height="351"
+          fetchPriority="high"
+        />
       </div>
       <div className="workspace-vignette" />
-      <div className="workspace-copy">
-        <div className="eyebrow light">DECLARACIÓN DE RENTA POR WHATSAPP</div>
-        <h1>Tu declaración.<br /><em>Por fin, clara.</em></h1>
-        <p>Clara consulta tu información, encuentra ahorros legales y deja el formulario de la DIAN listo para que lo revises y firmes.</p>
-      </div>
-      <div className="workspace-actions">
-        <Button onClick={start}>Averigua gratis si debes declarar <ArrowRight size={18} /></Button>
-        <a className="text-action" href="#como">Mira cómo funciona <span>↓</span></a>
+
+      <div className="hero-dos">
+        <div className="workspace-copy">
+          <div className="eyebrow light">TODO POR WHATSAPP</div>
+          {/* El salto va dentro de un espacio explicito. Sin el, el texto que lee un rastreador
+              queda "Tu declaracion de rentapor $50.000", pegado, y es el encabezado principal de
+              la pagina. */}
+          <h1>
+            Tu declaración de renta{" "}
+            <br />
+            por <em>$50.000</em>
+          </h1>
+          <p>
+            Le escribes a Clara, contestas unas preguntas y ella deja el formulario de la DIAN listo
+            para que lo revises y firmes. Sin portales ni contraseñas.
+          </p>
+          <ul className="workspace-hooks">
+            <li>
+              <MessageCircle size={15} /> Todo pasa en el chat
+            </li>
+            <li>
+              <CheckCircle2 size={15} /> Gratis hasta que veas tu resultado
+            </li>
+          </ul>
+          <div className="workspace-actions">
+            <Button onClick={start}>
+              Averigua gratis si debes declarar <ArrowRight size={18} />
+            </Button>
+            <a className="text-action" href="#como">
+              Mira cómo funciona <span>↓</span>
+            </a>
+          </div>
+          <Vencimiento variante="compacta" alResolver={start} />
+        </div>
+
+        <div className="hero-fono">
+          <picture>
+            <source srcSet={phoneArtworkWebp} type="image/webp" />
+            <img
+              src={phoneArtwork}
+              alt="Conversación con Clara por WhatsApp donde encuentra 5 certificados y un ahorro estimado de $1.290.000"
+              width="776"
+              height="1000"
+              fetchPriority="high"
+              decoding="async"
+            />
+          </picture>
+        </div>
       </div>
 
-      <div className="scroll-cue"><span>Desliza para entrar</span><div /></div>
+      <div className="scroll-cue">
+        <span>Desliza para entrar</span>
+        <div />
+      </div>
     </div>
   );
 }
@@ -292,7 +397,8 @@ function Landing({ goTo }) {
     ["¿Clara presenta por mí?", "No. Clara prepara todo, pero la firma y la presentación siempre las haces tú."],
     ["¿Qué pasa si no estoy obligado a declarar?", "Te lo decimos gratis y te damos una constancia que puedes usar con tu banco."],
     ["¿Y si ya tengo contador?", "Puedes usar Clara para comparar, organizar tus soportes o llegar a tu contador con un borrador claro."],
-    ["¿Cuánto cuesta y qué incluye?", "Cuesta $59.900 para asalariados y $79.900 para independientes. Solo pagas si decides presentar."],
+    ["¿Cuánto cuesta y qué incluye?", "$50.000, un solo pago, sea que seas asalariado o independiente. Incluye la consulta de tu información, la búsqueda de ahorros con soporte y el formulario diligenciado. Solo pagas si decides presentar."],
+    ["¿Todo se hace por WhatsApp?", "Sí. Contestas por chat y ahí mismo recibes tu resultado. Solo se abre una página segura para dos cosas: escribir tu clave de la DIAN y pagar. Nunca vas a tener que crear un usuario ni recordar otra contraseña."],
     ["¿Qué pasa si la DIAN me hace un requerimiento?", "Te ayudamos a entenderlo. Si ocurrió por un error nuestro, la corrección va por nuestra cuenta."],
   ];
 
@@ -321,19 +427,28 @@ function Landing({ goTo }) {
       if (frame) cancelAnimationFrame(frame);
     };
   }, []);
+  // Las preguntas de la portada ya estan escritas para una persona, asi que sirven tal cual como
+  // datos estructurados. Marcadas, un buscador las puede mostrar desplegadas en el resultado.
+  const datos = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "@id": `${SITIO}/#preguntas`,
+    mainEntity: faqs.map(([pregunta, respuesta]) => ({
+      "@type": "Question",
+      name: pregunta,
+      acceptedAnswer: { "@type": "Answer", text: respuesta },
+    })),
+  };
+
   return (
     <div className="landing">
-      <header className={`site-header ${headerSolid ? "solid" : ""}`}>
-        <div className="container nav-inner">
-          <Logo light />
-          <nav>
-            <a href="#como">Cómo funciona</a>
-            <a href="#precio">Precio</a>
-            <a href="#seguridad">Seguridad</a>
-          </nav>
-          <Button onClick={start}>Averigua gratis</Button>
-        </div>
-      </header>
+      <Seo
+        titulo="Declaración de renta 2026 por WhatsApp, por $50.000 | Clara"
+        descripcion="Clara deja tu declaración de renta lista para revisar y firmar. Todo por WhatsApp, un solo pago de $50.000. Te decimos gratis si debes declarar."
+        ruta="/"
+        datos={datos}
+      />
+      <Cabecera solida={headerSolid} alCta={start} />
 
       <main>
         <section className="hero-story" ref={heroRef}>
@@ -344,24 +459,52 @@ function Landing({ goTo }) {
 
         <section className="section problem">
           <div className="container">
-            <div className="section-heading"><div className="eyebrow">MENOS VUELTAS</div><h2>Hoy declarar renta es un dolor de cabeza</h2></div>
+            {/* El titular enmarca la comparación con Clara primero. Antes decía "hoy declarar renta es un
+                dolor de cabeza", que presenta el problema de otro producto justo cuando la primera
+                columna que se lee es la solución. */}
+            <div className="section-heading">
+              <div className="eyebrow">MENOS PLATA, MENOS VUELTAS</div>
+              <h2>Lo mismo, por menos de una tercera parte y sin salir de WhatsApp</h2>
+            </div>
+            {/* Clara va PRIMERO. En una comparación, lo que se lee primero es lo que se recuerda,
+                y el orden inverso hacía que el visitante entrara por el problema de otro producto.
+                Las dos primeras filas son el precio y el canal porque son las dos preguntas que
+                alguien trae antes de leer nada más. */}
             <div className="comparison-grid">
-              <CompareCard metric="40" metricLabel="casillas por revisar" title="Con el proceso tradicional" items={["Respondes preguntas que muchas veces no te aplican", "Terminas copiando datos y valores en el portal de la DIAN", "Es difícil saber qué cambió y por qué"]} />
-              <CompareCard good metric="1" metricLabel="revisión final" title="Con Clara" items={["Solo respondes lo necesario, por WhatsApp", "Recibes el formulario diligenciado para revisarlo", "Cada ahorro incluye su explicación y su soporte"]} />
+              <CompareCard
+                good
+                metric="$50.000"
+                metricLabel="pago único"
+                title="Con Clara"
+                canal="Todo por WhatsApp"
+                items={[
+                  "Contestas por chat, sin crear cuentas ni recordar contraseñas",
+                  "Recibes el formulario diligenciado para revisarlo",
+                  "Cada ahorro incluye su explicación y su soporte",
+                ]}
+              />
+              <CompareCard
+                metric="$170.000"
+                metricLabel="en adelante"
+                title="Con las otras opciones"
+                canal="Página web, correos y llamadas"
+                items={[
+                  "Creas usuario y contraseña, y llenas formularios largos",
+                  "Terminas copiando datos y valores en el portal de la DIAN",
+                  "Es difícil saber qué cambió y por qué",
+                ]}
+              />
             </div>
           </div>
         </section>
 
         <section id="como" className="section steps-section">
           <div className="container">
-            <div className="process-intro"><div><div className="eyebrow">ASÍ DE SIMPLE</div><h2>De “no sé por dónde empezar” a “ya quedó”.</h2></div><p>Clara hace el trabajo pesado detrás. Tú solo respondes, revisas y firmas.</p></div>
+            <div className="process-intro"><div><div className="eyebrow">ASÍ DE SIMPLE</div><h2>De “no sé por dónde empezar” a “ya quedó”.</h2></div><p>Todo pasa en el chat de WhatsApp. Clara hace el trabajo pesado detrás; tú solo respondes, revisas y firmas.</p></div>
             <div className="process-showcase">
-              <div className="process-phone-stage">
-                <img className="process-phone-art" src={phoneArtwork} alt="Conversación con Clara por WhatsApp" />
-              </div>
               <div className="process-chapters">
                 {[
-                  ["01", "Hablas, no llenas formularios", "Clara pregunta una cosa a la vez. En 30 segundos sabe si podrías estar obligado a declarar."],
+                  ["01", "Hablas por WhatsApp, no llenas formularios", "Clara pregunta una cosa a la vez, por chat. En 30 segundos sabe si podrías estar obligado a declarar."],
                   ["02", "Cruza lo que la DIAN sabe", "Trae ingresos, retenciones y certificados. Después busca beneficios que estén realmente soportados."],
                   ["03", "Te muestra cada peso", "Ves cuánto pagarías, cuánto ahorras y de dónde salió cada valor antes de pagar."],
                 ].map(([number, title, copy]) => (
@@ -422,12 +565,23 @@ function Landing({ goTo }) {
 
         <section id="precio" className="section pricing">
           <div className="container">
-            <div className="section-heading"><div className="eyebrow">PRECIO CLARO</div><h2>Un precio claro, sin sorpresas</h2></div>
-            <div className="pricing-grid">
-              <PriceCard title="Asalariado" price="$59.900" onClick={start} />
-              <PriceCard featured title="Independiente o con arriendos" price="$79.900" extra="Manejo de ingresos por cuenta propia, arriendos y dividendos" onClick={start} />
+            <div className="section-heading">
+              <div className="eyebrow">PRECIO CLARO</div>
+              <h2>$50.000. Un solo pago, sin sorpresas</h2>
             </div>
-            <p className="price-note"><CheckCircle2 size={18} /> ¿No estás obligado a declarar? Te lo decimos gratis antes de que pagues.</p>
+            <div className="pricing-grid pricing-unico">
+              <PriceCard
+                featured
+                title="Tu declaración de renta"
+                price="$50.000"
+                extra="Asalariado, independiente, con arriendos o dividendos. El mismo precio."
+                onClick={start}
+              />
+            </div>
+            <p className="price-note">
+              <CheckCircle2 size={18} /> Todo se hace por WhatsApp y solo pagas cuando ves tu
+              resultado. Si no estás obligado a declarar, te lo decimos gratis.
+            </p>
           </div>
         </section>
 
@@ -475,53 +629,74 @@ function Landing({ goTo }) {
           </div>
         </section>
 
+        <section className="section guias" id="guias">
+          <div className="container">
+            <div className="guias-cabeza">
+              <div className="eyebrow">RESUELVE TU DUDA PRIMERO</div>
+              <h2>Guías de renta, escritas en pesos y sin jerga</h2>
+              <p>
+                Si prefieres entender antes de empezar, acá está todo explicado. Los topes en pesos y
+                no en UVT, tu fecha límite según la cédula y cuánto baja el impuesto de verdad.
+              </p>
+            </div>
+            <div className="guias-grid">
+              {Object.values(RACIMO).map(([ruta, titulo, resumen]) => (
+                <a className="guia-tarjeta" href={ruta} key={ruta}>
+                  <h3>{titulo}</h3>
+                  <p>{resumen}</p>
+                  <span>
+                    Leer <ArrowRight size={16} />
+                  </span>
+                </a>
+              ))}
+            </div>
+          </div>
+        </section>
+
         <section className="section final-cta">
           <div className="cta-glow" />
           <div className="cta-orbit orbit-a" /><div className="cta-orbit orbit-b" />
           <div className="container final-cta-grid">
             <div className="final-cta-copy">
               <div className="eyebrow light">TU DECLARACIÓN EMPIEZA AQUÍ</div>
-              <h2>Treinta segundos.<br /><em>Y ya sabes si declaras.</em></h2>
-              <p>En 30 segundos sabes si podrías estar obligado. Si continúas, Clara puede dejar tu declaración lista en cerca de 15 minutos.</p>
-              <div className="cta-trust"><span><LockKeyhole size={14} /> Datos cifrados</span><span><BadgeCheck size={14} /> Respaldo contable</span></div>
+              <h2>Escribe por WhatsApp.<br /><em>En 30 segundos sabes.</em></h2>
+              <p>Te decimos gratis si estás obligado a declarar. Si continúas, tu declaración queda lista en cerca de 15 minutos por $50.000, sin salir del chat.</p>
+              <div className="cta-trust"><span><MessageCircle size={14} /> Todo por WhatsApp</span><span><CircleDollarSign size={14} /> $50.000, un solo pago</span><span><LockKeyhole size={14} /> Datos cifrados</span></div>
             </div>
             <div className="cta-live-card">
               <div className="cta-chat-head"><Avatar /><div><strong>Clara</strong><span>en línea ahora</span></div><i /></div>
               <div className="cta-bubble">Hola. En 30 segundos te digo gratis si debes declarar este año.</div>
               <div className="cta-result"><span>Consulta inicial</span><strong className="money">$0</strong></div>
-              <Button onClick={start}>Hablar con Clara <ArrowRight size={18} /></Button>
+              <div className="cta-result"><span>Si decides presentar</span><strong className="money">$50.000</strong></div>
+              <Button onClick={start}>Escribirle a Clara <ArrowRight size={18} /></Button>
               <small>No necesitas tarjeta para empezar</small>
             </div>
           </div>
         </section>
       </main>
-      <footer>
-        <div className="container footer-shell">
-          <div className="footer-lead">
-            <div><Logo light /><p>Impuestos claros para gente que tiene mejores cosas que hacer.</p></div>
-            <a className="footer-whatsapp" href="#" onClick={(event) => { event.preventDefault(); start(); }}><MessageCircle size={18} /> Habla con Clara <ArrowRight size={16} /></a>
-          </div>
-          <div className="footer-directory">
-            <div><span>PRODUCTO</span><a href="#como">Cómo funciona</a><a href="#precio">Precios</a><button onClick={() => goTo("whatsapp")}>Ver conversación</button></div>
-            <div><span>CONFIANZA</span><a href="#seguridad">Seguridad</a><a href="#seguridad">Tratamiento de datos</a><a href="#">Garantía Clara</a></div>
-            <div><span>LEGAL</span><a href="#">Términos del servicio</a><a href="#">Política de privacidad</a><a href="#">Contacto</a></div>
-          </div>
-          <div className="footer-bottom">
-            <div className="service-status"><i /> Todos los sistemas operando</div>
-            <p>Clara no es la DIAN. Somos un servicio independiente que te ayuda a preparar tu declaración. Tú siempre firmas y presentas.</p>
-            <span>© 2026 Clara Colombia</span>
-          </div>
-        </div>
-      </footer>
+      <Pie alCta={start} />
     </div>
   );
 }
 
-function CompareCard({ title, items, metric, metricLabel, good = false }) {
+/**
+ * Una columna de la comparación.
+ *
+ * `canal` va SEPARADO de `items` y no como un bullet más: es la diferencia que la gente entiende
+ * sin explicación ("por WhatsApp" contra "otra página en la que registrarse") y en una lista de
+ * tres viñetas se perdía entre las otras dos.
+ */
+function CompareCard({ title, items, metric, metricLabel, canal, good = false }) {
   return (
     <article className={`compare-card ${good ? "good" : ""}`}>
       <div className="compare-top"><div className="compare-icon">{good ? <Sparkles size={22} /> : <HelpCircle size={22} />}</div><div className="compare-metric"><strong>{metric}</strong><span>{metricLabel}</span></div></div>
       <h3>{title}</h3>
+      {canal ? (
+        <p className="compare-canal">
+          {good ? <MessageCircle size={16} /> : <Globe size={16} />}
+          {canal}
+        </p>
+      ) : null}
       <ul>{items.map((item) => <li key={item}>{good ? <Check size={18} /> : <span>×</span>} {item}</li>)}</ul>
     </article>
   );
@@ -541,166 +716,106 @@ function TrafficCard({ color, metric, status, title, children }) {
   );
 }
 
-function PriceCard({ title, price, extra, featured, onClick }) {
-  const items = ["Consultamos tu información en la DIAN", "Optimizamos tu declaración", "La dejamos lista para revisar y firmar", "Organizamos tu carpeta de soportes", "Garantía: si erramos, la corrección va por nuestra cuenta"];
+/**
+ * El precio, en una sola tarjeta ancha.
+ *
+ * ERA DOS PLANES ($59.900 asalariado y $79.900 independiente) Y AHORA ES UNO. Con el titular
+ * diciendo $50.000, dos precios distintos mas abajo se leen como una contradiccion, y una
+ * contradiccion en el precio es lo que hace que alguien cierre la pagina.
+ *
+ * El badge "mas completo" tambien se fue: sin un segundo plan al lado no hay con que comparar, asi
+ * que solo generaba la duda de cual es el otro. Y la forma pasa a ser horizontal (precio a un lado,
+ * lo que incluye al otro) porque una tarjeta sola en una rejilla de dos columnas quedaba en trescientos
+ * pixeles de ancho, con cada linea de la lista partida en tres.
+ */
+function PriceCard({ title, price, extra, onClick }) {
+  const items = [
+    "Consultamos tu información en la DIAN",
+    "Buscamos los ahorros que tengan soporte",
+    "Diligenciamos el formulario 210 completo",
+    "Organizamos tu carpeta de soportes",
+    "Garantía: si erramos, la corrección va por nuestra cuenta",
+  ];
   return (
-    <article className={`price-card ${featured ? "featured" : ""}`}>
-      {featured && <div className="featured-label">Más completo</div>}
-      <h3>{title}</h3><div className="price money">{price}</div><span className="once">pago único</span>
-      <ul>{items.map((item) => <li key={item}><Check size={17} />{item}</li>)}{extra && <li><Check size={17} />{extra}</li>}</ul>
-      <Button onClick={onClick}>Empieza gratis por WhatsApp <ArrowRight size={17} /></Button>
+    <article className="price-card price-card-ancha">
+      <div className="price-lado">
+        <h3>{title}</h3>
+        <div className="price money">{price}</div>
+        <span className="once">pago único, por WhatsApp</span>
+        {extra ? <p className="price-extra">{extra}</p> : null}
+        <Button onClick={onClick}>
+          Empieza gratis por WhatsApp <ArrowRight size={17} />
+        </Button>
+      </div>
+      <ul>
+        {items.map((item) => (
+          <li key={item}>
+            <Check size={17} />
+            {item}
+          </li>
+        ))}
+      </ul>
     </article>
   );
 }
 
-function AppShell({ children, width = "medium", title, subtitle }) {
-  return (
-    <main className="app-screen">
-      <div className="app-ambient ambient-a" /><div className="app-ambient ambient-b" />
-      <header className="app-header"><Logo /><div className="secure-chip"><LockKeyhole size={13} /> Sesión segura</div></header>
-      <div className={`app-container app-${width}`}>
-        {(title || subtitle) && <div className="app-title">{title && <h1>{title}</h1>}{subtitle && <p>{subtitle}</p>}</div>}
-        {children}
-      </div>
-    </main>
-  );
-}
+/**
+ * El prototipo esta encendido en desarrollo, y en produccion solo con ?prototipo=1.
+ *
+ * Se calcula una vez y fuera del componente porque no cambia durante la visita, y porque asi el
+ * `import()` de las pantallas ni siquiera se evalua cuando esta apagado.
+ */
+const CON_PROTOTIPO =
+  import.meta.env.DEV ||
+  (typeof window !== "undefined" &&
+    new URLSearchParams(window.location.search).has("prototipo"));
 
-function ConnectionScreen({ goTo }) {
-  const [showPassword, setShowPassword] = useState(false);
-  return (
-    <AppShell width="small">
-      <div className="clara-intro"><Avatar size="lg" /><div><span>Clara está contigo</span><h1>Vamos a consultar tu información en la DIAN</h1></div></div>
-      <div className="calm-card"><LockKeyhole size={20} /><p><strong>Conexión cifrada.</strong> Tu clave no se guarda en el chat y puedes borrarla al terminar.</p></div>
-      <form className="form-card" onSubmit={(e) => { e.preventDefault(); goTo("review"); }}>
-        <label>Tipo de documento<select defaultValue="CC"><option>CC</option><option>CE</option><option>Pasaporte</option></select></label>
-        <label>Número de documento<input inputMode="numeric" placeholder="1.023.456.789" /></label>
-        <label>Año gravable<select defaultValue="2025"><option>2025</option><option>2024</option></select></label>
-        <label>Contraseña de la DIAN<div className="password-input"><input type={showPassword ? "text" : "password"} placeholder="Tu contraseña" /><button type="button" aria-label="Mostrar contraseña" onClick={() => setShowPassword(!showPassword)}>{showPassword ? <EyeOff size={19} /> : <Eye size={19} />}</button></div></label>
-        <label className="checkbox"><input type="checkbox" required /><span>Acepto los <a href="#">términos</a> y la <a href="#">política de tratamiento de datos</a></span></label>
-        <Button type="submit" className="full">Consultar mi información <ArrowRight size={18} /></Button>
-      </form>
-      <div className="app-links"><button>No tengo clave de la DIAN</button><button><Upload size={15} /> Prefiero no darla y subir mis documentos</button></div>
-      <p className="legal-note">Clara nunca firma ni presenta con tu clave. Solo consulta y prepara tu borrador.</p>
-    </AppShell>
-  );
-}
+const Pantallas = CON_PROTOTIPO ? lazy(() => import("./prototipo/Pantallas")) : null;
 
-const declarationSections = [
-  ["Ingresos", [["Ingresos laborales", "$87.400.000", "Reportado por tu empresa", "ok"]]],
-  ["Deducciones", [["Aportes a salud y pensión", "-$7.000.000", "Certificados de aportes", "ok"], ["Intereses de vivienda", "-$4.230.000", "Certificado de intereses de Bancolombia", "ok"], ["Dependientes", "-$3.585.528", "Falta adjuntar registro civil", "warn"]]],
-  ["Patrimonio", [["Saldo en cuentas", "$18.920.000", "Información exógena DIAN", "ok"]]],
-  ["Impuesto", [["Retenciones que ya te hicieron", "-$3.120.000", "Certificado de ingresos y retenciones", "ok"]]],
-];
-
-function ReviewScreen({ goTo }) {
-  const [open, setOpen] = useState([0, 1, 3]);
-  const toggle = (index) => setOpen((value) => value.includes(index) ? value.filter((n) => n !== index) : [...value, index]);
-  return (
-    <AppShell title="Tu declaración, casilla por casilla" subtitle="Revisa de dónde salió cada peso. Si algo no te cuadra, pregúntame." width="medium">
-      <SavingsCard compact />
-      <div className="review-list">
-        {declarationSections.map(([section, rows], index) => (
-          <section className="review-section" key={section}>
-            <button className="review-heading" onClick={() => toggle(index)}><span>{section}</span><ChevronDown className={open.includes(index) ? "rotate" : ""} size={20} /></button>
-            {open.includes(index) && <div className="review-rows">{rows.map(([name, value, support, status]) => (
-              <div className="review-row" key={name}>
-                <div className={`row-status ${status}`} /> <div><strong>{name}</strong><span><Paperclip size={13} />{support}</span></div><b className="money">{value}</b>
-              </div>
-            ))}</div>}
-          </section>
-        ))}
-      </div>
-      <div className="bottom-action"><button className="question-link"><MessageCircle size={17} /> Tengo una pregunta</button><Button onClick={() => goTo("optimization")}>Ver mi optimización <ArrowRight size={18} /></Button></div>
-    </AppShell>
-  );
-}
-
-function OptimizationScreen({ goTo }) {
-  return (
-    <AppShell title="Tu informe de optimización" subtitle="Esto hicimos para que pagues lo justo, sin inventar nada." width="medium">
-      <OptimizationSection color="green" title="Lo que aprovechamos este año">
-        <Benefit title="Dependientes" amount="ahorraste $980.000" copy="Aplicamos la deducción con el registro civil que adjuntaste." />
-        <Benefit title="Intereses de vivienda" amount="ahorraste $310.000" copy="Usamos el certificado de intereses de Bancolombia." />
-        <Benefit title="Aportes obligatorios" amount="ahorraste $228.000" copy="Los cruzamos con tu certificado laboral." />
-      </OptimizationSection>
-      <OptimizationSection color="amber" title="Para el año entrante puedes pagar aún menos">
-        <div className="suggestion-card"><div><strong>Una cuenta AFC puede ayudarte</strong><p>Si aportas $3.000.000, pagarías <b className="money">$840.000 menos</b>. Te avisamos en noviembre.</p></div><Button variant="secondary">Recuérdamelo</Button></div>
-      </OptimizationSection>
-      <OptimizationSection color="red" title="Lo que no hicimos, y por qué te conviene">
-        <div className="risk-card"><ShieldCheck size={24} /><div><strong>No inventamos un dependiente</strong><p>Te habría bajado $980.000 hoy, pero si la DIAN lo cruza podrías pagar más de $2.000.000 entre devolución, multa e intereses.</p><div className="risk-math"><span>Ahorro aparente {money("$980.000")}</span><span>Riesgo estimado {money("$2.000.000+")}</span></div></div></div>
-      </OptimizationSection>
-      <div className="accountant-badge"><BadgeCheck size={20} /> Revisado por un contador del equipo</div>
-      <Button className="full" onClick={() => goTo("payment")}>Continuar al pago <ArrowRight size={18} /></Button>
-    </AppShell>
-  );
-}
-
-function OptimizationSection({ color, title, children }) {
-  return <section className="optimization-section"><h2><span className={`signal ${color}`} />{title}</h2><div className="optimization-body">{children}</div></section>;
-}
-
-function Benefit({ title, amount, copy }) {
-  return <div className="benefit-row"><div className="benefit-check"><Check size={17} /></div><div><strong>{title}</strong><p>{copy}</p></div><b>{amount}</b></div>;
-}
-
-function PaymentScreen() {
-  const [method, setMethod] = useState("PSE");
-  return (
-    <AppShell title="Presenta tu declaración" subtitle="Un último paso. Después te acompaño a firmar en la DIAN." width="small">
-      <div className="order-card">
-        <div className="order-head"><div><span>Declaración de renta 2025</span><small>Plan asalariado</small></div><strong className="money">$59.900</strong></div>
-        <ul>{["Presentación ante la DIAN acompañada", "Carpeta de soportes 3 años", "Garantía por errores nuestros"].map((text) => <li key={text}><Check size={16} />{text}</li>)}</ul>
-      </div>
-      <div className="payment-methods">
-        <label>¿Cómo quieres pagar?</label>
-        {[
-          ["PSE", "Débito desde tu banco", "PSE"],
-          ["Nequi", "Desde tu celular", "NQ"],
-          ["Tarjeta", "Crédito o débito", "VISA"],
-        ].map(([name, sub, logo]) => <button key={name} className={method === name ? "selected" : ""} onClick={() => setMethod(name)}><span className="pay-radio" /><div><strong>{name}</strong><small>{sub}</small></div><b>[{logo}]</b></button>)}
-      </div>
-      <Button className="full">Pagar $59.900 <LockKeyhole size={17} /></Button>
-      <p className="payment-note"><CircleDollarSign size={17} /> Solo pagas ahora. El impuesto, si te da a pagar, lo pagas directo a la DIAN dentro del plazo.</p>
-    </AppShell>
-  );
-}
-
-function WhatsAppScreen({ goTo }) {
-  return (
-    <main className="wa-screen">
-      <div className="wa-stage-copy">
-        <Logo light />
-        <div className="eyebrow light">ASÍ EMPIEZA TODO</div>
-        <h1>Una conversación. Una pregunta a la vez.</h1>
-        <p>Sin formularios eternos. Clara entiende tu caso y solo pregunta lo que importa.</p>
-        <Button onClick={() => goTo("connection")}>Continuar a conexión DIAN <ArrowRight size={18} /></Button>
-      </div>
-      <div className="wa-phone-wrap"><img className="wa-generated-art" src={phoneArtwork} alt="Conversación de Clara por WhatsApp" /><span>Así se siente declarar con Clara</span></div>
-    </main>
-  );
+/** Abre la conversacion real. En el prototipo, en cambio, se salta a la pantalla de la maqueta. */
+export function abrirWhatsApp() {
+  const numero = import.meta.env.VITE_WHATSAPP;
+  if (!numero) {
+    // Sin numero configurado el boton NO se queda muerto: lleva a la guia, que responde la misma
+    // pregunta ("¿me toca declarar?") y tiene la calculadora de la fecha. Es un destino real
+    // mientras el numero se configura, y el build avisa de que falta.
+    window.location.assign("/declaracion-de-renta-2026");
+    return;
+  }
+  const texto = encodeURIComponent("Hola Clara, quiero saber si debo declarar renta.");
+  window.open(`https://wa.me/${numero}?text=${texto}`, "_blank", "noopener");
 }
 
 export default function App() {
   const [screen, setScreen] = useState("landing");
   const goTo = (next) => {
+    // Sin prototipo, todo lo que llevaba a una pantalla de maqueta abre la conversacion de verdad.
+    if (!CON_PROTOTIPO) {
+      abrirWhatsApp();
+      return;
+    }
     setScreen(next);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
   useEffect(() => {
+    // La portada NO reescribe el titulo: el suyo lo pone el componente de SEO y es el que compite
+    // en el buscador. Las demas pantallas son del prototipo y no se indexan.
+    if (screen === "landing") return;
     document.title = `Clara | ${SCREENS.find(([id]) => id === screen)?.[1]}`;
   }, [screen]);
 
+  const Pantalla = CON_PROTOTIPO && screen !== "landing" ? screen : null;
+
   return (
     <>
-      <ScreenTabs active={screen} onChange={goTo} />
+      {CON_PROTOTIPO ? <ScreenTabs active={screen} onChange={goTo} /> : null}
       <div key={screen} className="screen-transition">
-        {screen === "landing" && <Landing goTo={goTo} />}
-        {screen === "connection" && <ConnectionScreen goTo={goTo} />}
-        {screen === "review" && <ReviewScreen goTo={goTo} />}
-        {screen === "optimization" && <OptimizationScreen goTo={goTo} />}
-        {screen === "payment" && <PaymentScreen />}
-        {screen === "whatsapp" && <WhatsAppScreen goTo={goTo} />}
+        {screen === "landing" ? <Landing goTo={goTo} /> : null}
+        {Pantalla ? (
+          <Suspense fallback={null}>
+            <Pantallas nombre={Pantalla} goTo={goTo} />
+          </Suspense>
+        ) : null}
       </div>
     </>
   );

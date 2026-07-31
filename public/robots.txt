@@ -1,0 +1,8 @@
+# La consola es la herramienta del contador: no tiene nada que buscar un motor y expone rutas de
+# trabajo interno, asi que queda fuera del indice.
+User-agent: *
+Allow: /
+Disallow: /consola
+Disallow: /consola/
+
+Sitemap: https://declaras.co/sitemap.xml

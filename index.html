@@ -1,11 +1,94 @@
 <!doctype html>
-<html lang="es">
+<html lang="es-CO">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#FBF9F4" />
-    <meta name="description" content="Clara hace tu declaración de renta por WhatsApp." />
-    <title>Clara | Tu declaración, clara</title>
+    <meta name="theme-color" content="#071712" />
+
+    <title>Declaración de renta 2026 por WhatsApp, por $50.000 | Clara</title>
+    <meta
+      name="description"
+      content="Clara deja tu declaración de renta lista para revisar y firmar. Todo por WhatsApp, un solo pago de $50.000. Te decimos gratis si debes declarar."
+    />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+    <link rel="canonical" href="https://declaras.co/" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Clara" />
+    <meta property="og:locale" content="es_CO" />
+    <meta property="og:title" content="Declaración de renta 2026 por WhatsApp, por $50.000" />
+    <meta
+      property="og:description"
+      content="Contestas por chat y Clara deja el formulario de la DIAN listo para revisar y firmar."
+    />
+    <meta property="og:url" content="https://declaras.co/" />
+    <meta property="og:image" content="https://declaras.co/clara-og.jpg" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!--
+      Las fuentes se piden desde aca y no con @import dentro de la hoja de estilos. Con el @import
+      habia que bajar el CSS, leerlo y recien ahi descubrir las fuentes, tres viajes en serie antes
+      de pintar el titular. Declaradas aca arrancan junto con todo lo demas.
+    -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600&display=swap" />
+
+    <!--
+      Datos estructurados del sitio y de la organizacion. Valen para todas las rutas, asi que viven
+      aca y no en el componente de SEO, que solo agrega los de cada pagina (el articulo, las
+      preguntas frecuentes). Sin esto, un buscador no tiene de donde sacar que Clara es un servicio,
+      cuanto cuesta y en que pais opera; con esto puede mostrar el precio en el resultado.
+    -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://declaras.co/#organizacion",
+            "name": "Clara",
+            "alternateName": "Clara de Declara",
+            "url": "https://declaras.co/",
+            "logo": "https://declaras.co/clara-og.jpg",
+            "areaServed": { "@type": "Country", "name": "Colombia" },
+            "knowsLanguage": "es-CO"
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://declaras.co/#sitio",
+            "url": "https://declaras.co/",
+            "name": "Clara",
+            "inLanguage": "es-CO",
+            "publisher": { "@id": "https://declaras.co/#organizacion" }
+          },
+          {
+            "@type": "Service",
+            "@id": "https://declaras.co/#servicio",
+            "name": "Declaración de renta para personas naturales por WhatsApp",
+            "serviceType": "Preparación de la declaración de renta",
+            "provider": { "@id": "https://declaras.co/#organizacion" },
+            "areaServed": { "@type": "Country", "name": "Colombia" },
+            "availableChannel": {
+              "@type": "ServiceChannel",
+              "name": "WhatsApp",
+              "serviceUrl": "https://declaras.co/"
+            },
+            "offers": {
+              "@type": "Offer",
+              "price": "50000",
+              "priceCurrency": "COP",
+              "description": "Un solo pago. Incluye la consulta de tu información en la DIAN, la búsqueda de beneficios con soporte y el formulario 210 diligenciado.",
+              "availability": "https://schema.org/InStock"
+            }
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

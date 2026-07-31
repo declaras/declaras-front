@@ -2,3 +2,7 @@ node_modules
 dist
 .DS_Store
 .env
+
+# El sitemap se genera en cada build con las fechas reales de los archivos. Versionarlo solo
+# produciria ruido en cada commit y, peor, se quedaria viejo si alguien lo edita a mano.
+public/sitemap.xml
