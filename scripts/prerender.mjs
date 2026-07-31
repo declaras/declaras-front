@@ -63,6 +63,22 @@ for (const { ruta } of RUTAS) {
   );
 }
 
+// La consola del contador: cascara vacia, no prerenderizada y fuera del indice. Necesita archivo
+// propio porque es una ruta de cliente; sin el, el alojamiento devolvia 404. Mandarla al HTML de la
+// portada tampoco servia: se veria la portada un instante antes de que React la reemplace.
+{
+  const cascara = plantilla
+    .replace(/<title>[\s\S]*?<\/title>/, "<title>Consola | Clara</title>")
+    .replace(/\s*<meta name="robots"[^>]*>/g, "")
+    .replace(/\s*<link rel="canonical"[^>]*>/g, "")
+    .replace("</head>", '  <meta name="robots" content="noindex, nofollow" />\n  </head>');
+  for (const salida of [join(DIST, "consola", "index.html"), join(DIST, "consola.html")]) {
+    mkdirSync(join(salida, ".."), { recursive: true });
+    writeFileSync(salida, cascara);
+  }
+  console.log("  /consola                           cascara sin indexar");
+}
+
 if (problemas.length) {
   console.error("\nprerender: problemas encontrados");
   for (const p of problemas.slice(0, 6)) console.error("  " + p);
