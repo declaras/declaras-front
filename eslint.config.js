@@ -52,10 +52,10 @@ export default [
     languageOptions: { globals: { ...globals.node } },
   },
   {
-    // El prerenderizador corre en Node, pero las funciones que le pasa a `page.evaluate` se
-    // ejecutan dentro del navegador. Sin declararlo, `no-undef` marca `document` en un codigo que
-    // es correcto, y la unica alternativa seria apagar la regla que precisamente hace falta.
-    files: ["scripts/prerender.mjs"],
+    // Corre en Node, pero las funciones que le pasa a `page.evaluate` se ejecutan dentro del
+    // navegador. Sin declararlo, `no-undef` marca `document` en un codigo que es correcto, y la
+    // unica alternativa seria apagar la regla que precisamente hace falta.
+    files: ["scripts/revisar-cajas.mjs"],
     languageOptions: { globals: { ...globals.node, ...globals.browser } },
   },
 ];

@@ -1016,13 +1016,13 @@ footer { position:relative;padding:0;color:#d6ded9;background:#07130f; }
 .post-lista-def dd { margin: 5px 0 0; font-size: 15px; line-height: 1.6; color: #4d5a54; }
 
 .post-pasos { margin: 26px 0 0; padding: 0; list-style: none; display: grid; gap: 4px; }
-.post-pasos li { display: grid; grid-template-columns: 46px 1fr; gap: 16px; padding: 19px 0; border-top: 1px solid rgba(22,35,29,.09); }
-.post-pasos li > span { font: 500 15px/1 "Fraunces", serif; color: var(--brand); padding-top: 3px; }
+.post-pasos > li { display: grid; grid-template-columns: 46px 1fr; gap: 16px; padding: 19px 0; border-top: 1px solid rgba(22,35,29,.09); }
+.post-pasos > li > span { font: 500 15px/1 "Fraunces", serif; color: var(--brand); padding-top: 3px; }
 .post-pasos h3 { margin: 0 0 7px; font-size: 17.5px; }
 .post-pasos p { margin: 0; font-size: 15.5px; }
 
 .post-errores { margin: 26px 0 0; padding: 0; list-style: none; counter-reset: err; display: grid; gap: 20px; }
-.post-errores li { padding: 22px 24px; border-radius: 16px; border: 1px solid rgba(214,69,69,.18); background: rgba(214,69,69,.04); counter-increment: err; }
+.post-errores > li { padding: 22px 24px; border-radius: 16px; border: 1px solid rgba(214,69,69,.18); background: rgba(214,69,69,.04); counter-increment: err; }
 .post-errores h3 { margin: 0 0 9px; font-size: 17px; }
 .post-errores h3::before { content: counter(err) ". "; color: #c0453f; }
 .post-errores p { margin: 0; font-size: 15.5px; }
@@ -1118,8 +1118,9 @@ footer { position:relative;padding:0;color:#d6ded9;background:#07130f; }
 .post-relacionadas small { display: block; margin-top: 4px; color: var(--muted); font-size: 13.5px; line-height: 1.55; }
 
 /* Los pasos con vinetas dentro, en la pagina del paso a paso. */
-.post-pasos-largos li { padding: 22px 0; }
-.post-pasos-largos ul { margin: 12px 0 0; padding-left: 19px; display: grid; gap: 6px; color: #6b7873; font-size: 14px; line-height: 1.55; }
+.post-pasos-largos > li { padding: 22px 0; }
+.post-pasos-largos ul { margin: 12px 0 0; padding-left: 19px; list-style: disc; display: block; color: #6b7873; font-size: 14px; line-height: 1.6; }
+.post-pasos-largos ul li { display: list-item; padding: 0; border: 0; margin-bottom: 5px; }
 
 @media (max-width: 680px) {
   .cupo-figura { padding: 18px 16px; }

@@ -15,7 +15,8 @@
     "lint": "eslint .",
     "sitemap": "node scripts/sitemap.mjs",
     "prerender": "node scripts/prerender.mjs",
-    "seo": "node scripts/auditar-seo.mjs"
+    "seo": "node scripts/auditar-seo.mjs",
+    "cajas": "node scripts/revisar-cajas.mjs"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.11",

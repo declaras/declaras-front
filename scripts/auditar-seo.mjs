@@ -119,7 +119,16 @@ for (const { ruta } of RUTAS) {
   if (!canon) fallas.push(`${ruta}: sin canonical`);
   else if (canon !== `${SITIO}${ruta}`) fallas.push(`${ruta}: la canonical apunta a ${canon}`);
   if (h1.length !== 1) fallas.push(`${ruta}: ${h1.length} etiquetas h1`);
-  if (h1[0] && /[a-z][A-Z]|[a-záéíóú]\$/.test(h1[0])) fallas.push(`${ruta}: el h1 tiene palabras pegadas, "${h1[0]}"`);
+  // Palabras pegadas por un <br /> sin espacio a los lados. Un rastreador lee el texto seguido, asi
+  // que "Automatica,<br />pero" le llega como "Automatica,pero".
+  //
+  // SE MIRA EL <br>, NO LAS MAYUSCULAS. Buscar una minuscula seguida de mayuscula parecia mas
+  // simple y marcaba "WhatsApp" en cada titular. Aca la senal es exacta: si a los dos lados del
+  // salto hay un caracter que no es espacio, las palabras quedan pegadas.
+  const pegadas = [...html.matchAll(/<h([1-3])[^>]*>([\s\S]*?)<\/h\1>/g)]
+    .filter((m) => /\S<br\s*\/?>\s*<?[a-zA-ZáéíóúñÁÉÍÓÚÑ]/.test(m[2].replace(/<em>|<\/em>/g, "")))
+    .map((m) => m[2].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim());
+  for (const t of pegadas) fallas.push(`${ruta}: encabezado con palabras pegadas por un <br>, "${t.slice(0, 50)}"`);
   if (og < 6) fallas.push(`${ruta}: solo ${og} etiquetas Open Graph`);
   if (!tipos.length) fallas.push(`${ruta}: sin datos estructurados`);
   if (palabras < 300) fallas.push(`${ruta}: solo ${palabras} palabras en el HTML servido`);
