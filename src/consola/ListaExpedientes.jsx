@@ -365,9 +365,15 @@ function QuienEres({ clientes, onElegir, onEmpezar, empezando, alAbrir, onCancel
   return (
     <section className="empezar">
       <h1 className="empezar-titulo">¿De quién es la declaración?</h1>
+      {/*
+        EL TEXTO DECIA "todavia no hay ingreso con clave", y desde que existe `/login` eso era
+        falso: quien llega aca YA entro con su cuenta. Lo que pasa es otra cosa, y es la que hay
+        que decir — esta es la vista del CLIENTE, o sea la que el contador usa para ver la consola
+        como la vera su cliente, y para eso hay que escoger de cual cliente se trata.
+      */}
       <p className="empezar-texto">
-        Todavía no hay ingreso con clave, así que aquí se elige a quién pertenece lo que vas a
-        ver.
+        Esta es la vista del cliente. Elige de quién quieres verla; con el interruptor de arriba
+        vuelves a la tuya.
       </p>
 
       {clientes.loading ? <Cargando filas={2} /> : null}

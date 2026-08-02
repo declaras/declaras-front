@@ -21,7 +21,12 @@ export default function Consola() {
   return (
     <ProveedorDeSesion>
       <Protegida>
-        <ProveedorDeVista>
+        {/*
+          Con sesion se arranca en la vista del contador: entrar exige una cuenta que esta en la
+          lista de contadores, asi que a quien llega ya lo conocemos. Sin sesion —el despliegue que
+          todavia no tiene Supabase configurado— se mantiene el default viejo.
+        */}
+        <VistaSegunLaSesion>
           <div className="app">
             <Cabecera />
             <main className="app-cuerpo">
@@ -31,10 +36,16 @@ export default function Consola() {
               </Routes>
             </main>
           </div>
-        </ProveedorDeVista>
+        </VistaSegunLaSesion>
       </Protegida>
     </ProveedorDeSesion>
   );
+}
+
+/** El proveedor de vista, con el default puesto segun si hay alguien identificado. */
+function VistaSegunLaSesion({ children }) {
+  const { sesion } = useSesion();
+  return <ProveedorDeVista porDefecto={Boolean(sesion)}>{children}</ProveedorDeVista>;
 }
 
 /**

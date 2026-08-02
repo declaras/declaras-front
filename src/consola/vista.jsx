@@ -35,10 +35,27 @@ function vistaDeLaDireccion() {
   return pedida === "contador" ? true : pedida === "cliente" ? false : null;
 }
 
-export function ProveedorDeVista({ children }) {
-  const [profunda, setProfunda] = useState(
-    () => vistaDeLaDireccion() ?? globalThis.localStorage?.getItem(CLAVE) === "contador",
-  );
+/**
+ * `porDefecto` es la vista de quien no ha elegido ninguna.
+ *
+ * POR QUE NO ES SIEMPRE LA DEL CLIENTE, QUE ERA EL DEFAULT. Cuando esto se escribio no habia
+ * login: cualquiera podia llegar a la consola, asi que arrancar en la vista del cliente era lo
+ * prudente. Ahora entrar exige una cuenta y esa cuenta esta en la lista de contadores — o sea que
+ * a quien llega ya lo conocemos, y sabemos que es contador. Recibirlo con la pantalla del cliente
+ * y pedirle que se autodeclare de quien es la declaracion era preguntarle algo que ya sabemos.
+ *
+ * El orden de precedencia se mantiene: lo que diga la direccion manda, luego lo que la persona
+ * eligio antes, y solo al final este default. Un contador que se pasa a la vista del cliente para
+ * ver que vera su cliente sigue encontrandola ahi la proxima vez.
+ */
+export function ProveedorDeVista({ children, porDefecto = false }) {
+  const [profunda, setProfunda] = useState(() => {
+    const deLaDireccion = vistaDeLaDireccion();
+    if (deLaDireccion !== null) return deLaDireccion;
+    const guardada = globalThis.localStorage?.getItem(CLAVE);
+    if (guardada) return guardada === "contador";
+    return porDefecto;
+  });
   // De quien es la declaracion que se esta viendo en modo cliente. Mientras no exista ingreso
   // con clave, esto hace las veces de identidad: sin ella la pantalla decia "tus declaraciones"
   // y listaba las de todo el mundo, que es peor que no mostrar nada.
