@@ -1,13 +1,31 @@
 /**
  * Cliente de la API de Declaras.
  *
- * Las peticiones van a /api, que el proxy de Vite reenvia al backend inyectando la llave
- * de API: el navegador nunca la tiene. En produccion ese papel lo cumple un gateway.
+ * ═══ LE HABLA AL BACKEND DIRECTO, SIN INTERMEDIARIO ═══
+ *
+ * Antes las peticiones iban a `/api` del mismo dominio y un proxy las reenviaba inyectando una
+ * `X-API-Key` compartida, para que la llave no bajara al navegador. Ese arreglo era circular —hacia
+ * falta un servidor para esconder una credencial que existia por no saber quien era el usuario— y
+ * dejo un agujero medido: el proxy le abria a cualquiera Y ponia la llave de su bolsillo, asi que un
+ * `curl` sin autenticar devolvia cedulas y correos.
+ *
+ * Ahora el navegador manda el token de la persona que entro. Es una credencial que le PERTENECE, asi
+ * que no hay nada que esconderle y no hace falta nadie en medio. El proxy se borro.
+ *
+ * Lo que eso trae: hace falta CORS del lado del backend (`DECLARAS_CORS_ORIGINS`), y desaparece el
+ * tope de 4,5 MB que imponia la funcion de Vercel — o sea que un 220 escaneado grande ya sube.
  */
 
 import { cerrarSesionLocal, tokenVigente } from "./sesion";
 
-const BASE = "/api";
+/**
+ * Sin `VITE_API_URL` no hay a donde llamar, y se dice en vez de fallar raro.
+ *
+ * El default apunta al backend local. En un despliegue la variable es obligatoria: sin ella todas
+ * las peticiones irian a `localhost` desde el navegador de otra persona, que falla con un error de
+ * red indistinguible de "el servicio esta caido".
+ */
+const BASE = (import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000").replace(/\/$/, "");
 
 /**
  * Le agrega a la peticion el token de la persona que esta entrada, si hay.
@@ -70,17 +88,13 @@ async function request(path, options = {}) {
   const body = isJson ? await response.json() : null;
 
   if (!response.ok) {
-    // Dos formas distintas de quedarse sin sesion a mitad de uso, y cada una se atiende donde vive.
+    // El token vencio o se revoco a mitad de uso. Se cierra la sesion local para que `Protegida`
+    // mande a `/login` en el proximo pintado. Sin esto la consola se queda con un token muerto
+    // mostrando errores en cada panel sin decir que hay que entrar de nuevo — el sintoma seria
+    // "se dañó" y no "se venció la sesión".
     //
-    // SIN_SESION es la clave compartida del middleware, que no es de este cliente: recargar hace
-    // que el middleware responda con su pantalla. No hay bucle — esa respuesta ya no es la app.
-    if (response.status === 401 && body?.code === "SIN_SESION") {
-      globalThis.location?.reload();
-    }
-    // TOKEN_INVALIDO es la sesion de la persona: el token vencio o se revoco. Se cierra la sesion
-    // local para que `Protegida` mande a `/login` en el proximo pintado. Sin esto la consola se
-    // queda con un token muerto mostrando errores en cada panel y sin decir que hay que entrar de
-    // nuevo — el sintoma seria "se dañó" y no "se venció la sesión".
+    // Se ramifica por `code` y no solo por el 401: un 401 puede venir de otra cosa, y cerrar la
+    // sesion por cualquier 401 sacaria a alguien a la calle por un error que no era de su sesion.
     if (response.status === 401 && body?.code === "TOKEN_INVALIDO") {
       cerrarSesionLocal();
     }

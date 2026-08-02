@@ -7,10 +7,6 @@
   "trailingSlash": false,
   "rewrites": [
     {
-      "source": "/api/(.*)",
-      "destination": "/api/proxy?ruta=$1"
-    },
-    {
       "source": "/consola/:ruta*",
       "destination": "/consola"
     }
