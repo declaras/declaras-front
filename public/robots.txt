@@ -1,8 +1,15 @@
 # La consola es la herramienta del contador: no tiene nada que buscar un motor y expone rutas de
-# trabajo interno, asi que queda fuera del indice.
+# trabajo interno, asi que queda fuera del indice. El ingreso tampoco: es la puerta de esa misma
+# herramienta y un formulario de clave en los resultados de busqueda solo invita a que lo prueben.
+#
+# ESTO NO PROTEGE NADA, y conviene tenerlo escrito para que nadie lo confunda: robots.txt es una
+# peticion que los buscadores respetan por convencion, no un control de acceso, y de hecho le dice
+# a quien lo lea exactamente donde estan las rutas internas. Lo que protege es que el backend
+# responde 401 sin sesion y 403 si el correo no esta habilitado.
 User-agent: *
 Allow: /
 Disallow: /consola
 Disallow: /consola/
+Disallow: /login
 
 Sitemap: https://declaras.co/sitemap.xml

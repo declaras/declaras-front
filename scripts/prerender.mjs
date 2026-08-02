@@ -63,20 +63,27 @@ for (const { ruta } of RUTAS) {
   );
 }
 
-// La consola del contador: cascara vacia, no prerenderizada y fuera del indice. Necesita archivo
-// propio porque es una ruta de cliente; sin el, el alojamiento devolvia 404. Mandarla al HTML de la
+// Las rutas internas: cascara vacia, no prerenderizadas y fuera del indice. Necesitan archivo
+// propio porque son rutas de cliente; sin el, el alojamiento devolvia 404. Mandarlas al HTML de la
 // portada tampoco servia: se veria la portada un instante antes de que React la reemplace.
-{
+//
+// `/login` va aca y NO en RUTAS por la misma razon que `/consola`: no se prerenderiza (no tiene
+// contenido que un buscador deba ver) y no se indexa. Que la ruta exista es para poder mandarla por
+// escrito, no para que se encuentre sola.
+for (const [ruta, titulo] of [
+  ["consola", "Consola | Clara"],
+  ["login", "Ingreso | Clara"],
+]) {
   const cascara = plantilla
-    .replace(/<title>[\s\S]*?<\/title>/, "<title>Consola | Clara</title>")
+    .replace(/<title>[\s\S]*?<\/title>/, `<title>${titulo}</title>`)
     .replace(/\s*<meta name="robots"[^>]*>/g, "")
     .replace(/\s*<link rel="canonical"[^>]*>/g, "")
     .replace("</head>", '  <meta name="robots" content="noindex, nofollow" />\n  </head>');
-  for (const salida of [join(DIST, "consola", "index.html"), join(DIST, "consola.html")]) {
+  for (const salida of [join(DIST, ruta, "index.html"), join(DIST, `${ruta}.html`)]) {
     mkdirSync(join(salida, ".."), { recursive: true });
     writeFileSync(salida, cascara);
   }
-  console.log("  /consola                           cascara sin indexar");
+  console.log(`  /${ruta.padEnd(33)} cascara sin indexar`);
 }
 
 if (problemas.length) {

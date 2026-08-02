@@ -7,29 +7,62 @@
  * cada vez que se le agrega algo a la del contador.
  */
 
-import { NavLink, Route, Routes } from "react-router";
+import { NavLink, Navigate, Route, Routes, useLocation } from "react-router";
 
 import { api } from "./api";
 import { useApi } from "./hooks";
 import DetalleExpediente from "./DetalleExpediente";
 import ListaExpedientes from "./ListaExpedientes";
+import { ProveedorDeSesion, hayProyecto, useSesion } from "./sesion";
 import { ProveedorDeVista, useVista } from "./vista";
 import "./consola.css";
 
 export default function Consola() {
   return (
-    <ProveedorDeVista>
-      <div className="app">
-        <Cabecera />
-        <main className="app-cuerpo">
-          <Routes>
-            <Route index element={<ListaExpedientes />} />
-            <Route path="expedientes/:caseId" element={<DetalleExpediente />} />
-          </Routes>
-        </main>
-      </div>
-    </ProveedorDeVista>
+    <ProveedorDeSesion>
+      <Protegida>
+        <ProveedorDeVista>
+          <div className="app">
+            <Cabecera />
+            <main className="app-cuerpo">
+              <Routes>
+                <Route index element={<ListaExpedientes />} />
+                <Route path="expedientes/:caseId" element={<DetalleExpediente />} />
+              </Routes>
+            </main>
+          </div>
+        </ProveedorDeVista>
+      </Protegida>
+    </ProveedorDeSesion>
   );
+}
+
+/**
+ * Sin sesion no se pinta la consola: se manda a `/login`.
+ *
+ * ES COMODIDAD, NO SEGURIDAD, y la distincion importa. Un guard de React solo decide que se dibuja;
+ * quien quiera los datos no dibuja nada, le habla a la API. Lo que de verdad protege es que el
+ * backend responde 401 sin token y 403 si el correo no esta en la lista de contadores.
+ *
+ * Lo que este guard evita es lo otro: que alguien sin sesion vea una consola vacia llena de errores
+ * en vez de una pantalla que le dice que entre.
+ *
+ * MIENTRAS NO HAY PROYECTO configurado no redirige. En ese despliegue la unica puerta es la clave
+ * compartida del middleware, y mandar a `/login` dejaria a la consola inalcanzable — un formulario
+ * que no puede funcionar delante de la herramienta que si.
+ */
+function Protegida({ children }) {
+  const { sesion, cargando } = useSesion();
+  const ubicacion = useLocation();
+
+  if (!hayProyecto) return children;
+  if (cargando) return <div className="entrar-cargando">Un momento…</div>;
+  if (!sesion) {
+    // Se recuerda a donde iba para volver ahi despues de entrar: perder el destino obliga a
+    // navegar de nuevo desde la lista, y con un enlace a un expediente concreto es peor.
+    return <Navigate to="/login" state={{ desde: ubicacion.pathname }} replace />;
+  }
+  return children;
 }
 
 function Cabecera() {
@@ -51,8 +84,27 @@ function Cabecera() {
         >
           Vista de contador
         </button>
+        <Salir />
       </div>
     </header>
+  );
+}
+
+/**
+ * Cerrar sesion.
+ *
+ * No aparece cuando no hay proyecto configurado: en ese despliegue no hay sesion que cerrar, y un
+ * boton que no hace nada es peor que no tenerlo. Muestra el correo porque con varias cuentas —la
+ * de prueba y la de verdad— saber con cual estas entrado ahorra el rato de no entender por que un
+ * expediente no aparece.
+ */
+function Salir() {
+  const { sesion, salir } = useSesion();
+  if (!sesion) return null;
+  return (
+    <button className="salir" onClick={salir} title={sesion.user?.email ?? "Cerrar sesión"}>
+      Salir
+    </button>
   );
 }
 

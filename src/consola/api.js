@@ -5,7 +5,35 @@
  * de API: el navegador nunca la tiene. En produccion ese papel lo cumple un gateway.
  */
 
+import { cerrarSesionLocal, tokenVigente } from "./sesion";
+
 const BASE = "/api";
+
+/**
+ * Le agrega a la peticion el token de la persona que esta entrada, si hay.
+ *
+ * ═══ COMO CONVIVE CON LA LLAVE DEL PROXY ═══
+ *
+ * El proxy le pone `X-API-Key` a todo lo que pasa, y reenvia `Authorization` sin tocarla. El
+ * backend prefiere el token cuando llegan los dos. O sea que esto funciona sobre el despliegue tal
+ * como esta, sin cambiar el proxy: mientras no haya sesion se entra como servicio —como hasta hoy—
+ * y en cuanto alguien entra, la misma peticion pasa a estar firmada por una persona y la bitacora
+ * empieza a decir la verdad.
+ *
+ * ═══ POR QUE SE PIDE EL TOKEN EN CADA PETICION ═══
+ *
+ * `tokenVigente` consulta al cliente de Supabase, que lo renueva solo si esta por vencer.
+ * Guardarlo en una variable al entrar produciria el bug de la hora: todo funciona bien hasta que
+ * el token vence y de golpe todo da 401, sin que nadie haya tocado nada.
+ *
+ * El costo es una llamada local —lee del almacenamiento, no de la red— asi que no hay nada que
+ * optimizar aca.
+ */
+async function conSesion(options) {
+  const token = await tokenVigente();
+  if (!token) return options;
+  return { ...options, headers: { ...(options.headers ?? {}), Authorization: `Bearer ${token}` } };
+}
 
 /** Error con el codigo estable que devuelve el backend, para poder ramificar en la UI. */
 export class ApiError extends Error {
@@ -26,7 +54,7 @@ export class ApiError extends Error {
 async function request(path, options = {}) {
   let response;
   try {
-    response = await fetch(`${BASE}${path}`, options);
+    response = await fetch(`${BASE}${path}`, await conSesion(options));
   } catch (cause) {
     throw new ApiError({
       code: "NETWORK_ERROR",
@@ -42,11 +70,19 @@ async function request(path, options = {}) {
   const body = isJson ? await response.json() : null;
 
   if (!response.ok) {
-    // La sesion de la consola vencio a mitad de uso. Recargar es lo correcto y no un atajo: la
-    // reja vive en el middleware, asi que al pedir la pagina de nuevo el la responde con la
-    // pantalla de la clave. No hay bucle — esa respuesta ya no es la aplicacion.
+    // Dos formas distintas de quedarse sin sesion a mitad de uso, y cada una se atiende donde vive.
+    //
+    // SIN_SESION es la clave compartida del middleware, que no es de este cliente: recargar hace
+    // que el middleware responda con su pantalla. No hay bucle — esa respuesta ya no es la app.
     if (response.status === 401 && body?.code === "SIN_SESION") {
       globalThis.location?.reload();
+    }
+    // TOKEN_INVALIDO es la sesion de la persona: el token vencio o se revoco. Se cierra la sesion
+    // local para que `Protegida` mande a `/login` en el proximo pintado. Sin esto la consola se
+    // queda con un token muerto mostrando errores en cada panel y sin decir que hay que entrar de
+    // nuevo — el sintoma seria "se dañó" y no "se venció la sesión".
+    if (response.status === 401 && body?.code === "TOKEN_INVALIDO") {
+      cerrarSesionLocal();
     }
     throw new ApiError({ ...(body ?? {}), status: response.status });
   }

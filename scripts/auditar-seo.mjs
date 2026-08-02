@@ -28,6 +28,35 @@ if (!process.env.VITE_WHATSAPP) {
   );
 }
 
+// EL INGRESO SE DECIDE EN EL BUILD, NO EN EJECUCION, y eso no es obvio.
+//
+// `sesion.jsx` construye el cliente de Supabase solo si las dos variables existen. Vite reemplaza
+// `import.meta.env.VITE_*` por literales al construir, asi que sin ellas la condicion queda
+// estaticamente falsa, la rama muerta se poda y EL SDK NO ENTRA AL PAQUETE. Se comprobo: sin las
+// variables, ningun chunk contiene `signInWithPassword`.
+//
+// La consecuencia es la que hay que avisar: poner las variables en el panel DESPUES de construir no
+// arregla nada, porque no hay codigo que las lea. Y el sintoma no es un error — `/login` dice
+// tranquilamente que el ingreso no esta configurado, o sea que un despliegue puede quedar con el
+// login muerto y la unica pista es un aviso como este.
+const supabaseCompleto = Boolean(
+  process.env.VITE_SUPABASE_URL && process.env.VITE_SUPABASE_ANON_KEY,
+);
+if (!supabaseCompleto) {
+  console.warn(
+    "\n  AVISO: sin VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY este paquete NO lleva el cliente\n" +
+      "  de Supabase, asi que /login queda inerte y ponerlas despues del build no lo revive.\n" +
+      "  Configuralas en el despliegue y vuelve a construir.\n",
+  );
+} else if (!/^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/.test(process.env.VITE_SUPABASE_URL)) {
+  // Un typo aca produce un login que rebota todo con un error de red, indistinguible de "la clave
+  // esta mal" desde la pantalla.
+  fallas.push(
+    `VITE_SUPABASE_URL="${process.env.VITE_SUPABASE_URL}" no parece la URL de un proyecto: ` +
+      "va como https://<ref>.supabase.co, sin ruta.",
+  );
+}
+
 // El dominio queda escrito varias veces en el head del index.html, que es estatico y no puede leer
 // la constante. Si alguien cambia SITIO y olvida el head, las canonicas y las tarjetas de compartir
 // apuntarian al dominio viejo sin que nada falle.

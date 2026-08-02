@@ -337,7 +337,10 @@ function FormularioDecision({ caseId, partida, decision, motivos, onListo }) {
       className="decision-form"
       onSubmit={async (e) => {
         e.preventDefault();
-        const payload = { decision, motivo, quien: "contador" };
+        // Sin `quien`: el actor lo pone el backend con la credencial verificada. Mandarlo desde
+        // aca era la mentira —el navegador declaraba quien habia decidido, y siempre decia
+        // "contador" sin importar quien estuviera del otro lado.
+        const payload = { decision, motivo };
         if (pideValor) payload.valor = Number(valor);
         if (nota.trim()) payload.nota = nota.trim();
         if (await resolver.run(payload)) onListo();

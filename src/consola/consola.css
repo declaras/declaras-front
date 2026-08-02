@@ -1958,3 +1958,107 @@
   flex-wrap: wrap;
   padding: 6px 0;
 }
+
+/* ─────────────────────────── ingreso del contador ─────────────────────────── */
+
+/* Deliberadamente austero: es una puerta, no una pantalla de producto. Cualquier cosa que
+   distraiga acá le quita atención a lo único que hay que hacer. Usa los mismos tokens que el
+   resto de la consola para que no se sienta como otra aplicación. */
+
+.entrar {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+}
+
+.entrar-cargando {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  color: var(--tinta-suave, #6b7280);
+  font-size: 0.9375rem;
+}
+
+.entrar-caja {
+  width: min(22rem, 100%);
+  display: grid;
+  gap: 0.875rem;
+}
+
+.entrar-titulo {
+  margin: 0;
+  font-size: 1.5rem;
+  letter-spacing: -0.02em;
+}
+
+.entrar-nota {
+  margin: -0.5rem 0 0.5rem;
+  color: var(--tinta-suave, #6b7280);
+  font-size: 0.875rem;
+}
+
+.entrar-campo {
+  display: grid;
+  gap: 0.3125rem;
+}
+
+.entrar-campo > span {
+  font-size: 0.8125rem;
+  color: var(--tinta-suave, #6b7280);
+}
+
+.entrar-campo input {
+  font: inherit;
+  padding: 0.5625rem 0.6875rem;
+  border: 1px solid var(--borde, #d8dbe0);
+  border-radius: 0.5rem;
+  background: var(--fondo, #fff);
+  color: inherit;
+}
+
+.entrar-campo input:focus-visible {
+  outline: 2px solid var(--acento, #1f6feb);
+  outline-offset: 1px;
+  border-color: transparent;
+}
+
+.entrar-boton {
+  font: inherit;
+  font-weight: 600;
+  padding: 0.5625rem 0.75rem;
+  border: 0;
+  border-radius: 0.5rem;
+  background: var(--acento, #1f6feb);
+  color: #fff;
+  cursor: pointer;
+}
+
+.entrar-boton:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* Reserva su alto siempre: sin esto la caja salta cuando aparece el error, y el salto mueve el
+   botón justo cuando alguien va a volver a hacer clic. */
+.entrar-error {
+  margin: 0;
+  min-height: 1.25rem;
+  font-size: 0.8125rem;
+  color: var(--peligro, #d1242f);
+}
+
+.salir {
+  font: inherit;
+  font-size: 0.8125rem;
+  padding: 0.375rem 0.625rem;
+  border: 1px solid var(--borde, #d8dbe0);
+  border-radius: 0.5rem;
+  background: transparent;
+  color: var(--tinta-suave, #6b7280);
+  cursor: pointer;
+}
+
+.salir:hover {
+  color: inherit;
+}
