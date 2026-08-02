@@ -52,6 +52,19 @@ export default [
     languageOptions: { globals: { ...globals.node } },
   },
   {
+    // El middleware corre en el Edge de Vercel: ni navegador ni Node. Tiene los globals estandar
+    // de la web —`Response`, `URL`, `crypto.subtle`, `TextEncoder`— mas `process.env`, que es lo
+    // unico que toma prestado de Node. Sin esta entrada, `no-undef` marca las once cosas que el
+    // Edge si define, y apagar la regla en el unico archivo que decide quien entra seria el peor
+    // sitio del proyecto para quedarse sin ella.
+    files: ["middleware.js"],
+    languageOptions: {
+      ecmaVersion: 2023,
+      sourceType: "module",
+      globals: { ...globals.browser, process: "readonly" },
+    },
+  },
+  {
     // El prerenderizador corre en Node, pero las funciones que le pasa a `page.evaluate` se
     // ejecutan dentro del navegador. Sin declararlo, `no-undef` marca `document` en un codigo que
     // es correcto, y la unica alternativa seria apagar la regla que precisamente hace falta.

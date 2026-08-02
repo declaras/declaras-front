@@ -42,6 +42,12 @@ async function request(path, options = {}) {
   const body = isJson ? await response.json() : null;
 
   if (!response.ok) {
+    // La sesion de la consola vencio a mitad de uso. Recargar es lo correcto y no un atajo: la
+    // reja vive en el middleware, asi que al pedir la pagina de nuevo el la responde con la
+    // pantalla de la clave. No hay bucle — esa respuesta ya no es la aplicacion.
+    if (response.status === 401 && body?.code === "SIN_SESION") {
+      globalThis.location?.reload();
+    }
     throw new ApiError({ ...(body ?? {}), status: response.status });
   }
   return body;
