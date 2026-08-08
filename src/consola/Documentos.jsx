@@ -21,6 +21,7 @@ import { useState } from "react";
 import { ChevronDown, ChevronRight, Download, Eye } from "lucide-react";
 
 import {
+  CAMPOS_QUE_NO_SON_PESOS,
   campoLabel,
   docLabel,
   esFechaIso,
@@ -141,6 +142,13 @@ function CamposLeidos({ doc }) {
 
 function valorDelCampo(campo) {
   if (campo.value === null || campo.value === undefined) return "—";
+  // TODA CIFRA SE ASUME EN PESOS. El panel existe para que el contador pueda CREERLE al valor
+  // comparandolo con el papel, y un `84000000` crudo no se verifica: obliga a contar ceros y se
+  // aprueba de afan. Los extractores del modelo no declaran `unit`, asi que esperar a que lo
+  // hagan era dejar el panel ilegible mientras tanto.
+  if (typeof campo.value === "number" && !CAMPOS_QUE_NO_SON_PESOS.has(campo.name)) {
+    return formatMoney(campo.value);
+  }
   if (campo.unit === "COP") return formatMoney(campo.value);
   if (esFechaIso(campo.value)) return formatIso(campo.value);
   return sinCaracterIlegible(campo.value);

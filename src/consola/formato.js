@@ -129,7 +129,52 @@ const CAMPO_LABELS = {
   email: "Correo electrónico",
   economic_activity_code: "Actividad económica",
   economic_activity_start_date: "Inicio de actividad",
+
+  // Los certificados que lee el modelo. Sin estas entradas, `campoLabel` cae al reemplazo de
+  // guiones bajos y sale "anio gravable", "empleador nit", "cesantias e intereses" — sin tildes y
+  // en el vocabulario interno del esquema, no en el del documento que la persona tiene delante.
+  anio_gravable: "Año gravable",
+  empleador_nit: "NIT del empleador",
+  empleador_nombre: "Empleador",
+  numero_de_certificados: "Certificados expedidos",
+  total_ingresos_brutos: "Total de ingresos brutos",
+  salarios: "Salarios",
+  cesantias_e_intereses: "Cesantías e intereses",
+  prima: "Prima de servicios",
+  bonificaciones: "Bonificaciones",
+  pensiones_de_jubilacion: "Pensiones de jubilación",
+  aportes_salud: "Aportes a salud",
+  aportes_pension: "Aportes a pensión",
+  retencion: "Retención en la fuente",
+  promedio_mensual_6m: "Promedio mensual (6 meses)",
+  entidad_nit: "NIT de la entidad",
+  entidad_nombre: "Entidad",
+  tipo_beneficio: "Tipo de beneficio",
+  valor: "Valor",
+  certificada: "Certificada",
+  discrimina: "Discrimina conceptos",
 };
+
+/**
+ * TODA CIFRA SE ASUME EN PESOS, salvo estas.
+ *
+ * Salian crudas —`84000000`— y en un producto tributario eso obliga a contar ceros para saber si
+ * son ochenta y cuatro millones u ochocientos cuarenta. El panel de lectura existe para VERIFICAR
+ * contra el papel que la persona tiene al lado, y un numero que hay que descifrar no se verifica:
+ * se aprueba de afan. Que el contador pueda creerle a la cifra es la razon de ser del panel.
+ *
+ * Se asume pesos por defecto y se excluye lo que evidentemente no lo es. La lista al reves
+ * —enumerar lo que SI es plata— deja crudo cualquier campo nuevo que alguien agregue y nadie se
+ * entera; asi, un campo nuevo sale formateado y el error, si lo hay, se ve.
+ *
+ * Estas tres se excluyen porque pintarlas como plata seria visiblemente absurdo: el año gravable
+ * saldria como "$ 2.025".
+ */
+export const CAMPOS_QUE_NO_SON_PESOS = new Set([
+  "anio_gravable",
+  "numero_de_certificados",
+  "confianza",
+]);
 
 export const campoLabel = (nombre) => {
   if (CAMPO_LABELS[nombre]) return CAMPO_LABELS[nombre];
