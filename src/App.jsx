@@ -547,7 +547,11 @@ function Landing({ goTo }) {
           <div className="container credibility-editorial">
             <div className="credibility-copy">
               <div className="eyebrow">CON RESPALDO, SIN LETRA PEQUEÑA</div>
-              <h2>Automática,<br /><em>pero nunca a ciegas.</em></h2>
+              <h2>
+                Automática,{" "}
+                <br />
+                <em>pero nunca a ciegas.</em>
+              </h2>
               <p>Clara deja un registro de cada dato encontrado, cada beneficio aplicado y cada revisión realizada.</p>
               <div className="credibility-metric"><strong>Cada peso</strong><span>del ahorro queda explicado</span></div>
             </div>
@@ -660,7 +664,11 @@ function Landing({ goTo }) {
           <div className="container final-cta-grid">
             <div className="final-cta-copy">
               <div className="eyebrow light">TU DECLARACIÓN EMPIEZA AQUÍ</div>
-              <h2>Escribe por WhatsApp.<br /><em>En 30 segundos sabes.</em></h2>
+              <h2>
+                Escribe por WhatsApp.{" "}
+                <br />
+                <em>En 30 segundos sabes.</em>
+              </h2>
               <p>Te decimos gratis si estás obligado a declarar. Si continúas, tu declaración queda lista en cerca de 15 minutos por $50.000, sin salir del chat.</p>
               <div className="cta-trust"><span><MessageCircle size={14} /> Todo por WhatsApp</span><span><CircleDollarSign size={14} /> $50.000, un solo pago</span><span><LockKeyhole size={14} /> Datos cifrados</span></div>
             </div>
