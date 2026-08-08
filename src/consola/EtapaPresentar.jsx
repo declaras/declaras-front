@@ -153,7 +153,7 @@ export default function EtapaPresentar({ caseId, caso, conciliacion, peticiones,
 
       {/* Antes del formulario: la pregunta "¿en qué difiere de lo que la DIAN espera?" se contesta
           antes de mirar las casillas una por una. */}
-      <Comparacion comparacion={comparacion.data} />
+      <Comparacion comparacion={comparacion.data} error={comparacion.error} />
 
       {porRevisar.length ? (
         <section className="revisar">

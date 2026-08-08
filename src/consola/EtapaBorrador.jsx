@@ -82,7 +82,10 @@ export default function EtapaBorrador({ caseId, caso, resumen, liquidacion, reco
                 ? "Lo que la DIAN precargó con lo que los terceros le reportaron. Las diferencias son lo que aportó el trabajo con documentos."
                 : "La DIAN precarga un borrador con lo que otros reportaron de ti. Las diferencias son lo que agregamos nosotros."}
             </p>
-            <Comparacion comparacion={comparaciones?.dian?.data} />
+            <Comparacion
+              comparacion={comparaciones?.dian?.data}
+              error={comparaciones?.dian?.error}
+            />
           </section>
 
           <section className="comparar-bloque">
@@ -94,7 +97,10 @@ export default function EtapaBorrador({ caseId, caso, resumen, liquidacion, reco
                 ? "Lo que de verdad se radicó ese año gravable, que en un año viejo es el trabajo de un contador. Cada diferencia es un beneficio que él no tomó o un error nuestro."
                 : "Si ese año ya declaraste, acá se ve en qué difiere nuestro cálculo de lo que se presentó. Sirve para saber si dejaste plata sobre la mesa."}
             </p>
-            <Comparacion comparacion={comparaciones?.presentada?.data} />
+            <Comparacion
+              comparacion={comparaciones?.presentada?.data}
+              error={comparaciones?.presentada?.error}
+            />
           </section>
         </div>
       ) : null}

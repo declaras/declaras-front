@@ -65,10 +65,31 @@ const CONTRA = {
   },
 };
 
-export default function Comparacion({ comparacion }) {
+export default function Comparacion({ comparacion, error, cargando = false }) {
   const { profunda } = useVista();
   const [abierto, setAbierto] = useState(false);
-  if (!comparacion) return null;
+
+  // ═══ UNA COMPARACION QUE NO SE PUDO HACER TIENE QUE DECIRLO ═══
+  //
+  // Devolver `null` dejaba el bloque con su título y su párrafo explicativo y NADA debajo. Es el
+  // peor resultado posible: quien mira no puede distinguir "no hay diferencias" de "esto ni se
+  // calculó", y son conclusiones opuestas — una dice que la declaración está lista y la otra que
+  // no se ha revisado.
+  //
+  // Pasó en producción y el diagnóstico fácil era el equivocado: parecía que faltaban los dos
+  // documentos de la DIAN, y la causa real era que el expediente nunca había pasado por la
+  // conciliación, así que no había liquidación con qué comparar. El backend lo decía con todas
+  // las letras en el 409; era esta pantalla la que se lo tragaba.
+  if (error) {
+    return <p className="comparacion-igual">{error.message}</p>;
+  }
+  if (!comparacion) {
+    return (
+      <p className="comparacion-igual">
+        {cargando ? "Comparando…" : "Todavía no se ha podido hacer esta comparación."}
+      </p>
+    );
+  }
 
   const quien = CONTRA[comparacion.contra] ?? CONTRA.BORRADOR_DE_LA_DIAN;
 
