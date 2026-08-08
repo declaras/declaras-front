@@ -31,6 +31,7 @@ import {
 } from "./formato";
 import { SoloContador, useVista } from "./vista";
 import VisorDocumento from "./VisorDocumento";
+import { urlDeApi } from "./api";
 
 const CAMPOS_TECNICOS = new Set(["raw_text"]);
 
@@ -85,7 +86,7 @@ function Documento({ doc, onVer }) {
         </button>
         <a
           className="btn-icono"
-          href={`/api${doc.download_url}`}
+          href={urlDeApi(doc.download_url)}
           target="_blank"
           rel="noreferrer"
           title="Descargar"

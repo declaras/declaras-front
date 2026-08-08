@@ -47,6 +47,23 @@ const BASE = (import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000").replace(/
  * El costo es una llamada local —lee del almacenamiento, no de la red— asi que no hay nada que
  * optimizar aca.
  */
+/**
+ * La URL absoluta de un recurso del backend, para lo que NO pasa por `fetch`.
+ *
+ * El visor mete el PDF en un `<iframe>` y la descarga es un `<a href>`: los dos los resuelve el
+ * navegador solo, sin pasar por `request`. Antes decian `/api/...` porque un proxy del mismo
+ * dominio los reenviaba; al borrarlo, esa ruta dejo de existir en el front y el servidor
+ * respondia el index.html de la SPA. El sintoma era la LANDING renderizada dentro del visor.
+ *
+ * OJO CON LO QUE ESTO NO ARREGLA: un `<iframe>` no manda la cabecera `Authorization`, asi que
+ * estos recursos solo funcionan si el backend los deja pasar de otra forma. Hoy exige token en
+ * todo, asi que la descarga va a dar 401 — es el mismo problema que tiene cualquier SPA con
+ * archivos protegidos, y se resuelve con una URL firmada de un solo uso. Queda anotado.
+ */
+export function urlDeApi(ruta) {
+  return `${BASE}${ruta}`;
+}
+
 async function conSesion(options) {
   const token = await tokenVigente();
   if (!token) return options;

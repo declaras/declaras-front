@@ -17,6 +17,7 @@ import { Download } from "lucide-react";
 
 import Cajon from "./Cajon";
 import { useVista } from "./vista";
+import { urlDeApi } from "./api";
 import {
   campoLabel,
   docLabel,
@@ -37,7 +38,10 @@ export default function VisorDocumento({ doc, onCerrar }) {
   const { profunda } = useVista();
   if (!doc) return null;
 
-  const urlDescarga = `/api${doc.download_url}`;
+  // `/api` era la ruta del proxy que se borró. Sin esto el navegador pedía al servidor del
+  // FRONT, que no tiene esa ruta y responde el index.html de la SPA — por eso el visor
+  // mostraba la landing dentro del marco en vez del PDF.
+  const urlDescarga = urlDeApi(doc.download_url);
   const urlVista = `${urlDescarga}&inline=true`;
 
   return (

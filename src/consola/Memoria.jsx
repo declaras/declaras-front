@@ -25,6 +25,7 @@ import { Download } from "lucide-react";
 import { formatMoney } from "./formato";
 import Cajon from "./Cajon";
 import { useVista } from "./vista";
+import { urlDeApi } from "./api";
 
 /**
  * Las etapas del calculo, con el nombre que tienen para quien no es contador.
@@ -147,7 +148,7 @@ export default function Memoria({ caseId, liquidacion, onCerrar }) {
       accion={
         <a
           className="btn-mini"
-          href={`/api/v1/cases/${caseId}/memoria`}
+          href={urlDeApi(`/v1/cases/${caseId}/memoria`)}
           target="_blank"
           rel="noreferrer"
           title="Descargar para anexar o archivar"

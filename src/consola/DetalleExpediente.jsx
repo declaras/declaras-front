@@ -459,12 +459,25 @@ function SubirDocumento({ caso, onListo }) {
         <div className="fila-campos">
           <label className="campo">
             <span>Qué es</span>
+            {/*
+              FALTABAN LOS CERTIFICADOS DE INGRESO, y por eso un 220 subido aca quedaba como
+              "otro documento" sin leer: el backend TIENE extractor para los seis, pero esta lista
+              solo ofrecia los de beneficios. El tipo que se elige aqui es el que decide que lector
+              corre, asi que un tipo ausente equivale a un lector que no existe.
+            */}
             <select value={tipo} onChange={(e) => setTipo(e.target.value)}>
-              <option value="certificado_intereses_vivienda">
+              <option value="CERT_INGRESOS_220">
+                Certificado de ingresos y retenciones (220)
+              </option>
+              <option value="CERT_PENSION">Certificado de pensión</option>
+              <option value="CERT_BANCARIO">Certificado bancario (rendimientos, GMF)</option>
+              <option value="CERT_DIVIDENDOS">Certificado de dividendos</option>
+              <option value="CERT_ARRIENDO">Certificado de arrendamiento</option>
+              <option value="CERT_INTERESES_VIVIENDA">
                 Certificado de intereses de vivienda
               </option>
-              <option value="certificado_prepagada">Certificado de medicina prepagada</option>
-              <option value="certificado_afc">Certificado de AFC o pensión voluntaria</option>
+              <option value="CERT_PREPAGADA">Certificado de medicina prepagada</option>
+              <option value="CERT_AFC_FVP">Certificado de AFC o pensión voluntaria</option>
               <option value="registro_civil">Registro civil de un dependiente</option>
               <option value="planilla_pila">Planilla de aportes (PILA)</option>
               <option value="predial">Impuesto predial</option>
