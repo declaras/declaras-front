@@ -1,6 +1,9 @@
 # Despliegue
 
-El sitio se publica en Vercel desde la rama `main`. La configuracion vive en `vercel.json`, que no
+El sitio se publica en Vercel desde la rama `main`. El repositorio es publico: en el plan Hobby de
+Vercel un repositorio privado que pertenece a una organizacion no se puede desplegar, y durante una
+semana todos los despliegues fallaron con "Cannot deploy from a private GitHub organization
+repository on the Hobby plan" mientras el sitio seguia sirviendo una version vieja. La configuracion vive en `vercel.json`, que no
 admite comentarios porque Vercel lo valida contra un esquema estricto y rechaza cualquier clave que
 no conozca. Por eso las razones estan aca.
 
@@ -47,6 +50,8 @@ formas de cada URL.
 |---|---|---|
 | `VITE_WHATSAPP` | El numero al que escribe el boton principal. Solo digitos, con indicativo. | El boton lleva a la guia en vez de abrir la conversacion. El build avisa. |
 | `VITE_SITIO_URL` | El dominio, para canonicas, sitemap y tarjetas al compartir. | Toma `https://declaras.co`. |
+| `VITE_SUPABASE_URL` | El proyecto de Supabase contra el que se valida al contador. Va como `https://<ref>.supabase.co`, sin ruta. | La consola no puede iniciar sesion. El build avisa. |
+| `VITE_SUPABASE_ANON_KEY` | La llave publica del mismo proyecto. Es publica a proposito: la reja de verdad esta en el backend. | Igual que la anterior. |
 
 ## Despues de desplegar
 
