@@ -30,7 +30,7 @@ const PESTANAS = [
   { id: "soportes", nombre: "Soportes" },
 ];
 
-export default function EtapaBorrador({ caseId, caso, resumen, liquidacion, recomendaciones, comparaciones }) {
+export default function EtapaBorrador({ caseId, caso, resumen, liquidacion, liquidacionError, recomendaciones, comparaciones }) {
   const { profunda } = useVista();
   const [pestana, setPestana] = useState("resumen");
   const [memoriaAbierta, setMemoriaAbierta] = useState(false);
@@ -53,7 +53,9 @@ export default function EtapaBorrador({ caseId, caso, resumen, liquidacion, reco
         ))}
       </div>
 
-      {pestana === "resumen" ? <Resumen liquidacion={liquidacion} resumen={resumen} /> : null}
+      {pestana === "resumen" ? (
+        <Resumen liquidacion={liquidacion} error={liquidacionError} resumen={resumen} />
+      ) : null}
       {pestana === "ingresos" ? (
         <Renglones lineas={resumen?.form_lines} profunda={profunda} />
       ) : null}
@@ -115,6 +117,7 @@ export default function EtapaBorrador({ caseId, caso, resumen, liquidacion, reco
         <Memoria
           caseId={caseId}
           liquidacion={liquidacion}
+          error={liquidacionError}
           onCerrar={() => setMemoriaAbierta(false)}
         />
       ) : null}
@@ -123,8 +126,21 @@ export default function EtapaBorrador({ caseId, caso, resumen, liquidacion, reco
 }
 
 /** Las categorias del 210 con su total, abribles. */
-function Resumen({ liquidacion, resumen }) {
+function Resumen({ liquidacion, error, resumen }) {
   const actual = liquidacion?.actual;
+
+  // UN ERROR NO ES UN VACIO, y confundirlos costo horas. El backend responde 409 con el motivo
+  // exacto ("quedan 3 partidas sin resolver", "hay que conciliar antes de calcular") y esto lo
+  // mostraba como "todavia no hay borrador", que suena a que no hay nada que hacer. El mensaje
+  // dice justamente lo que hay que hacer.
+  if (error) {
+    return (
+      <p className="estado estado-motivo">
+        {error.message}
+        {error.code ? <small>{error.code}</small> : null}
+      </p>
+    );
+  }
   if (!actual) return <p className="estado">Todavía no hay borrador que mostrar.</p>;
 
   return (

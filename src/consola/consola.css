@@ -2062,3 +2062,11 @@
 .salir:hover {
   color: inherit;
 }
+
+
+/* El motivo por el que algo no se pudo calcular, en vez de un vacio generico.
+   Se distingue del estado neutro: un vacio dice que no hay nada, y esto dice que falta algo por
+   hacer y cual es. El codigo va debajo, chico, porque sirve para buscar en el log pero no es lo
+   que la persona necesita leer. */
+.estado-motivo { max-width: 46ch; margin-inline: auto; color: var(--ink); text-align: center; line-height: 1.6; }
+.estado-motivo small { display: block; margin-top: 10px; color: var(--muted); font-size: 10.5px; letter-spacing: .06em; }

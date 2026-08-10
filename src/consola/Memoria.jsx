@@ -125,7 +125,7 @@ const igual = (a, b) =>
       .replace(/[.¿?]/g, "")
       .trim();
 
-export default function Memoria({ caseId, liquidacion, onCerrar }) {
+export default function Memoria({ caseId, liquidacion, error, onCerrar }) {
   const { profunda } = useVista();
   const pasos = liquidacion?.actual?.casillas ?? [];
 
@@ -165,7 +165,10 @@ export default function Memoria({ caseId, liquidacion, onCerrar }) {
         ))}
 
         {!pasos.length ? (
-          <p className="estado">La memoria se genera cuando el cálculo esté hecho.</p>
+          <p className="estado estado-motivo">
+            {error ? error.message : "La memoria se genera cuando el cálculo esté hecho."}
+            {error?.code ? <small>{error.code}</small> : null}
+          </p>
         ) : null}
       </div>
     </Cajon>

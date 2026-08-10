@@ -44,10 +44,13 @@ export default function DetalleExpediente() {
 
   const expediente = useApi(() => api.getCase(caseId), [caseId]);
   const resumen = useApi(() => api.getCaseSummary(caseId), [caseId]);
-  // Los tres del cruce fallan mientras nadie haya conciliado, y eso es normal, no un error:
-  // `useApi` guarda el error y estas vistas simplemente no se pintan. Por eso no se muestra
-  // `ErrorApi` de estos tres — un 409 "hay que conciliar" no es algo que el contador tenga
-  // que leer como falla.
+  // Los tres del cruce fallan mientras nadie haya conciliado, y eso es normal, no un error.
+  //
+  // PERO EL MOTIVO SI SE MUESTRA. Antes se guardaba y no se pintaba, asi que una liquidacion que
+  // el backend rechazaba con 409 y un mensaje concreto ("quedan 3 partidas sin resolver") llegaba
+  // a la pantalla como "Todavia no hay borrador que mostrar". Desde afuera no se distingue un caso
+  // vacio de uno que no se pudo calcular, y son cosas opuestas: una no requiere nada y la otra
+  // dice exactamente que falta hacer.
   const conciliacion = useApi(() => api.getConciliacion(caseId), [caseId]);
   const peticiones = useApi(() => api.listPeticiones(caseId), [caseId]);
   const respuestas = useApi(() => api.listRespuestas(caseId), [caseId]);
@@ -140,6 +143,7 @@ export default function DetalleExpediente() {
           peticiones={peticiones.data}
           respuestas={respuestas.data}
           liquidacion={liquidacion.data}
+          liquidacionError={liquidacion.error}
           recomendaciones={recomendaciones.data}
           comparaciones={comparaciones}
           resumen={resumen.data}
@@ -163,7 +167,7 @@ export default function DetalleExpediente() {
  * ir a cualquiera ya alcanzada. Lo que no se puede es adelantarse a una que todavia no aplica:
  * leer el borrador antes de decidir los renglones es leer una cifra que va a cambiar.
  */
-function Flujo({ caseId, caso, conciliacion, peticiones, respuestas, liquidacion, recomendaciones, comparaciones, resumen, profunda, onCambio }) {
+function Flujo({ caseId, caso, conciliacion, peticiones, respuestas, liquidacion, liquidacionError, recomendaciones, comparaciones, resumen, profunda, onCambio }) {
   const sinDecidir = (conciliacion?.partidas ?? []).filter((p) => !p.resolucion).length;
   const porConfirmar = caso.flags.filter((f) => !f.resolved_at && f.severity !== "info").length;
   const porPedir = (peticiones ?? []).length;
@@ -232,6 +236,7 @@ function Flujo({ caseId, caso, conciliacion, peticiones, respuestas, liquidacion
             caso={caso}
             resumen={resumen}
             liquidacion={liquidacion}
+            liquidacionError={liquidacionError}
             recomendaciones={recomendaciones}
             comparaciones={comparaciones}
           />
