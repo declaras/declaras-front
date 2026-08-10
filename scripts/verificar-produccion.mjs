@@ -15,6 +15,8 @@
  */
 import { PAGINAS } from "../src/seo/paginas.js";
 
+import { execSync } from "node:child_process";
+
 const SITIO = process.env.SITIO ?? "https://declaras.co";
 const problemas = [];
 
@@ -32,6 +34,30 @@ const soloTexto = (html) =>
     .filter((p) => p.length > 1).length;
 
 console.log(`verificando ${SITIO}\n`);
+
+// LO PRIMERO: ¿lo publicado corresponde a lo que se empujo? Un despliegue puede fallar y dejar en
+// linea una version vieja sin que nada avise; el sitio responde 200 en todo y sirve contenido de la
+// semana pasada. Comparar el commit marcado en el HTML contra el local lo dice de una.
+{
+  const { html } = await pedir("/");
+  const publicado = html.match(/name="clara:commit" content="([^"]*)"/)?.[1] ?? null;
+  let local = null;
+  try {
+    local = execSync("git rev-parse --short HEAD", { encoding: "utf8" }).trim();
+  } catch {
+    /* fuera de un repo, se omite la comparacion */
+  }
+  if (!publicado) {
+    console.log("  commit publicado: (sin marca, es un build anterior a esta comprobacion)\n");
+  } else if (local && publicado !== local) {
+    console.log(`  commit publicado: ${publicado}   local: ${local}\n`);
+    problemas.push(
+      `lo publicado es el commit ${publicado} y el local es ${local}: el ultimo despliegue no llego`,
+    );
+  } else {
+    console.log(`  commit publicado: ${publicado}  (al dia)\n`);
+  }
+}
 
 for (const [ruta, meta] of Object.entries(PAGINAS)) {
   const { codigo, html } = await pedir(ruta);

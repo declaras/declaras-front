@@ -17,6 +17,8 @@ import { readFileSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 
+import { execSync } from "node:child_process";
+
 import { RUTAS } from "./rutas.mjs";
 
 const DIST = "dist";
@@ -24,7 +26,30 @@ const SERVIDOR = "dist-ssr/entrada-servidor.js";
 
 const { render } = await import(pathToFileURL(SERVIDOR).href);
 
-const plantilla = readFileSync(join(DIST, "index.html"), "utf8");
+/**
+ * El commit del que salio este build, marcado en el HTML.
+ *
+ * POR QUE: un despliegue puede fallar y dejar publicada una version vieja sin que nada avise. Paso
+ * durante ocho dias: el sitio respondia 200 en todas las rutas y servia contenido de hace una
+ * semana. Con esto, `pnpm run produccion` compara lo publicado contra el commit local y lo dice.
+ *
+ * En Vercel el sha lo pone la plataforma; en local sale de git. Si no hay ninguno se marca
+ * "desconocido" en vez de fallar: no vale la pena romper un build por esto.
+ */
+const COMMIT =
+  process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ??
+  (() => {
+    try {
+      return execSync("git rev-parse --short HEAD", { encoding: "utf8" }).trim();
+    } catch {
+      return "desconocido";
+    }
+  })();
+
+const plantilla = readFileSync(join(DIST, "index.html"), "utf8").replace(
+  "</head>",
+  `  <meta name="clara:commit" content="${COMMIT}" />\n  </head>`,
+);
 const problemas = [];
 
 for (const { ruta } of RUTAS) {
@@ -91,4 +116,4 @@ if (problemas.length) {
   for (const p of problemas.slice(0, 6)) console.error("  " + p);
   process.exit(1);
 }
-console.log(`prerender: ${RUTAS.length} rutas convertidas a HTML estatico`);
+console.log(`prerender: ${RUTAS.length} rutas convertidas a HTML estatico, commit ${COMMIT}`);
