@@ -12,6 +12,7 @@
 import { ArrowRight } from "lucide-react";
 
 import { formatMoney } from "./formato";
+import { useVista } from "./vista";
 
 export default function EtapaResultado({ liquidacion, resumen, pendientes, onSeguir }) {
   const actual = liquidacion?.actual;
@@ -22,16 +23,30 @@ export default function EtapaResultado({ liquidacion, resumen, pendientes, onSeg
   // Máximo dos, y las más graves primero: una lista de alertas deja de leerse en la tercera.
   const alertas = (pendientes ?? []).slice(0, 2);
 
+  // ESTA ETAPA ERA LA UNICA SIN VOZ DE CONTADOR. Las otras tres tienen 27, 11 y 14 variantes; esta
+  // tenia cero, asi que a quien esta revisando la declaracion de otra persona le decia "tu
+  // declaracion está casi lista", "te devuelven" y "te ahorraste". El contador no es el
+  // contribuyente, y hablarle como si lo fuera hace dudar de quien es el titular de la cifra.
+  const { profunda } = useVista();
+
   return (
     <section className="etapa-cuerpo">
       <h1 className="resultado-titulo">
         {actual
           ? pendientes?.length
-            ? "Tu declaración está casi lista"
-            : "Tu declaración está lista"
+            ? profunda
+              ? "La declaración está casi lista"
+              : "Tu declaración está casi lista"
+            : profunda
+              ? "La declaración está lista"
+              : "Tu declaración está lista"
           : obligado === false
-            ? "Este año no te toca declarar"
-            : "Estamos armando tu declaración"}
+            ? profunda
+              ? "Este año el cliente no está obligado a declarar"
+              : "Este año no te toca declarar"
+            : profunda
+              ? "Armando la declaración"
+              : "Estamos armando tu declaración"}
       </h1>
 
       {actual ? (
@@ -41,7 +56,13 @@ export default function EtapaResultado({ liquidacion, resumen, pendientes, onSeg
               {formatMoney(Math.abs(actual.saldo ?? 0))}
             </span>
             <span className="resultado-nombre">
-              {(actual.saldo ?? 0) >= 0 ? "te toca pagar" : "te devuelven"}
+              {(actual.saldo ?? 0) >= 0
+                ? profunda
+                  ? "a pagar"
+                  : "te toca pagar"
+                : profunda
+                  ? "saldo a favor"
+                  : "te devuelven"}
             </span>
           </div>
           {liquidacion.ganancia_saldo ? (
@@ -50,7 +71,11 @@ export default function EtapaResultado({ liquidacion, resumen, pendientes, onSeg
                 {formatMoney(Math.abs(liquidacion.ganancia_saldo))}
               </span>
               <span className="resultado-nombre">
-                {liquidacion.ganancia_saldo >= 0 ? "te ahorraste" : "de más que la DIAN sugería"}
+                {liquidacion.ganancia_saldo >= 0
+                  ? profunda
+                    ? "menos que el borrador de la DIAN"
+                    : "te ahorraste"
+                  : "de más que la DIAN sugería"}
               </span>
             </div>
           ) : null}
@@ -66,7 +91,11 @@ export default function EtapaResultado({ liquidacion, resumen, pendientes, onSeg
       ) : null}
 
       <button className="btn-grande" onClick={onSeguir}>
-        {pendientes?.length ? "Revisar lo que falta" : "Ver el borrador"}
+        {pendientes?.length
+          ? profunda
+            ? "Ir a las decisiones"
+            : "Revisar lo que falta"
+          : "Ver el borrador"}
         <ArrowRight size={16} />
       </button>
     </section>

@@ -37,6 +37,34 @@ const ESTADO = {
   CONCEPTO_DESCONOCIDO: { texto: "Sin clasificar", tono: "falta" },
 };
 
+/**
+ * El concepto, dicho en espanol.
+ *
+ * Salia crudo del backend: SALARIOS, APORTES_PENSION, RENDIMIENTOS, OTROS. Con guion bajo y sin
+ * tildes es texto de maquina, y "OTROS" no le dice nada a nadie. El backend ya tiene vocabulario
+ * en espanol para los nodos del motor y las casillas del 210; esto se habia quedado por fuera.
+ *
+ * Lo que no este en la tabla se muestra tal como llega: es preferible un nombre feo a esconder un
+ * concepto que el sistema si conoce.
+ */
+const CONCEPTO = {
+  SALARIOS: "Salario",
+  HONORARIOS: "Honorarios",
+  SERVICIOS: "Servicios",
+  ARRENDAMIENTOS: "Arriendos",
+  RENDIMIENTOS: "Rendimientos financieros",
+  DIVIDENDOS: "Dividendos",
+  PENSIONES: "Pensión",
+  APORTES_SALUD: "Aportes a salud",
+  APORTES_PENSION: "Aportes a pensión",
+  CESANTIAS: "Cesantías",
+  PROMEDIO_SALARIAL: "Promedio salarial",
+  RETENCION: "Retención",
+  PATRIMONIO: "Patrimonio",
+  DEUDA: "Deuda",
+  OTROS: "Sin clasificar",
+};
+
 /** Que hace cada decision, en una linea. */
 const DECISION = {
   USAR_DIAN: "Usar la cifra de la DIAN",
@@ -150,10 +178,32 @@ function Partida({ caseId, partida, onCambio }) {
   const resuelta = Boolean(partida.resolucion);
   const [abierta, setAbierta] = useState(!resuelta);
 
+  // LA DECISION VIVE AQUI porque las cifras se pintan aqui, y elegir una cifra ES la decision.
+  // Con el estado dentro del bloque de botones, la tarjeta no tenia como resolver.
+  const [otra, setOtra] = useState(null);
+  const directa = useAction((decision, motivo) =>
+    api.resolverPartida(caseId, partida.id, { decision, motivo }),
+  );
+
+  const posibles = partida.decisiones_posibles ?? {};
+  /** Un clic en la cifra la elige. Si el backend admite varios motivos, se pregunta cual. */
+  const alElegir = (decision) => {
+    const motivos = posibles[decision];
+    if (resuelta || !motivos?.length) return null;
+    if (motivos.length > 1) return () => setOtra(decision);
+    return async () => {
+      if (await directa.run(decision, motivos[0])) onCambio();
+    };
+  };
+
   const cifra = partida.version_dian?.monto ?? partida.version_documento?.monto;
 
+  // Un renglon decidido deja de estar en alarma: la barra roja decia "no cuadra" sobre algo que el
+  // contador ya resolvio, y la mesa seguia pareciendo llena de problemas despues de trabajarla.
+  const tono = resuelta ? "ok" : estado.tono;
+
   return (
-    <li className={`partida partida-${estado.tono} ${ajena ? "partida-ajena" : ""}`}>
+    <li className={`partida partida-${tono} ${ajena ? "partida-ajena" : ""}`}>
       <button className="partida-fila" onClick={() => setAbierta((v) => !v)} aria-expanded={abierta}>
         <span className="partida-chevron">
           {abierta ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
@@ -161,7 +211,10 @@ function Partida({ caseId, partida, onCambio }) {
         <span className="partida-quien">
           <span className="partida-tercero">{partida.nombre_tercero || partida.nit_tercero}</span>
           <span className="partida-concepto">
-            {partida.concepto ?? partida.codigos_crudos.join(", ") ?? "sin clasificar"}
+            {CONCEPTO[partida.concepto] ??
+              partida.concepto ??
+              partida.codigos_crudos.join(", ") ??
+              "sin clasificar"}
           </span>
         </span>
         {cifra !== undefined && cifra !== null ? (
@@ -187,7 +240,12 @@ function Partida({ caseId, partida, onCambio }) {
       {abierta ? (
         <div className="partida-detalle">
           <div className="partida-versiones">
-            <Version titulo="La DIAN" valor={partida.version_dian} />
+            <Version
+              titulo="La DIAN"
+              valor={partida.version_dian}
+              alElegir={alElegir("USAR_DIAN")}
+              eligiendo={directa.running}
+            />
             {/* La columna del documento solo existe si hay documento. Una caja vacia repetida
                 en cada renglon no informa: dice lo mismo que su ausencia, ocupando el doble. */}
             {partida.version_documento ? (
@@ -196,6 +254,8 @@ function Partida({ caseId, partida, onCambio }) {
                 valor={partida.version_documento}
                 versiones={partida.versiones_documento}
                 rige={partida.version_que_rige}
+                alElegir={alElegir("USAR_DOCUMENTO")}
+                eligiendo={directa.running}
               />
             ) : (
               <p className="partida-sin-documento">El cliente todavía no ha aportado nada.</p>
@@ -203,14 +263,18 @@ function Partida({ caseId, partida, onCambio }) {
           </div>
 
           {partida.diferencia_monto || partida.diferencia_retencion ? (
-            <p className="partida-diferencias">
+            <ul className="partida-diferencias">
               {partida.diferencia_monto ? (
-                <span>Diferencia en el monto: {formatMoney(partida.diferencia_monto)}</span>
+                <li>
+                  Diferencia en el monto <b>{formatMoney(partida.diferencia_monto)}</b>
+                </li>
               ) : null}
               {partida.diferencia_retencion ? (
-                <span>Diferencia en la retención: {formatMoney(partida.diferencia_retencion)}</span>
+                <li>
+                  Diferencia en la retención <b>{formatMoney(partida.diferencia_retencion)}</b>
+                </li>
               ) : null}
-            </p>
+            </ul>
           ) : null}
 
           {partida.documentos_por_cruzar?.length ? (
@@ -223,7 +287,14 @@ function Partida({ caseId, partida, onCambio }) {
           {resuelta ? (
             <Resuelta resolucion={partida.resolucion} />
           ) : (
-            <Decidir caseId={caseId} partida={partida} onCambio={onCambio} />
+            <Decidir
+              caseId={caseId}
+              partida={partida}
+              onCambio={onCambio}
+              otra={otra}
+              setOtra={setOtra}
+              error={directa.error}
+            />
           )}
         </div>
       ) : null}
@@ -242,7 +313,15 @@ function ResumenResolucion({ resolucion }) {
   );
 }
 
-function Version({ titulo, valor, versiones, rige }) {
+/**
+ * Una de las dos cifras en juego. Si se puede elegir, la tarjeta ES el boton.
+ *
+ * POR QUE: antes las cifras se mostraban arriba y debajo habia cinco botones de texto, uno de
+ * ellos "Usar la cifra de la DIAN". Para decidir habia que leer la cifra, leer la etiqueta, y
+ * hacer la correspondencia entre las dos en la cabeza — veinte veces por declaracion. La cifra
+ * correcta ya estaba en pantalla; lo unico que faltaba era poder tocarla.
+ */
+function Version({ titulo, valor, versiones, rige, alElegir, eligiendo = false }) {
   if (!valor) {
     return (
       <div className="version version-vacia">
@@ -252,8 +331,8 @@ function Version({ titulo, valor, versiones, rige }) {
       </div>
     );
   }
-  return (
-    <div className="version">
+  const cuerpo = (
+    <>
       <p className="version-titulo">{titulo}</p>
       <p className="version-monto">{formatMoney(valor.monto)}</p>
       <p className="version-detalle">
@@ -269,7 +348,21 @@ function Version({ titulo, valor, versiones, rige }) {
           Llegaron {versiones} certificados distintos; rige {rige ?? "el último"}.
         </p>
       ) : null}
-    </div>
+    </>
+  );
+
+  if (!alElegir) return <div className="version">{cuerpo}</div>;
+
+  return (
+    <button
+      type="button"
+      className="version version-elegible"
+      onClick={alElegir}
+      disabled={eligiendo}
+    >
+      {cuerpo}
+      <span className="version-elegir">{eligiendo ? "Guardando…" : "Usar esta cifra"}</span>
+    </button>
   );
 }
 
@@ -294,13 +387,31 @@ function Resuelta({ resolucion }) {
 }
 
 /**
- * Los botones que este renglon admite, tal como los manda el backend.
+ * Como se decide un renglon.
  *
- * `decisiones_posibles` es un mapa decision -> motivos validos. Se recorre; no se filtra ni se
- * completa desde aqui.
+ * ANTES: cinco botones de texto con el mismo peso, envueltos en dos filas. "Usar la cifra de la
+ * DIAN", "Usar la cifra del documento", "Poner otra cifra", "No es del cliente", "Llevarlo a mano".
+ * Ninguno destacaba, asi que habia que leer los cinco cada vez. Con veinte renglones son cien
+ * lecturas para tomar veinte decisiones que casi siempre son la misma.
+ *
+ * AHORA hay una sola idea: LA DECISION ES ELEGIR UNA CIFRA, y las dos cifras ya estan en pantalla.
+ * Se toca la que rige y listo. Las demas salidas —poner otra cifra, marcarla ajena, llevarla a
+ * mano— existen para el caso raro, asi que viven detras de un enlace discreto en vez de competir
+ * por la atencion en cada renglon.
+ *
+ * Y SI SOLO HAY UN MOTIVO VALIDO, NO SE PREGUNTA. El formulario pedia motivo incluso cuando la
+ * lista tenia un solo elemento: un desplegable de una opcion no es una decision, es un tramite. El
+ * backend ya dice que motivos admite cada decision; cuando manda uno, el clic resuelve.
+ *
+ * Lo que NO cambia: que decisiones existen y con que motivos lo sigue diciendo el backend. Esta
+ * pantalla decide como se ven, no cuales hay.
  */
-function Decidir({ caseId, partida, onCambio }) {
-  const [abierta, setAbierta] = useState(null);
+function Decidir({ caseId, partida, onCambio, otra, setOtra, error }) {
+  // Cuantas cifras se ofrecen arriba decide como se llama la salida: con dos, "ninguna de las dos";
+  // con una, esa frase seria falsa.
+  const cifras =
+    (partida.version_dian ? 1 : 0) + (partida.version_documento ? 1 : 0);
+  const [verOtras, setVerOtras] = useState(false);
   const posibles = partida.decisiones_posibles ?? {};
   const decisiones = Object.keys(posibles);
 
@@ -308,27 +419,55 @@ function Decidir({ caseId, partida, onCambio }) {
     return <p className="bloque-nota">Este renglón no admite ninguna decisión todavía.</p>;
   }
 
+  // Las que ya tienen su tarjeta arriba no se repiten como boton.
+  const enTarjeta = new Set(["USAR_DIAN", "USAR_DOCUMENTO"]);
+  const otras = decisiones.filter((d) => !enTarjeta.has(d));
+
   return (
     <div className="partida-decidir">
-      <div className="partida-botones">
-        {decisiones.map((d) => (
+      {error ? <ErrorApi error={error} /> : null}
+
+      {otras.length ? (
+        <div className="partida-otras">
           <button
-            key={d}
-            className={`btn-mini ${abierta === d ? "btn-mini-activo" : ""}`}
-            onClick={() => setAbierta(abierta === d ? null : d)}
+            type="button"
+            className="enlace-suave"
+            onClick={() => setVerOtras((v) => !v)}
+            aria-expanded={verOtras}
           >
-            {DECISION[d] ?? d}
+            {verOtras
+              ? "Ocultar las otras opciones"
+              : cifras > 1
+                ? "Ninguna de las dos"
+                : "Otra opción"}
           </button>
-        ))}
-      </div>
-      {abierta ? (
+
+          {verOtras ? (
+            <div className="partida-botones">
+              {otras.map((d) => (
+                <button
+                  key={d}
+                  type="button"
+                  className={`btn-mini ${otra === d ? "btn-mini-activo" : ""}`}
+                  onClick={() => setOtra(otra === d ? null : d)}
+                >
+                  {DECISION[d] ?? d}
+                </button>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
+      {otra ? (
         <FormularioDecision
           caseId={caseId}
           partida={partida}
-          decision={abierta}
-          motivos={posibles[abierta]}
+          decision={otra}
+          motivos={posibles[otra]}
           onListo={() => {
-            setAbierta(null);
+            setOtra(null);
+            setVerOtras(false);
             onCambio();
           }}
         />
