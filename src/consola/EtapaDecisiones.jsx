@@ -121,8 +121,11 @@ export default function EtapaDecisiones({
         <div className="decision-marco">
           <p className="decision-progreso">
             <span>
-              {profunda ? "Renglón" : "Pregunta"} {partidas.length - sinDecidir.length + 1} de{" "}
-              {partidas.length}
+              {verTodas
+                ? ""
+                : `${profunda ? "Renglón" : "Pregunta"} ${
+                    partidas.length - sinDecidir.length + 1
+                  } de ${partidas.length}`}
             </span>
             <button className="enlace-suave" onClick={() => setVerTodas((v) => !v)}>
               {verTodas
