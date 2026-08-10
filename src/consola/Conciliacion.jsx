@@ -26,7 +26,7 @@ import { AlertTriangle, ChevronDown, ChevronRight, UserX } from "lucide-react";
 import { api } from "./api";
 import { useAction } from "./hooks";
 import { formatMoney } from "./formato";
-import { ErrorApi, Vacio } from "./componentes";
+import { Cruzar, ErrorApi, Vacio } from "./componentes";
 
 /** Como se llama cada desenlace del cruce, dicho sin jerga. */
 const ESTADO = {
@@ -82,14 +82,27 @@ export default function Conciliacion({ caseId, conciliacion, onCambio }) {
           <h2 className="bloque-titulo">El cruce</h2>
         </header>
         <Vacio>Todavía no hay renglones. Hay que cruzar el reporte de la DIAN.</Vacio>
+        <Cruzar caseId={caseId} onCambio={onCambio} />
       </section>
     );
   }
 
   const pendientes = partidas.filter((p) => !p.resolucion);
+  // El motivo por el que todavia no se puede liquidar, tal como lo manda el backend. Solo interesa
+  // el que se arregla cruzando: los otros ("quedan N partidas sin resolver") se resuelven decidiendo
+  // y ofrecer un boton de cruzar ahi seria mandar a la persona por el camino equivocado.
+  const falta = conciliacion.falta_para_liquidar;
+  const hayQueCruzar = Boolean(falta) && /conciliar|cruzad/i.test(falta);
 
   return (
     <section className="bloque">
+      {hayQueCruzar ? (
+        <div className="cruce-desactualizado" role="status">
+          <p>{falta}</p>
+          <Cruzar caseId={caseId} onCambio={onCambio} />
+        </div>
+      ) : null}
+
       <header className="bloque-top">
         <h2 className="bloque-titulo">El cruce</h2>
         <p className="bloque-nota">

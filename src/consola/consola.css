@@ -2070,3 +2070,10 @@
    que la persona necesita leer. */
 .estado-motivo { max-width: 46ch; margin-inline: auto; color: var(--ink); text-align: center; line-height: 1.6; }
 .estado-motivo small { display: block; margin-top: 10px; color: var(--muted); font-size: 10.5px; letter-spacing: .06em; }
+
+
+/* El aviso de que el cruce quedo viejo, con su boton al lado. Va antes de los renglones porque
+   mientras no se vuelva a cruzar, lo que se ve debajo salio de otros documentos. */
+.cruce-desactualizado { display: flex; align-items: center; justify-content: space-between; gap: 18px; flex-wrap: wrap; margin-bottom: 18px; padding: 15px 18px; border-radius: 13px; border: 1px solid rgba(214,158,46,.28); background: rgba(214,158,46,.08); }
+.cruce-desactualizado p { margin: 0; max-width: 60ch; color: #6b5320; font-size: 13.5px; line-height: 1.6; }
+.cruce-accion { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 14px; }

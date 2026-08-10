@@ -26,7 +26,7 @@ import { ArrowRight, X } from "lucide-react";
 import { api } from "./api";
 import { useAction } from "./hooks";
 import { formatMoney } from "./formato";
-import { ErrorApi } from "./componentes";
+import { Cruzar, ErrorApi } from "./componentes";
 import {
   CLASES_DE_INGRESO,
   HECHOS_DE_CLASIFICACION,
@@ -70,6 +70,9 @@ export default function EtapaDecisiones({
 
   // Cuando no queda nada por decidir, la etapa se cierra sola y ofrece seguir.
   const nadaPendiente = !sinDecidir.length && !porConfirmar.length && !(peticiones ?? []).length;
+  // Si el backend dice que hay que conciliar, no es que no falte nada: es que nunca se cruzo.
+  const faltaCruzar = /conciliar|cruzad/i.test(conciliacion?.falta_para_liquidar ?? "");
+
   if (nadaPendiente) {
     return (
       <section className="etapa-cuerpo">
@@ -81,9 +84,18 @@ export default function EtapaDecisiones({
             ? "Todos los renglones están decididos y no hay documentos pendientes."
             : "Ya confirmaste todo y no falta ningún documento por mandar."}
         </p>
-        <button className="btn-grande" onClick={onSeguir}>
-          Ver el borrador <ArrowRight size={16} />
-        </button>
+        {faltaCruzar ? (
+          // "No falta nada" es falso cuando no se ha cruzado: no hay renglones porque nadie los
+          // creo, no porque esten todos decididos. Se dice, y se ofrece la accion.
+          <div className="cruce-desactualizado" role="status">
+            <p>{conciliacion?.falta_para_liquidar}</p>
+            <Cruzar caseId={caseId} onCambio={onCambio} />
+          </div>
+        ) : (
+          <button className="btn-grande" onClick={onSeguir}>
+            Ver el borrador <ArrowRight size={16} />
+          </button>
+        )}
 
         {/* Aunque no quede nada pendiente, lo contestado sigue accesible: es la única forma de
             corregir un sí o un no dado por error. */}

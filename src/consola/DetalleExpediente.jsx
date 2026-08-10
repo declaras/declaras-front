@@ -237,6 +237,7 @@ function Flujo({ caseId, caso, conciliacion, peticiones, respuestas, liquidacion
             resumen={resumen}
             liquidacion={liquidacion}
             liquidacionError={liquidacionError}
+            onCambio={onCambio}
             recomendaciones={recomendaciones}
             comparaciones={comparaciones}
           />
@@ -347,6 +348,22 @@ function ConsultarDian({ caso, onListo, discreto = false }) {
     }
 
     const detalle = await api.linkExtraction(caso.id, job.job_id);
+
+    // ENLAZAR NO ES CRUZAR, y esa era la cadena rota: la consulta dejaba los documentos en el
+    // expediente y nadie los cruzaba, asi que no habia renglones, sin renglones no hay caso que
+    // liquidar, y el borrador salia vacio diciendo "hay que conciliar antes de calcular". El
+    // endpoint es idempotente y preserva las decisiones del contador, asi que llamarlo aca es
+    // seguro incluso si el caso ya estaba cruzado.
+    //
+    // Si el cruce falla NO se pierde la consulta: los documentos ya quedaron guardados. Se avisa y
+    // queda el boton para reintentar, en vez de que toda la consulta parezca haber fallado.
+    try {
+      await api.runConciliacion(caso.id);
+    } catch (error) {
+      setPasos(null);
+      return `${detalle.events.filter((e) => e.kind === "DIAN_QUERY").at(-1)?.message ?? "Listo."} Los documentos quedaron guardados, pero el cruce no se pudo hacer: ${error.message}`;
+    }
+
     setPasos(null);
     // El backend ya comparo esta consulta con la anterior y lo dejo escrito en la actividad;
     // se usa ese mismo texto para no decir dos cosas distintas del mismo hecho.

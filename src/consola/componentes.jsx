@@ -1,6 +1,9 @@
 /** Piezas compartidas de la aplicacion. */
 
-import { AlertTriangle, Loader2 } from "lucide-react";
+import { AlertTriangle, Loader2, RefreshCw } from "lucide-react";
+
+import { api } from "./api";
+import { useAction } from "./hooks";
 
 /** Estado de carga con la forma aproximada del contenido que viene. */
 export function Cargando({ filas = 3, texto }) {
@@ -82,3 +85,33 @@ export function Avatar({ nombre, size = "md" }) {
     </div>
   );
 }
+
+/**
+ * Vuelve a cruzar el reporte de la DIAN con los documentos del expediente.
+ *
+ * POR QUE HACE FALTA UN BOTON: el cruce ya se dispara solo despues de consultar la DIAN, que es
+ * cuando entran documentos nuevos. Pero un certificado puede llegar despues, subido a mano, y
+ * entonces los renglones dejan de corresponder y la liquidacion se bloquea con un mensaje que
+ * dice que hay que conciliar — sin ninguna forma de hacerlo desde la pantalla. Eso paso: el
+ * metodo existia en el cliente del API y no lo llamaba nadie.
+ *
+ * ES SEGURO PULSARLO VARIAS VECES. El endpoint reconstruye el cruce completo, preserva las
+ * decisiones del contador y repone las provisionales; reemplaza en vez de acumular.
+ */
+export function Cruzar({ caseId, onCambio }) {
+  const accion = useAction(async () => {
+    await api.runConciliacion(caseId);
+    onCambio?.();
+  });
+
+  return (
+    <div className="cruce-accion">
+      <button className="btn-mini" onClick={() => accion.run()} disabled={accion.running}>
+        <RefreshCw size={15} />
+        {accion.running ? "Cruzando…" : "Cruzar el reporte de la DIAN"}
+      </button>
+      {accion.error ? <ErrorApi error={accion.error} /> : null}
+    </div>
+  );
+}
+

@@ -11,6 +11,8 @@
  */
 
 import { useState } from "react";
+
+import { Cruzar } from "./componentes";
 import { ArrowRight, ChevronDown, ChevronRight } from "lucide-react";
 
 import { formatMoney } from "./formato";
@@ -30,7 +32,7 @@ const PESTANAS = [
   { id: "soportes", nombre: "Soportes" },
 ];
 
-export default function EtapaBorrador({ caseId, caso, resumen, liquidacion, liquidacionError, recomendaciones, comparaciones }) {
+export default function EtapaBorrador({ caseId, caso, resumen, liquidacion, liquidacionError, recomendaciones, comparaciones, onCambio }) {
   const { profunda } = useVista();
   const [pestana, setPestana] = useState("resumen");
   const [memoriaAbierta, setMemoriaAbierta] = useState(false);
@@ -54,7 +56,13 @@ export default function EtapaBorrador({ caseId, caso, resumen, liquidacion, liqu
       </div>
 
       {pestana === "resumen" ? (
-        <Resumen liquidacion={liquidacion} error={liquidacionError} resumen={resumen} />
+        <Resumen
+          caseId={caseId}
+          liquidacion={liquidacion}
+          error={liquidacionError}
+          resumen={resumen}
+          onCambio={onCambio}
+        />
       ) : null}
       {pestana === "ingresos" ? (
         <Renglones lineas={resumen?.form_lines} profunda={profunda} />
@@ -126,7 +134,7 @@ export default function EtapaBorrador({ caseId, caso, resumen, liquidacion, liqu
 }
 
 /** Las categorias del 210 con su total, abribles. */
-function Resumen({ liquidacion, error, resumen }) {
+function Resumen({ caseId, liquidacion, error, resumen, onCambio }) {
   const actual = liquidacion?.actual;
 
   // UN ERROR NO ES UN VACIO, y confundirlos costo horas. El backend responde 409 con el motivo
@@ -134,11 +142,16 @@ function Resumen({ liquidacion, error, resumen }) {
   // mostraba como "todavia no hay borrador", que suena a que no hay nada que hacer. El mensaje
   // dice justamente lo que hay que hacer.
   if (error) {
+    // Cuando el motivo es que falta cruzar, la accion que lo arregla va AQUI MISMO. Decirle a
+    // alguien que hay que conciliar y dejarlo buscando donde hacerlo es media respuesta; y hasta
+    // hace poco no habia donde, porque el metodo del API no lo llamaba nadie.
+    const cruzando = /conciliar|cruzad/i.test(error.message ?? "");
     return (
-      <p className="estado estado-motivo">
-        {error.message}
+      <div className="estado estado-motivo">
+        <p>{error.message}</p>
+        {cruzando ? <Cruzar caseId={caseId} onCambio={onCambio} /> : null}
         {error.code ? <small>{error.code}</small> : null}
-      </p>
+      </div>
     );
   }
   if (!actual) return <p className="estado">Todavía no hay borrador que mostrar.</p>;
