@@ -16,7 +16,8 @@
     "sitemap": "node scripts/sitemap.mjs",
     "prerender": "node scripts/prerender.mjs",
     "seo": "node scripts/auditar-seo.mjs",
-    "cajas": "node scripts/revisar-cajas.mjs"
+    "cajas": "node scripts/revisar-cajas.mjs",
+    "produccion": "node scripts/verificar-produccion.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.111.0",

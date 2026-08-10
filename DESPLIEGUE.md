@@ -53,6 +53,13 @@ formas de cada URL.
 | `VITE_SUPABASE_URL` | El proyecto de Supabase contra el que se valida al contador. Va como `https://<ref>.supabase.co`, sin ruta. | La consola no puede iniciar sesion. El build avisa. |
 | `VITE_SUPABASE_ANON_KEY` | La llave publica del mismo proyecto. Es publica a proposito: la reja de verdad esta en el backend. | Igual que la anterior. |
 
+## Como saber si el despliegue sirvio
+
+`pnpm run produccion` pide cada ruta al dominio publicado y comprueba tres cosas: que responda 200,
+que el titulo sea el suyo y no el de la portada, y que el HTML traiga contenido sin ejecutar
+JavaScript. Un despliegue en verde no dice nada de eso, y ya paso dos veces que saliera bien y el
+sitio quedara mal: una con las guias devolviendo 404 y otra con las paginas vacias.
+
 ## Despues de desplegar
 
 Verificar el dominio en Search Console y enviar `https://declaras.co/sitemap.xml`, que se regenera
