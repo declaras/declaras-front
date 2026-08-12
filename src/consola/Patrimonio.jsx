@@ -37,7 +37,9 @@ import CampoNumero from "../comun/CampoNumero";
 const NOMBRE = {
   inmueble: { uno: "un inmueble", varios: "Inmuebles" },
   vehiculo: { uno: "un vehículo", varios: "Carros y motos" },
-  otro: { uno: "otro bien", varios: "Otros bienes" },
+  // "otro bien" daba "Agregar otro bien" con la lista todavia vacia, o sea prometiendo un
+  // segundo bien cuando no habia ni el primero. "un bien" sirve para los dos momentos.
+  otro: { uno: "un bien", varios: "Otros bienes" },
 };
 
 export default function Patrimonio({ caseId, datos, onCambio }) {
