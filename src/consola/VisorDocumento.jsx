@@ -17,7 +17,9 @@ import { Download } from "lucide-react";
 
 import Cajon from "./Cajon";
 import { useVista } from "./vista";
-import { urlDeApi } from "./api";
+import { descargarArchivo, useArchivo } from "./archivos";
+import { useAction } from "./hooks";
+import { ErrorApi } from "./componentes";
 import {
   campoLabel,
   docLabel,
@@ -36,13 +38,13 @@ const CAMPOS_TECNICOS = new Set(["raw_text"]);
 
 export default function VisorDocumento({ doc, onCerrar }) {
   const { profunda } = useVista();
+  const seMuestra = esPdf(doc?.filename) || esImagen(doc?.filename);
+  // `&inline=true` le pide al backend `Content-Disposition: inline`. Para un `blob:` la cabecera
+  // ya no decide nada, pero se conserva porque el tipo de contenido de la respuesta SÍ viaja al
+  // blob, y es lo que hace que el iframe muestre el PDF en vez de ofrecerlo para guardar.
+  const vista = useArchivo(seMuestra && doc ? `${doc.download_url}&inline=true` : null);
+  const bajar = useAction(() => descargarArchivo(doc.download_url, doc.filename));
   if (!doc) return null;
-
-  // `/api` era la ruta del proxy que se borró. Sin esto el navegador pedía al servidor del
-  // FRONT, que no tiene esa ruta y responde el index.html de la SPA — por eso el visor
-  // mostraba la landing dentro del marco en vez del PDF.
-  const urlDescarga = urlDeApi(doc.download_url);
-  const urlVista = `${urlDescarga}&inline=true`;
 
   return (
     <Cajon
@@ -54,17 +56,25 @@ export default function VisorDocumento({ doc, onCerrar }) {
       mono
       ancho={880}
       accion={
-        <a className="btn-mini" href={urlDescarga} target="_blank" rel="noreferrer">
+        <button className="btn-mini" onClick={() => bajar.run()} disabled={bajar.running}>
           <Download size={13} />
-          Descargar
-        </a>
+          {bajar.running ? "Bajando…" : "Descargar"}
+        </button>
       }
       onCerrar={onCerrar}
     >
-      {esPdf(doc.filename) ? (
-        <iframe className="visor-marco" src={urlVista} title={docLabel(doc.doc_type)} />
+      <ErrorApi error={bajar.error} />
+
+      {seMuestra && vista.error ? (
+        <p className="estado estado-error">
+          No se pudo traer el archivo. {vista.error.message}
+        </p>
+      ) : seMuestra && vista.cargando ? (
+        <p className="estado">Trayendo el documento…</p>
+      ) : esPdf(doc.filename) ? (
+        <iframe className="visor-marco" src={vista.url} title={docLabel(doc.doc_type)} />
       ) : esImagen(doc.filename) ? (
-        <img className="visor-imagen" src={urlVista} alt={docLabel(doc.doc_type)} />
+        <img className="visor-imagen" src={vista.url} alt={docLabel(doc.doc_type)} />
       ) : doc.reading ? (
         <ContenidoLeido lectura={doc.reading} />
       ) : (

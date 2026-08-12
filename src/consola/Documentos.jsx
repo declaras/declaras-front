@@ -32,7 +32,8 @@ import {
 } from "./formato";
 import { SoloContador, useVista } from "./vista";
 import VisorDocumento from "./VisorDocumento";
-import { urlDeApi } from "./api";
+import { descargarArchivo } from "./archivos";
+import { useAction } from "./hooks";
 
 const CAMPOS_TECNICOS = new Set(["raw_text"]);
 
@@ -63,6 +64,7 @@ export default function Documentos({ documentos }) {
 function Documento({ doc, onVer }) {
   const { profunda } = useVista();
   const noSePudoLeer = !doc.reading && doc.doc_type !== "CLIENT_DOCUMENT";
+  const bajar = useAction(() => descargarArchivo(doc.download_url, doc.filename));
 
   return (
     <li className="doc">
@@ -85,15 +87,16 @@ function Documento({ doc, onVer }) {
         <button className="btn-icono" onClick={onVer} title="Ver el documento">
           <Eye size={15} />
         </button>
-        <a
+        {/* Era un `<a href>`, y por eso bajaba el JSON del 401 con nombre de PDF: el navegador
+            resuelve el enlace por su cuenta y sin la cabecera de sesion. */}
+        <button
           className="btn-icono"
-          href={urlDeApi(doc.download_url)}
-          target="_blank"
-          rel="noreferrer"
-          title="Descargar"
+          onClick={() => bajar.run()}
+          disabled={bajar.running}
+          title={bajar.error ? bajar.error.message : "Descargar"}
         >
           <Download size={15} />
-        </a>
+        </button>
       </div>
 
       <SoloContador>

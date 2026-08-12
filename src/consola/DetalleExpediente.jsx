@@ -54,6 +54,7 @@ export default function DetalleExpediente() {
   const conciliacion = useApi(() => api.getConciliacion(caseId), [caseId]);
   const peticiones = useApi(() => api.listPeticiones(caseId), [caseId]);
   const respuestas = useApi(() => api.listRespuestas(caseId), [caseId]);
+  const patrimonio = useApi(() => api.getPatrimonio(caseId), [caseId]);
   const liquidacion = useApi(() => api.getLiquidacion(caseId), [caseId]);
   const recomendaciones = useApi(() => api.getRecomendaciones(caseId), [caseId]);
   const comparaciones = {
@@ -68,6 +69,7 @@ export default function DetalleExpediente() {
     conciliacion.reload();
     peticiones.reload();
     respuestas.reload();
+    patrimonio.reload();
     liquidacion.reload();
     recomendaciones.reload();
     comparaciones.dian.reload();
@@ -80,6 +82,7 @@ export default function DetalleExpediente() {
     conciliacion,
     peticiones,
     respuestas,
+    patrimonio,
     liquidacion,
     recomendaciones,
     comparaciones.dian,
@@ -142,6 +145,7 @@ export default function DetalleExpediente() {
           conciliacion={conciliacion.data}
           peticiones={peticiones.data}
           respuestas={respuestas.data}
+          patrimonio={patrimonio.data}
           liquidacion={liquidacion.data}
           liquidacionError={liquidacion.error}
           recomendaciones={recomendaciones.data}
@@ -167,11 +171,16 @@ export default function DetalleExpediente() {
  * ir a cualquiera ya alcanzada. Lo que no se puede es adelantarse a una que todavia no aplica:
  * leer el borrador antes de decidir los renglones es leer una cifra que va a cambiar.
  */
-function Flujo({ caseId, caso, conciliacion, peticiones, respuestas, liquidacion, liquidacionError, recomendaciones, comparaciones, resumen, profunda, onCambio }) {
+function Flujo({ caseId, caso, conciliacion, peticiones, respuestas, patrimonio, liquidacion, liquidacionError, recomendaciones, comparaciones, resumen, profunda, onCambio }) {
   const sinDecidir = (conciliacion?.partidas ?? []).filter((p) => !p.resolucion).length;
   const porConfirmar = caso.flags.filter((f) => !f.resolved_at && f.severity !== "info").length;
   const porPedir = (peticiones ?? []).length;
-  const faltan = sinDecidir + porConfirmar + porPedir;
+  // El patrimonio cuenta como algo que falta, y por eso no basta con mostrar la pantalla: hasta
+  // que esté contestado, el backend se niega a dar el borrador por bueno. Si la etapa dejara
+  // seguir igual, el cliente llegaría a "Presentar" para encontrarse un 409 sin haber visto
+  // nunca la pregunta que lo produce.
+  const faltaPatrimonio = patrimonio && !patrimonio.completo ? 1 : 0;
+  const faltan = sinDecidir + porConfirmar + porPedir + faltaPatrimonio;
   const hayBorrador = Boolean(liquidacion?.actual);
 
   // Hasta donde se puede llegar hoy. No es una restricción de permisos: es que una etapa sin
@@ -225,6 +234,7 @@ function Flujo({ caseId, caso, conciliacion, peticiones, respuestas, liquidacion
             conciliacion={conciliacion}
             peticiones={peticiones}
             respuestas={respuestas}
+            patrimonio={patrimonio}
             profunda={profunda}
             onCambio={onCambio}
             onSeguir={() => setEtapa("borrador")}
@@ -478,7 +488,7 @@ function SubirDocumento({ caso, onListo }) {
       </header>
       <form className="bloque-cuerpo" onSubmit={enviar}>
         <ErrorApi error={accion.error} />
-        <div className="fila-campos">
+        <div className="subir-campos">
           <label className="campo">
             <span>Qué es</span>
             {/*
@@ -486,6 +496,14 @@ function SubirDocumento({ caso, onListo }) {
               "otro documento" sin leer: el backend TIENE extractor para los seis, pero esta lista
               solo ofrecia los de beneficios. El tipo que se elige aqui es el que decide que lector
               corre, asi que un tipo ausente equivale a un lector que no existe.
+
+              Y SOBRABAN CUATRO. `registro_civil`, `planilla_pila`, `predial` y `otro` no existen
+              en el registro de lectores del backend, asi que lo subido con esos tipos se guardaba
+              sin leer y la lista de documentos lo marcaba en rojo como "no se pudo leer": la
+              interfaz ofrecia doce opciones de las que ocho funcionaban. Los soportes que no
+              tienen lector se piden donde tienen sentido —el predial vive ahora en el bloque de
+              patrimonio, con su cifra al lado— y no en una lista que promete una lectura que no
+              va a ocurrir.
             */}
             <select value={tipo} onChange={(e) => setTipo(e.target.value)}>
               <option value="CERT_INGRESOS_220">
@@ -498,19 +516,34 @@ function SubirDocumento({ caso, onListo }) {
               <option value="CERT_INTERESES_VIVIENDA">
                 Certificado de intereses de vivienda
               </option>
+              <option value="CERT_ICETEX">Certificado de intereses del ICETEX</option>
               <option value="CERT_PREPAGADA">Certificado de medicina prepagada</option>
               <option value="CERT_AFC_FVP">Certificado de AFC o pensión voluntaria</option>
-              <option value="registro_civil">Registro civil de un dependiente</option>
-              <option value="planilla_pila">Planilla de aportes (PILA)</option>
-              <option value="predial">Impuesto predial</option>
-              <option value="otro">Otro</option>
+              <option value="CERT_DONACION_ESAL">Certificado de una donación</option>
             </select>
           </label>
-          <label className="campo">
+
+          <div className="campo">
             <span>El archivo o la foto</span>
-            <input type="file" onChange={(e) => setArchivo(e.target.files?.[0] ?? null)} required />
-          </label>
+            <div className="subir-archivo">
+              {/* El `<input>` va DENTRO del label: asi el label es el area clickeable y no hace
+                  falta un `htmlFor` con un id inventado. */}
+              <label className="subir-archivo-boton">
+                <input
+                  type="file"
+                  onChange={(e) => setArchivo(e.target.files?.[0] ?? null)}
+                  required
+                />
+                <Upload size={14} />
+                {archivo ? "Cambiar archivo" : "Elegir archivo"}
+              </label>
+              <span className="subir-archivo-nombre">
+                {archivo ? archivo.name : "Sirve una foto del papel"}
+              </span>
+            </div>
+          </div>
         </div>
+
         <div className="clave-botones">
           <button className="btn-grande" disabled={accion.running || !archivo}>
             {accion.running ? "Subiendo…" : "Agregar"}
@@ -519,6 +552,8 @@ function SubirDocumento({ caso, onListo }) {
             Cancelar
           </button>
         </div>
+        {/* Por que el boton esta apagado. Un gris sin explicacion se lee como un boton roto. */}
+        {!archivo ? <p className="subir-falta">Falta elegir el archivo.</p> : null}
       </form>
     </section>
   );

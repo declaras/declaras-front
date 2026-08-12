@@ -25,7 +25,8 @@ import { Download } from "lucide-react";
 import { formatMoney } from "./formato";
 import Cajon from "./Cajon";
 import { useVista } from "./vista";
-import { urlDeApi } from "./api";
+import { descargarArchivo } from "./archivos";
+import { useAction } from "./hooks";
 
 /**
  * Las etapas del calculo, con el nombre que tienen para quien no es contador.
@@ -128,6 +129,11 @@ const igual = (a, b) =>
 export default function Memoria({ caseId, liquidacion, error, onCerrar }) {
   const { profunda } = useVista();
   const pasos = liquidacion?.actual?.casillas ?? [];
+  // La memoria es texto (markdown), no un archivo guardado: se pide igual que un documento porque
+  // el endpoint tambien exige sesion, y el nombre lo pone el front porque no hay archivo original.
+  const bajar = useAction(() =>
+    descargarArchivo(`/v1/cases/${caseId}/memoria`, "memoria-de-calculo.md"),
+  );
 
   const porEtapa = [...ETAPAS, OTROS]
     .map((etapa) => ({
@@ -146,16 +152,15 @@ export default function Memoria({ caseId, liquidacion, error, onCerrar }) {
       }
       ancho={620}
       accion={
-        <a
+        <button
           className="btn-mini"
-          href={urlDeApi(`/v1/cases/${caseId}/memoria`)}
-          target="_blank"
-          rel="noreferrer"
-          title="Descargar para anexar o archivar"
+          onClick={() => bajar.run()}
+          disabled={bajar.running}
+          title={bajar.error ? bajar.error.message : "Descargar para anexar o archivar"}
         >
           <Download size={13} />
-          Descargar
-        </a>
+          {bajar.running ? "Bajando…" : "Descargar"}
+        </button>
       }
       onCerrar={onCerrar}
     >

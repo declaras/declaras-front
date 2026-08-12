@@ -651,7 +651,10 @@
 
 /* ── formularios ── */
 .campo { display: block; margin-bottom: 16px; }
-.campo span { display: block; margin-bottom: 7px; color: var(--muted); font-size: 12.5px; font-weight: 500; }
+/* `> label` cubre el caso de un `CampoNumero` envuelto en un `.campo`: ese componente rinde su
+   propia etiqueta como `<label>` y sin esto quedaba con el tamaño del texto normal, compitiendo
+   con el valor. El `>` evita alcanzar la etiqueta del propio `.campo`, que suele SER un label. */
+.campo > span, .campo > label { display: block; margin-bottom: 7px; color: var(--muted); font-size: 12.5px; font-weight: 500; }
 .campo input, .campo select {
   width: 100%;
   padding: 11px 13px;
@@ -2119,3 +2122,177 @@
 .cruce-desactualizado { display: flex; align-items: center; justify-content: space-between; gap: 18px; flex-wrap: wrap; margin-bottom: 18px; padding: 15px 18px; border-radius: 13px; border: 1px solid rgba(214,158,46,.28); background: rgba(214,158,46,.08); }
 .cruce-desactualizado p { margin: 0; max-width: 60ch; color: #6b5320; font-size: 13.5px; line-height: 1.6; }
 .cruce-accion { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 14px; }
+
+/* ── el patrimonio ──
+ *
+ * Es el unico bloque de la consola donde se CAPTURA en vez de confirmar, y eso cambia la forma:
+ * un cuestionario con estados (sin contestar, dijo que no, dijo que si y estos son) en vez de una
+ * lista. El color se sigue reservando para lo excepcional, asi que un "no tengo" no lleva color:
+ * lleva menos peso, que es lo que de verdad significa. */
+.patrimonio-cuenta {
+  padding: 16px 18px;
+  border-radius: 12px;
+  background: var(--cream);
+  border: 1px solid var(--line);
+}
+.patrimonio-cuenta dl {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 14px;
+  margin: 0;
+}
+.patrimonio-cuenta dt { color: var(--muted); font-size: 12.5px; margin-bottom: 3px; }
+.patrimonio-cuenta dd { margin: 0; font-variant-numeric: tabular-nums; font-size: 16px; }
+.patrimonio-cuenta dd.strong { font-weight: 600; }
+/* Que el patrimonio haya bajado no es un error del sistema, es una pregunta para el contador:
+   o se vendio algo o falta algo. Por eso avisa y no bloquea. */
+.patrimonio-alerta {
+  margin: 14px 0 0;
+  padding-top: 12px;
+  border-top: 1px dashed var(--line);
+  color: var(--ink);
+  font-size: 13.5px;
+  max-width: 62ch;
+}
+
+.patrimonio-contado { margin-top: 14px; }
+.patrimonio-lista-contada { list-style: none; margin: 10px 0 0; padding: 0; }
+.patrimonio-lista-contada li {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 7px 0;
+  border-bottom: 1px dashed var(--line);
+  color: var(--muted);
+  font-size: 13.5px;
+}
+.patrimonio-lista-contada .num { font-variant-numeric: tabular-nums; color: var(--ink); }
+
+.patrimonio-compuerta {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+.patrimonio-pregunta { margin: 0; font-size: 15.5px; font-weight: 500; max-width: 62ch; }
+.patrimonio-porque { margin: 6px 0 0; color: var(--muted); font-size: 13.5px; max-width: 62ch; }
+.patrimonio-documento { margin: 6px 0 0; color: var(--muted); font-size: 13px; max-width: 62ch; }
+/* Contestada que no: se queda a la vista, en gris, porque es la unica forma de corregirla. */
+.patrimonio-compuerta-no { display: flex; align-items: center; gap: 12px; }
+.patrimonio-compuerta-no p {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 13.5px;
+}
+
+.patrimonio-bienes { list-style: none; margin: 12px 0 0; padding: 0; }
+.patrimonio-bien {
+  position: relative;
+  padding: 12px 44px 12px 0;
+  border-top: 1px dashed var(--line);
+}
+.patrimonio-bien:first-child { border-top: none; }
+.patrimonio-bien-principal {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 20px;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+}
+.patrimonio-bien-principal:hover .patrimonio-bien-nombre { color: var(--brand); }
+.patrimonio-bien-nombre { display: flex; flex-direction: column; gap: 2px; font-weight: 500; }
+.patrimonio-bien-id {
+  color: var(--muted);
+  font-size: 12.5px;
+  font-weight: 400;
+  font-family: ui-monospace, monospace;
+}
+.patrimonio-bien-principal .num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* La regla: es lo que permite defender la cifra ante la DIAN, asi que se lee, no se decora. */
+.patrimonio-bien-regla { margin: 4px 0 0; color: var(--muted); font-size: 12.5px; max-width: 62ch; }
+/* El articulo se separa de la frase sin puntuacion inventada: es una referencia, no parte del texto. */
+.patrimonio-bien-norma { margin-left: 8px; padding-left: 8px; border-left: 1px solid var(--line); }
+.patrimonio-bien-deuda { margin: 5px 0 0; color: var(--muted); font-size: 13px; }
+.patrimonio-bien-falta {
+  margin: 6px 0 0;
+  padding-left: 10px;
+  border-left: 2px solid var(--amber);
+  color: var(--ink);
+  font-size: 13px;
+  max-width: 62ch;
+}
+.patrimonio-bien > .btn-icono { position: absolute; top: 10px; right: 0; }
+
+.patrimonio-acciones { display: flex; align-items: center; gap: 14px; margin-top: 12px; }
+.patrimonio-form { margin-top: 14px; max-width: 620px; }
+.patrimonio-form .campo { margin-bottom: 14px; }
+
+/* ── subir un certificado ──
+ *
+ * ESTABA EN UNA REJILLA DE DOS COLUMNAS y no cabia: la opcion mas larga de la lista mide 42
+ * caracteres, asi que en un panel angosto el navegador cortaba la etiqueta y quedaba
+ * "Certificado c⌄". Un desplegable que no deja leer lo que se escogio no sirve para nada, y
+ * ensanchar la columna no arregla el caso general porque la consola se usa a anchos distintos.
+ * Ahora el tipo ocupa el ancho completo y el archivo va debajo. */
+.subir-campos { display: block; max-width: 520px; }
+.subir-campos .campo { margin-bottom: 14px; }
+.subir-campos select {
+  /* La flecha propia reemplaza la del sistema, que en Safari se dibuja encima del texto. */
+  appearance: none;
+  padding-right: 38px;
+  background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+    linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position: calc(100% - 19px) 52%, calc(100% - 14px) 52%;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  text-overflow: ellipsis;
+}
+
+/* El control nativo de archivo decia "Choose File / No file chosen" en ingles en medio de una
+   pantalla en español, y dentro de una caja con borde que lo hacia parecer un campo de texto
+   vacio. Se esconde y el `<label>` que lo envuelve hace de boton. */
+.subir-archivo { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.subir-archivo input[type="file"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+.subir-archivo-boton {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 15px;
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+  background: var(--white);
+  color: var(--ink);
+  font-size: 14px;
+  cursor: pointer;
+}
+.subir-archivo-boton:hover { border-color: var(--brand); color: var(--brand); }
+.subir-archivo input[type="file"]:focus-visible + .subir-archivo-boton {
+  outline: 2px solid rgba(14, 159, 110, 0.3);
+  outline-offset: 1px;
+  border-color: var(--brand);
+}
+.subir-archivo-nombre {
+  color: var(--muted);
+  font-size: 13.5px;
+  overflow-wrap: anywhere;
+  max-width: 100%;
+}
+/* Por que el boton esta apagado, dicho en vez de insinuado con un gris. */
+.subir-falta { margin: 0; color: var(--muted); font-size: 13px; }

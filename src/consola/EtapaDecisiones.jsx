@@ -35,6 +35,7 @@ import {
   nombreDeDecision,
 } from "./decisiones";
 import Conciliacion from "./Conciliacion";
+import Patrimonio from "./Patrimonio";
 import Peticiones from "./Peticiones";
 import Pendientes from "./Pendientes";
 import YaContestado from "./YaContestado";
@@ -55,6 +56,7 @@ export default function EtapaDecisiones({
   conciliacion,
   peticiones,
   respuestas,
+  patrimonio,
   profunda,
   onCambio,
   onSeguir,
@@ -69,7 +71,11 @@ export default function EtapaDecisiones({
   const porConfirmar = caso.flags.filter((f) => !f.resolved_at && f.severity !== "info");
 
   // Cuando no queda nada por decidir, la etapa se cierra sola y ofrece seguir.
-  const nadaPendiente = !sinDecidir.length && !porConfirmar.length && !(peticiones ?? []).length;
+  // El patrimonio entra en la cuenta de lo pendiente porque el backend NO deja cerrar el borrador
+  // sin él. Sin esta mitad, la etapa diría "no falta nada" y ofrecería seguir hacia un 409.
+  const faltaPatrimonio = Boolean(patrimonio) && !patrimonio.completo;
+  const nadaPendiente =
+    !sinDecidir.length && !porConfirmar.length && !(peticiones ?? []).length && !faltaPatrimonio;
   // Si el backend dice que hay que conciliar, no es que no falte nada: es que nunca se cruzo.
   const faltaCruzar = /conciliar|cruzad/i.test(conciliacion?.falta_para_liquidar ?? "");
 
@@ -96,6 +102,10 @@ export default function EtapaDecisiones({
             Ver el borrador <ArrowRight size={16} />
           </button>
         )}
+
+        {/* El patrimonio sigue a la vista con todo contestado: es donde se corrige un "no tengo
+            carro" dado por error, y donde se ve la casilla 29 que nadie más muestra. */}
+        <Patrimonio caseId={caseId} datos={patrimonio} onCambio={onCambio} />
 
         {/* Aunque no quede nada pendiente, lo contestado sigue accesible: es la única forma de
             corregir un sí o un no dado por error. */}
@@ -152,6 +162,8 @@ export default function EtapaDecisiones({
       {(peticiones ?? []).length ? (
         <Peticiones caseId={caseId} peticiones={peticiones} onCambio={onCambio} />
       ) : null}
+
+      <Patrimonio caseId={caseId} datos={patrimonio} onCambio={onCambio} />
 
       <YaContestado
         caseId={caseId}

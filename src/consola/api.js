@@ -47,22 +47,6 @@ const BASE = (import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000").replace(/
  * El costo es una llamada local —lee del almacenamiento, no de la red— asi que no hay nada que
  * optimizar aca.
  */
-/**
- * La URL absoluta de un recurso del backend, para lo que NO pasa por `fetch`.
- *
- * El visor mete el PDF en un `<iframe>` y la descarga es un `<a href>`: los dos los resuelve el
- * navegador solo, sin pasar por `request`. Antes decian `/api/...` porque un proxy del mismo
- * dominio los reenviaba; al borrarlo, esa ruta dejo de existir en el front y el servidor
- * respondia el index.html de la SPA. El sintoma era la LANDING renderizada dentro del visor.
- *
- * OJO CON LO QUE ESTO NO ARREGLA: un `<iframe>` no manda la cabecera `Authorization`, asi que
- * estos recursos solo funcionan si el backend los deja pasar de otra forma. Hoy exige token en
- * todo, asi que la descarga va a dar 401 — es el mismo problema que tiene cualquier SPA con
- * archivos protegidos, y se resuelve con una URL firmada de un solo uso. Queda anotado.
- */
-export function urlDeApi(ruta) {
-  return `${BASE}${ruta}`;
-}
 
 async function conSesion(options) {
   const token = await tokenVigente();
@@ -86,7 +70,15 @@ export class ApiError extends Error {
   }
 }
 
-async function request(path, options = {}) {
+/**
+ * La respuesta cruda de una peticion firmada, o un `ApiError` si el backend dijo que no.
+ *
+ * Existe aparte de `request` porque no todo lo que se le pide al backend es JSON: un PDF y una
+ * memoria de calculo se piden igual, con la misma sesion y con los mismos errores, y lo unico
+ * distinto es como se lee el cuerpo. Antes esto vivia dentro de `request`, asi que quien
+ * necesitara bytes no tenia por donde entrar sin duplicar el manejo de sesion y de errores.
+ */
+async function pedir(path, options = {}) {
   let response;
   try {
     response = await fetch(`${BASE}${path}`, await conSesion(options));
@@ -99,25 +91,59 @@ async function request(path, options = {}) {
     });
   }
 
-  if (response.status === 204) return null;
+  if (response.ok) return response;
 
   const isJson = (response.headers.get("content-type") ?? "").includes("json");
   const body = isJson ? await response.json() : null;
 
-  if (!response.ok) {
-    // El token vencio o se revoco a mitad de uso. Se cierra la sesion local para que `Protegida`
-    // mande a `/login` en el proximo pintado. Sin esto la consola se queda con un token muerto
-    // mostrando errores en cada panel sin decir que hay que entrar de nuevo — el sintoma seria
-    // "se dañó" y no "se venció la sesión".
-    //
-    // Se ramifica por `code` y no solo por el 401: un 401 puede venir de otra cosa, y cerrar la
-    // sesion por cualquier 401 sacaria a alguien a la calle por un error que no era de su sesion.
-    if (response.status === 401 && body?.code === "TOKEN_INVALIDO") {
-      cerrarSesionLocal();
-    }
-    throw new ApiError({ ...(body ?? {}), status: response.status });
+  // El token vencio o se revoco a mitad de uso. Se cierra la sesion local para que `Protegida`
+  // mande a `/login` en el proximo pintado. Sin esto la consola se queda con un token muerto
+  // mostrando errores en cada panel sin decir que hay que entrar de nuevo — el sintoma seria
+  // "se dañó" y no "se venció la sesión".
+  //
+  // Se ramifica por `code` y no solo por el 401: un 401 puede venir de otra cosa, y cerrar la
+  // sesion por cualquier 401 sacaria a alguien a la calle por un error que no era de su sesion.
+  if (response.status === 401 && body?.code === "TOKEN_INVALIDO") {
+    cerrarSesionLocal();
   }
-  return body;
+  throw new ApiError({ ...(body ?? {}), status: response.status });
+}
+
+async function request(path, options = {}) {
+  const response = await pedir(path, options);
+  if (response.status === 204) return null;
+  const isJson = (response.headers.get("content-type") ?? "").includes("json");
+  return isJson ? await response.json() : null;
+}
+
+/**
+ * El contenido de un recurso protegido, ya con la sesion puesta.
+ *
+ * ═══ POR QUE NO SE PUEDE USAR LA URL DIRECTA ═══
+ *
+ * Un `<iframe src>`, un `<img src>` y un `<a href>` los resuelve el navegador por su cuenta, y el
+ * navegador NO manda la cabecera `Authorization`. Como el backend exige token en todo, esas tres
+ * cosas devolvian el JSON del 401 en vez del archivo: el visor pintaba
+ * `{"code":"UNAUTHORIZED","message":"Necesitas haber ingresado para usar esto."}` dentro del marco,
+ * la descarga bajaba ese texto con nombre de PDF, y la memoria de calculo abria una pestaña con el
+ * mismo JSON. Se veia como un problema de almacenamiento y era de transporte: los bytes estaban
+ * siempre ahi, lo que faltaba era la credencial en el camino.
+ *
+ * ═══ POR QUE NO SE HIZO CON UNA URL FIRMADA ═══
+ *
+ * Era la otra salida y quedaba peor: una URL firmada mete una credencial en la barra de
+ * direcciones, o sea en el historial del navegador, en la cabecera `Referer` de lo que se cargue
+ * despues y en los logs de acceso del servidor. Traer los bytes con la sesion y publicarlos como
+ * `blob:` no expone nada, no necesita endpoint nuevo y no obliga a desplegar el backend.
+ *
+ * QUE VIGILAR EL DIA QUE EL ALMACENAMIENTO SEA GCS. Con disco local el backend responde los bytes,
+ * que es el caso de hoy. Con GCS responde un 307 hacia una URL firmada, y `fetch` sigue el redirect
+ * a otro dominio: ahi hara falta CORS en el bucket, o esto empieza a fallar sin que nada del codigo
+ * haya cambiado.
+ */
+export async function archivo(ruta) {
+  const response = await pedir(ruta);
+  return response.blob();
 }
 
 const json = (body) => ({
@@ -183,6 +209,14 @@ export const api = {
   listPeticiones: (caseId) => request(`/v1/cases/${caseId}/peticiones`),
   listRespuestas: (caseId) => request(`/v1/cases/${caseId}/respuestas`),
   postRespuesta: (caseId, payload) => request(`/v1/cases/${caseId}/respuestas`, json(payload)),
+
+  getPatrimonio: (caseId) => request(`/v1/cases/${caseId}/patrimonio`),
+  guardarBien: (caseId, bien) =>
+    request(`/v1/cases/${caseId}/patrimonio/bienes`, json(bien)),
+  borrarBien: (caseId, bienId) =>
+    request(`/v1/cases/${caseId}/patrimonio/bienes/${encodeURIComponent(bienId)}`, {
+      method: "DELETE",
+    }),
   cerrarPeticion: (caseId, peticionId) =>
     request(`/v1/cases/${caseId}/cerrar-peticion/${encodeURIComponent(peticionId)}`, {
       method: "POST",
