@@ -27,6 +27,8 @@ import { api } from "./api";
 import { useAction } from "./hooks";
 import { formatMoney } from "./formato";
 import { Cruzar, ErrorApi, Vacio } from "./componentes";
+import Clasificar from "./Clasificar";
+import { COMO_CONTADOR, QUE_HACE, nombreDeMotivo } from "./decisiones";
 
 /** Como se llama cada desenlace del cruce, dicho sin jerga. */
 const ESTADO = {
@@ -66,15 +68,6 @@ const CONCEPTO = {
 };
 
 /** Que hace cada decision, en una linea. */
-const DECISION = {
-  USAR_DIAN: "Usar la cifra de la DIAN",
-  USAR_DOCUMENTO: "Usar la cifra del documento",
-  USAR_OTRO: "Poner otra cifra",
-  MARCAR_AJENO: "No es del cliente",
-  CERRAR_SIN_SOPORTE: "Cerrar sin documento",
-  LLEVAR_A_MANO: "Llevarlo a mano (el motor no lo liquida)",
-};
-
 /** Como se nombra cada decision cuando cabe en una sola linea de la fila cerrada. */
 const DECISION_CORTA = {
   USAR_DIAN: "Se usa la DIAN",
@@ -87,17 +80,6 @@ const DECISION_CORTA = {
 
 /** Decisiones que ponen una cifra en la declaracion; en las demas el valor es cero y no dice nada. */
 const PONE_CIFRA = new Set(["USAR_DIAN", "USAR_DOCUMENTO", "USAR_OTRO"]);
-
-const MOTIVO = {
-  COINCIDEN: "las dos cifras coinciden",
-  ERROR_DEL_TERCERO: "el tercero reportó mal",
-  ERROR_DEL_CERTIFICADO: "el certificado está mal",
-  NO_ES_MIO: "no es del cliente",
-  FALTA_DOCUMENTO: "falta el documento",
-  DECISION_DEL_CONTADOR: "criterio del contador",
-  FUERA_DEL_MOTOR: "fuera del alcance del cálculo",
-  SIN_CONTRAPARTE_DIAN: "la DIAN no reporta nada que comparar",
-};
 
 export default function Conciliacion({ caseId, conciliacion, onCambio }) {
   if (!conciliacion) return null;
@@ -378,7 +360,7 @@ function Resuelta({ resolucion }) {
   const delSistema = resolucion.origen === "SISTEMA";
   return (
     <p className={`partida-resuelta ${delSistema ? "por-sistema" : ""}`}>
-      {MOTIVO[resolucion.motivo] ?? resolucion.motivo}
+      {nombreDeMotivo(resolucion.motivo)}
       {PONE_CIFRA.has(resolucion.decision) ? ` · queda en ${formatMoney(resolucion.valor)}` : ""}
       {delSistema ? " · lo puso el sistema y se puede cambiar" : ` · ${resolucion.quien}`}
       {resolucion.nota ? ` · “${resolucion.nota}”` : ""}
@@ -419,13 +401,32 @@ function Decidir({ caseId, partida, onCambio, otra, setOtra, error }) {
     return <p className="bloque-nota">Este renglón no admite ninguna decisión todavía.</p>;
   }
 
-  // Las que ya tienen su tarjeta arriba no se repiten como boton.
-  const enTarjeta = new Set(["USAR_DIAN", "USAR_DOCUMENTO"]);
+  // Las que ya tienen su tarjeta arriba no se repiten como boton. CLASIFICAR tampoco: no es una
+  // salida alternativa sino LA pregunta de ese renglon, y va desplegada, no detras de un enlace.
+  const enTarjeta = new Set(["USAR_DIAN", "USAR_DOCUMENTO", "CLASIFICAR"]);
   const otras = decisiones.filter((d) => !enTarjeta.has(d));
+  const clasificar = decisiones.includes("CLASIFICAR") && partida.clases_posibles;
 
   return (
     <div className="partida-decidir">
       {error ? <ErrorApi error={error} /> : null}
+
+      {clasificar ? (
+        <div className="partida-clasificar">
+          <p className="partida-clasificar-pregunta">¿A qué cédula del 210 va este ingreso?</p>
+          <p className="bloque-nota">
+            La exógena lo reportó con un concepto que el motor no sabe ubicar. Sin clasificarlo, el
+            ingreso queda por fuera de la liquidación.
+          </p>
+          <Clasificar
+            caseId={caseId}
+            partida={partida}
+            profunda
+            motivos={posibles.CLASIFICAR}
+            onListo={onCambio}
+          />
+        </div>
+      ) : null}
 
       {otras.length ? (
         <div className="partida-otras">
@@ -443,15 +444,19 @@ function Decidir({ caseId, partida, onCambio, otra, setOtra, error }) {
           </button>
 
           {verOtras ? (
-            <div className="partida-botones">
+            <div className="decision-opciones">
+              {/* Cada salida dice QUE HACE, igual que en la tarjeta: "No es del cliente" saca la
+                  plata de la declaracion y "Lo pongo yo en el 210" la deja adentro pero fuera del
+                  calculo, y con solo el nombre se veian equivalentes. */}
               {otras.map((d) => (
                 <button
                   key={d}
                   type="button"
-                  className={`btn-mini ${otra === d ? "btn-mini-activo" : ""}`}
+                  className={`salida ${otra === d ? "salida-abierta" : ""}`}
                   onClick={() => setOtra(otra === d ? null : d)}
                 >
-                  {DECISION[d] ?? d}
+                  <span className="salida-nombre">{COMO_CONTADOR[d] ?? d}</span>
+                  {QUE_HACE[d] ? <span className="salida-que">{QUE_HACE[d]}</span> : null}
                 </button>
               ))}
             </div>
@@ -503,7 +508,7 @@ function FormularioDecision({ caseId, partida, decision, motivos, onListo }) {
         <select value={motivo} onChange={(e) => setMotivo(e.target.value)}>
           {motivos.map((m) => (
             <option key={m} value={m}>
-              {MOTIVO[m] ?? m}
+              {nombreDeMotivo(m)}
             </option>
           ))}
         </select>

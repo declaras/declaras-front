@@ -1120,7 +1120,6 @@
 
 .partida-decidir { margin-top: 15px; }
 .partida-botones { display: flex; flex-wrap: wrap; gap: 8px; }
-.btn-mini-activo { border-color: var(--brand); color: var(--brand); }
 .partida-resuelta {
   margin: 14px 0 0;
   font-size: 13px;
@@ -1465,16 +1464,6 @@
 }
 
 /* ── etapa 2: una decisión a la vez ── */
-.decision-marco { margin-bottom: 34px; }
-.decision-progreso {
-  display: flex;
-  align-items: baseline;
-  gap: 16px;
-  margin: 0 0 18px;
-  color: var(--muted);
-  font-size: 13px;
-}
-.decision-progreso .enlace-suave { margin-left: auto; }
 
 .decision {
   padding: 26px;
@@ -1500,19 +1489,11 @@
   font-size: 11.5px;
   font-family: ui-monospace, monospace;
 }
-.decision-opciones { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-start; }
 /* Una opcion con formulario ocupa su propia linea: el formulario no cabe al lado de los botones. */
 .opcion { flex: 1 1 100%; }
 .opcion-forma { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); }
 
 /* Un botón grande secundario: la otra cara de una pregunta de sí o no. */
-.btn-secundario {
-  background: var(--white);
-  color: var(--ink);
-  border: 1px solid var(--line);
-  box-shadow: none;
-}
-.btn-secundario:hover:not(:disabled) { border-color: var(--ink); background: var(--white); }
 
 /* ── etapa 3: el borrador ── */
 .pestanas { display: flex; gap: 2px; margin-bottom: 26px; border-bottom: 1px solid var(--line); }
@@ -2296,3 +2277,90 @@
 }
 /* Por que el boton esta apagado, dicho en vez de insinuado con un gris. */
 .subir-falta { margin: 0; color: var(--muted); font-size: 13px; }
+
+/* ── las secciones de la etapa de decisiones ──
+ *
+ * Es el mismo gesto que las pestañas del borrador y a proposito: en las dos, lo que hay debajo son
+ * PARES que se recorren en cualquier orden. Lo que no es un par es la etapa completa (resultado,
+ * decisiones, borrador, presentar), que tiene orden y por eso arriba sigue siendo un progreso.
+ *
+ * Antes esto era una sola columna con los cuatro asuntos uno detras de otro: para contestar si el
+ * cliente tiene carro habia que pasar por dieciocho renglones de ingresos. */
+.secciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 22px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+}
+.seccion {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: none;
+  color: var(--muted);
+  font-size: 14px;
+  cursor: pointer;
+}
+.seccion:hover { color: var(--ink); }
+.seccion-activa, .seccion-activa:hover {
+  background: var(--white);
+  border-color: var(--line);
+  color: var(--ink);
+  font-weight: 500;
+}
+/* La cuenta es de lo que FALTA. Un cero no se pinta: en un contador se lee como aviso. */
+.seccion-cuenta {
+  min-width: 20px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--brand);
+  color: var(--white);
+  font-size: 11.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+/* ── las salidas de un renglon ──
+ *
+ * Eran botones del alto de una linea, uno pegado al otro, con nombres que no decian su
+ * consecuencia: "No es del cliente" saca la plata de la declaracion y "Lo pongo yo en el 210" la
+ * deja adentro pero fuera del calculo, y se veian identicos. Cada una dice ahora que hace. */
+.decision-opciones { display: grid; gap: 10px; margin-top: 18px; max-width: 520px; }
+.salida {
+  display: block;
+  width: 100%;
+  padding: 12px 15px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--white);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+}
+.salida:hover:not(:disabled) { border-color: var(--muted); }
+.salida:disabled { opacity: .6; cursor: default; }
+.salida-abierta { border-color: var(--brand); background: rgba(14, 159, 110, .04); }
+.salida-nombre {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--ink);
+  font-size: 14.5px;
+  font-weight: 500;
+}
+.salida-que { display: block; margin-top: 3px; color: var(--muted); font-size: 13px; }
+
+/* Clasificar dentro de la mesa. No es una salida alternativa: es LA pregunta de ese renglon, y
+   sin contestarla el ingreso no entra a la declaracion, asi que va desplegada. */
+.partida-clasificar {
+  margin-bottom: 18px;
+  padding-bottom: 18px;
+  border-bottom: 1px dashed var(--line);
+}
+.partida-clasificar-pregunta { margin: 0 0 4px; font-size: 15px; font-weight: 500; }

@@ -56,7 +56,63 @@ export const COMO_CONTADOR = {
   USAR_OTRO: "Poner otra cifra",
   MARCAR_AJENO: "No es del cliente",
   CERRAR_SIN_SOPORTE: "Cerrar sin documento",
-  LLEVAR_A_MANO: "Llevarlo a mano",
+  // "Llevarlo a mano" no decia NADA. Nombraba el gesto (sacarlo del sistema) y callaba las dos
+  // cosas que hay que saber para elegirlo: que el ingreso NO entra al calculo de Clara, y que
+  // entonces le toca a una persona ponerlo en el formulario. Quien lo leia no sabia si estaba
+  // descartando la plata o encargandosela a alguien.
+  LLEVAR_A_MANO: "Lo pongo yo en el 210",
+};
+
+/**
+ * Que hace cada decision, cuando el nombre no alcanza.
+ *
+ * Solo las que tienen consecuencia no obvia. Una linea debajo del boton vale mas que un nombre
+ * mas largo: el nombre se lee al escanear y esto se lee al dudar.
+ */
+export const QUE_HACE = {
+  MARCAR_AJENO: "El ingreso no entra a la declaración. Queda constancia de a quién se reportó.",
+  CERRAR_SIN_SOPORTE: "Se acepta la cifra de la DIAN sin certificado que la respalde.",
+  LLEVAR_A_MANO:
+    "Clara no liquida esta cédula todavía. El ingreso queda por fuera del cálculo y lo digitas tú en el formulario.",
+  USAR_OTRO: "Rige una cifra que no es ninguna de las dos.",
+};
+
+/**
+ * El motivo, escrito. Antes se volcaba el enum en minusculas y en pantalla salia "no es mio":
+ * el sistema hablando en primera persona sobre la plata de OTRO, en la vista del contador.
+ *
+ * VIVE ACA Y NO EN LA MESA porque las dos pantallas que ofrecen motivos son la mesa y la tarjeta
+ * de correccion. Estaban en una sola de las dos, asi que la otra mostraba el enum crudo.
+ */
+export const MOTIVO = {
+  COINCIDEN: "Las dos cifras coinciden",
+  ERROR_DEL_TERCERO: "El tercero reportó mal",
+  ERROR_DEL_CERTIFICADO: "El certificado está mal",
+  NO_ES_MIO: "No es del cliente",
+  FALTA_DOCUMENTO: "Falta el documento",
+  DECISION_DEL_CONTADOR: "Criterio del contador",
+  FUERA_DEL_MOTOR: "Fuera del alcance del cálculo",
+  SIN_CONTRAPARTE_DIAN: "La DIAN no reporta nada que comparar",
+  SIN_COSTOS_NI_EMPLEADOS: "Sin costos imputados ni dos o más trabajadores",
+  NATURALEZA_DEL_INGRESO: "Por la naturaleza del ingreso",
+};
+
+export const nombreDeMotivo = (motivo) => MOTIVO[motivo] ?? motivo;
+
+/**
+ * La pregunta que encabeza un renglon, segun quien mira y que hay que resolver.
+ *
+ * EN LA VISTA DEL CONTADOR NO SE HABLA EN SEGUNDA PERSONA. Decia "¿Reconoces este ingreso?" y
+ * "¿Este dinero es tuyo?" a alguien que esta revisando la plata de un tercero: el contador no
+ * reconoce nada, pregunta. Era la voz del titular filtrandose a la pantalla equivocada.
+ */
+export const preguntaDelRenglon = ({ porClasificar, ajena, hayDocumento, profunda }) => {
+  if (porClasificar) {
+    return profunda ? "¿A qué cédula del 210 va este ingreso?" : "¿Qué fue este pago?";
+  }
+  if (ajena) return profunda ? "¿Este ingreso es del cliente?" : "¿Este dinero es tuyo?";
+  if (hayDocumento) return profunda ? "¿Cuál cifra rige?" : "¿Cuál cifra es la correcta?";
+  return profunda ? "¿El cliente reconoce este ingreso?" : "¿Reconoces este ingreso?";
 };
 
 /**

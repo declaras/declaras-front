@@ -195,7 +195,11 @@ function Compuerta({ caseId, pregunta, bienes, onCambio }) {
   if (pregunta.contestada == null && !bienes.length) {
     return (
       <div className="patrimonio-compuerta">
-        <p className="patrimonio-pregunta">{pregunta.texto}</p>
+        {/* La pregunta cambia de voz, no solo de tono: el contador no tiene casa a su nombre,
+            revisa la de otro. El backend manda las dos redacciones. */}
+        <p className="patrimonio-pregunta">
+          {profunda ? (pregunta.texto_contador ?? pregunta.texto) : pregunta.texto}
+        </p>
         <p className="patrimonio-porque">{pregunta.por_que}</p>
         {profunda ? <p className="patrimonio-documento">{pregunta.documento}</p> : null}
         <div className="peticion-botones">
