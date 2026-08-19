@@ -242,8 +242,8 @@ function EscribirAlPortal({ caseId, profunda }) {
           <h3 className="revisar-titulo">Llevar el borrador al portal de la DIAN</h3>
           <p className="presentar-nota">
             {profunda
-              ? "Clara llena el borrador del 210 en la cuenta del cliente, casilla por casilla, y verifica releyendo lo que quedó guardado. No firma ni presenta nada."
-              : "Llenamos tu borrador en la DIAN con estas cifras y verificamos que quede igual. Firmar y presentar sigue siendo tuyo."}
+              ? "Clara crea el borrador del 210 en la cuenta del cliente si no existe, lo llena casilla por casilla y verifica releyendo lo que quedó guardado. Después solo falta que él entre a firmar."
+              : "Dejamos tu declaración lista en el portal de la DIAN y verificamos que quede igual a esto. Después solo entras a firmarla."}
           </p>
           <label className="campo portal-clave">
             <span>{profunda ? "Clave del portal del cliente" : "Tu clave del portal de la DIAN"}</span>
@@ -299,7 +299,14 @@ function ResultadoEscritura({ resultado, profunda }) {
       ) : null}
 
       {verificado ? (
-        <a className="btn-grande" href="https://muisca.dian.gov.co" target="_blank" rel="noreferrer">
+        <a
+          className="btn-grande"
+          href="https://muisca.dian.gov.co/WebDilIngresoFormRenta210/#/ingreso/borradores"
+          target="_blank"
+          rel="noreferrer"
+        >
+          {/* Al listado de borradores, no a la portada: es donde esta el que Clara acaba de
+              dejar listo. Mandar a la raiz obligaba a navegar tres pantallas para llegar. */}
           Entrar a la DIAN a firmar
           <ExternalLink size={15} />
         </a>
