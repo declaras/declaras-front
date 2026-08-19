@@ -2364,3 +2364,17 @@
   border-bottom: 1px dashed var(--line);
 }
 .partida-clasificar-pregunta { margin: 0 0 4px; font-size: 15px; font-weight: 500; }
+
+/* El año gravable del documento, pegado a su nombre. Es lo unico que distingue, en una lista, la
+   declaracion que se esta preparando de la del año anterior que sirve de insumo. */
+.doc-anio {
+  margin-left: 8px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--cream);
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+

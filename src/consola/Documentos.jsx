@@ -22,8 +22,10 @@ import { ChevronDown, ChevronRight, Download, Eye } from "lucide-react";
 
 import {
   CAMPOS_QUE_NO_SON_PESOS,
+  anioDelDocumento,
   campoLabel,
   docLabel,
+  docLabelContador,
   esFechaIso,
   formatDate,
   formatIso,
@@ -64,12 +66,21 @@ export default function Documentos({ documentos }) {
 function Documento({ doc, onVer }) {
   const { profunda } = useVista();
   const noSePudoLeer = !doc.reading && doc.doc_type !== "CLIENT_DOCUMENT";
+  const anio = anioDelDocumento(doc);
   const bajar = useAction(() => descargarArchivo(doc.download_url, doc.filename));
 
   return (
     <li className="doc">
       <button className="doc-principal" onClick={onVer}>
-        <span className="doc-nombre">{docLabel(doc.doc_type)}</span>
+        {/* EL AÑO DEL DOCUMENTO, A LA VISTA. Un expediente de 2025 contiene por necesidad la
+            declaración de 2024, porque es insumo del cálculo. Sin el año en la lista, y con el
+            borrador sugerido de la DIAN todavía sin publicar, ese PDF de 2024 es el único 210
+            completo que se puede abrir: quien lo abra concluye que se preparó el año equivocado.
+            Fue exactamente lo que reportó el contador. */}
+        <span className="doc-nombre">
+          {profunda ? docLabelContador(doc.doc_type) : docLabel(doc.doc_type)}
+          {anio ? <span className="doc-anio">{anio}</span> : null}
+        </span>
         <span className="doc-meta">
           {formatDate(doc.added_at)}
           {/* Al contador le sirve saber con qué lector se leyó y cómo se llama el archivo, porque

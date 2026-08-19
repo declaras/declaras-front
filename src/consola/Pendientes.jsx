@@ -25,8 +25,16 @@ const QUE_HACER = {
   DOCUMENT_UNREADABLE: "El archivo llegó dañado. Hay que volver a traerlo del portal.",
   NO_REPORTED_ITEMS: "La DIAN no tiene valores reportados por terceros para este año.",
   RUT_ID_MISMATCH: "El NIT y la cédula del RUT no coinciden. Hay que revisar el documento.",
+  // ESTE TEXTO ES EL QUE FALLÓ. Decía solo que el documento no llegó, y un contador leyó la alerta,
+  // entró al portal de la DIAN, encontró ahí un borrador de OTRO año que no es nuestro, y concluyó
+  // que el sistema había preparado el año equivocado. La declaración estaba bien.
+  //
+  // Lo que faltaba no era el hecho —ese ya estaba y era exacto— sino sus dos consecuencias: que no
+  // cambia nada de lo que se está preparando, y que lo que se vea en el portal no salió de acá.
   DIAN_DOCUMENT_UNAVAILABLE:
-    "La DIAN todavía no publica ese documento. Se puede volver a consultar más adelante.",
+    "No cambia el año que estamos preparando ni impide presentar: el borrador de la DIAN sirve " +
+    "para contrastar cifras, no es requisito. Si en el portal aparece un borrador de otro año, es " +
+    "del contribuyente y no lo creó Clara: aquí solo se descargan documentos, nunca se escriben.",
   DIAN_PORTAL_UNAVAILABLE: "El portal de la DIAN estaba caído. Se puede volver a intentar.",
   FORM_ARITHMETIC_MISMATCH:
     "Las cifras de la declaración no cuadran entre ellas. Hay que revisarla antes de usarla.",

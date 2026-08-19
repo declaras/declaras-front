@@ -61,6 +61,36 @@ export const formatDateTime = (iso) => {
  * "Información exógena" es como se llama en la DIAN y no significa nada para quien no trabaja
  * en esto; lo que es, es la lista de lo que otros reportaron a su nombre.
  */
+/**
+ * Los mismos documentos, dichos para quien NO es el contribuyente.
+ *
+ * "Tu declaración del año pasado" sobre un PDF de otra persona no solo suena raro: se lee como
+ * "esta es la declaración", y en un expediente donde la DIAN todavia no publica el borrador
+ * sugerido, ese PDF de 2024 es el UNICO formulario 210 completo que se puede abrir. Un contador
+ * que lo abre ve una declaracion entera de otro año y concluye que el sistema hizo el año
+ * equivocado, que es exactamente el reporte que llego.
+ */
+const DOC_LABELS_CONTADOR = {
+  RUT: "RUT del cliente",
+  EXOGENA: "Exógena: lo que terceros le reportaron",
+  PRIOR_RETURN: "Declaración del año anterior",
+  SUGGESTED_RETURN: "Borrador sugerido por la DIAN",
+  EINVOICE_SUMMARY: "Facturas electrónicas",
+  CLIENT_DOCUMENT: "Documento que aportó el cliente",
+};
+
+/**
+ * El año gravable que trae el propio documento, si lo trae.
+ *
+ * ES LO QUE DESAMBIGUA. Un expediente de 2025 contiene por necesidad documentos de 2024 (la
+ * declaración anterior es un insumo del cálculo), y sin el año a la vista no hay forma de saber,
+ * mirando la lista, cuál pertenece a qué.
+ */
+export function anioDelDocumento(doc) {
+  const campo = (doc?.reading?.fields ?? []).find((c) => c.name === "tax_year");
+  return typeof campo?.value === "number" ? campo.value : null;
+}
+
 const DOC_LABELS = {
   RUT: "Tu RUT",
   EXOGENA: "Lo que otros reportaron a tu nombre",
@@ -77,6 +107,8 @@ const DOC_LABELS = {
   recibo_de_pago: "Recibo de pago",
   otro: "Otro documento",
 };
+
+export const docLabelContador = (tipo) => DOC_LABELS_CONTADOR[tipo] ?? docLabel(tipo);
 
 export const docLabel = (docType) =>
   DOC_LABELS[docType] ?? docType.replaceAll("_", " ").toLowerCase();
