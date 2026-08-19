@@ -199,18 +199,112 @@ export default function EtapaPresentar({ caseId, caso, conciliacion, peticiones,
         </div>
       ) : null}
 
-      {yaLista ? (
-        <a
-          className="btn-grande"
-          href="https://muisca.dian.gov.co"
-          target="_blank"
-          rel="noreferrer"
-        >
-          Continuar para firmar en la DIAN
+      {yaLista ? <EscribirAlPortal caseId={caseId} profunda={profunda} /> : null}
+    </section>
+  );
+}
+
+
+/**
+ * Escribir el borrador en el portal de la DIAN, que era lo que se hacia a mano.
+ *
+ * Aparece solo con la declaracion dada por lista: lo que sale de Clara hacia la cuenta real
+ * del contribuyente tiene que haber pasado por el "dar por buena" del contador, y el backend
+ * lo exige igual (409 si no).
+ *
+ * LA CLAVE SE PIDE AQUI Y NO SE GUARDA EN NINGUN LADO. Viaja en esta peticion, abre la
+ * sesion y se suelta; el campo se limpia al terminar. Es el mismo trato que le da la
+ * extraccion.
+ *
+ * EL RESULTADO MUESTRA LA VERIFICACION, no un "listo" a secas. Despues de guardar, el
+ * backend relee el borrador completo y compara casilla por casilla: en el primer ensayo
+ * real el portal respondio 201 habiendo corrompido una letra, asi que un 201 sin relectura
+ * no prueba nada. Si algo volvio distinto, se muestra en rojo con lo enviado y lo leido.
+ */
+function EscribirAlPortal({ caseId, profunda }) {
+  const [clave, setClave] = useState("");
+  const [resultado, setResultado] = useState(null);
+  const escribir = useAction((password) => api.escribirAlPortal(caseId, password));
+
+  const enviar = async (evento) => {
+    evento.preventDefault();
+    const r = await escribir.run(clave);
+    if (r) {
+      setResultado(r);
+      setClave("");
+    }
+  };
+
+  return (
+    <div className="portal-escribir">
+      {!resultado ? (
+        <form onSubmit={enviar}>
+          <h3 className="revisar-titulo">Llevar el borrador al portal de la DIAN</h3>
+          <p className="presentar-nota">
+            {profunda
+              ? "Clara llena el borrador del 210 en la cuenta del cliente, casilla por casilla, y verifica releyendo lo que quedó guardado. No firma ni presenta nada."
+              : "Llenamos tu borrador en la DIAN con estas cifras y verificamos que quede igual. Firmar y presentar sigue siendo tuyo."}
+          </p>
+          <label className="campo portal-clave">
+            <span>{profunda ? "Clave del portal del cliente" : "Tu clave del portal de la DIAN"}</span>
+            <input
+              type="password"
+              autoComplete="off"
+              value={clave}
+              onChange={(e) => setClave(e.target.value)}
+              required
+            />
+          </label>
+          <button className="btn-grande" disabled={escribir.running || !clave}>
+            {escribir.running ? "Escribiendo en el portal…" : "Escribir el borrador"}
+          </button>
+          <ErrorApi error={escribir.error} />
+        </form>
+      ) : (
+        <ResultadoEscritura resultado={resultado} profunda={profunda} />
+      )}
+    </div>
+  );
+}
+
+function ResultadoEscritura({ resultado, profunda }) {
+  const { verificado, escritas, form_id: formId, diferencias, ajenas } = resultado;
+  const numerosAjenos = Object.keys(ajenas ?? {});
+
+  return (
+    <div className={verificado ? "portal-resultado" : "portal-resultado portal-fallo"}>
+      <p className="portal-veredicto">
+        {verificado ? <Check size={15} /> : <AlertCircle size={15} />}
+        {verificado
+          ? `Borrador ${formId} escrito y verificado: las ${escritas} casillas quedaron como se enviaron.`
+          : `El borrador ${formId} quedó DISTINTO de lo enviado. No lo firmes sin revisar esto:`}
+      </p>
+
+      {diferencias?.length ? (
+        <ul className="portal-diferencias">
+          {diferencias.map((d) => (
+            <li key={d.casilla}>
+              Casilla {d.casilla}: se envió {String(d.enviado)} y el portal guardó {String(d.leido)}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+
+      {numerosAjenos.length ? (
+        <p className="presentar-nota">
+          {profunda
+            ? `El borrador además trae cifras que Clara no calcula (casillas ${numerosAjenos.join(", ")}): estaban en el portal y se conservaron. Revisarlas antes de firmar.`
+            : "El borrador trae además unas cifras que ya estaban en el portal. Tu contador las revisa antes de la firma."}
+        </p>
+      ) : null}
+
+      {verificado ? (
+        <a className="btn-grande" href="https://muisca.dian.gov.co" target="_blank" rel="noreferrer">
+          Entrar a la DIAN a firmar
           <ExternalLink size={15} />
         </a>
       ) : null}
-    </section>
+    </div>
   );
 }
 

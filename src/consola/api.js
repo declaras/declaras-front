@@ -233,6 +233,8 @@ export const api = {
   // un contador. Es la segunda opinión.
   getComparacionPresentada: (caseId) =>
     request(`/v1/cases/${caseId}/comparacion-con-lo-presentado`),
+  escribirAlPortal: (caseId, dianPassword) =>
+    request(`/v1/cases/${caseId}/portal/escribir`, json({ dian_password: dianPassword })),
   cerrarLiquidacion: (caseId) =>
     request(`/v1/cases/${caseId}/liquidacion/cerrar`, { method: "POST" }),
 };

@@ -2378,3 +2378,33 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* ── escribir el borrador en el portal ──
+ *
+ * Es la unica accion de la consola que modifica algo FUERA de Clara, y se ve distinto a
+ * proposito: caja propia, la clave se pide en el momento, y el resultado muestra la
+ * verificacion de relectura en vez de un "listo" a secas. */
+.portal-escribir {
+  margin-top: 26px;
+  padding: 20px 22px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--white);
+  max-width: 560px;
+}
+.portal-clave { max-width: 320px; margin: 14px 0; }
+.portal-resultado { display: grid; gap: 12px; justify-items: start; }
+.portal-veredicto {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  font-weight: 500;
+}
+.portal-fallo .portal-veredicto { color: var(--red); }
+.portal-diferencias {
+  margin: 0;
+  padding-left: 10px;
+  border-left: 2px solid var(--red);
+  list-style: none;
+  font-size: 13.5px;
+}
