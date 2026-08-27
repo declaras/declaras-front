@@ -18,6 +18,7 @@ import heroHorizonte from "./assets/clara-hero-montanas.jpg";
 import Seo, { SITIO } from "./seo/Seo";
 import { Cabecera, Pie } from "./comun/Marco";
 import { Avatar, Button } from "./comun/piezas";
+import { referenciaDeAnuncio, registrarAperturaDeChat } from "./comun/medicion";
 import Vencimiento from "./comun/Vencimiento";
 import { RACIMO } from "./contenido/datos";
 import phoneArtwork from "./assets/clara-phone-cutout.png";
@@ -791,7 +792,16 @@ export function abrirWhatsApp() {
     window.location.assign("/declaracion-de-renta-2026");
     return;
   }
-  const texto = encodeURIComponent("Hola Clara, quiero saber si debo declarar renta.");
+  // El aviso a Google va ANTES de abrir la pestaña. No porque se pueda perder —esta pagina sigue
+  // viva— sino porque si `window.open` lo bloquea un navegador, el hecho igual ocurrio: la persona
+  // hizo clic en el boton, y eso es lo que se esta midiendo.
+  registrarAperturaDeChat();
+
+  // El rastro del anuncio viaja DENTRO del mensaje, no como parametro: wa.me lee `text` y descarta
+  // todo lo demas. Quien llega por busqueda organica no lleva ninguno y el mensaje sale limpio.
+  const texto = encodeURIComponent(
+    `Hola Clara, quiero saber si debo declarar renta.${referenciaDeAnuncio()}`,
+  );
   window.open(`https://wa.me/${numero}?text=${texto}`, "_blank", "noopener");
 }
 

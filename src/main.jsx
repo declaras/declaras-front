@@ -2,7 +2,15 @@ import React, { lazy, Suspense } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Route, Routes } from "react-router";
 
+import { iniciarMedicion } from "./comun/medicion";
+
 import "./styles.css";
+
+/**
+ * Antes de montar nada: la URL de llegada es lo unico que trae el identificador del clic pago, y
+ * se pierde en cuanto la persona navega dentro del sitio.
+ */
+iniciarMedicion();
 
 /**
  * La consola y la guia se cargan aparte.

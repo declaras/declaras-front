@@ -28,6 +28,22 @@ if (!process.env.VITE_WHATSAPP) {
   );
 }
 
+// La conversion de Google Ads necesita LAS DOS MITADES del `send_to`: el ID de la cuenta y la
+// etiqueta de la accion. Con una sola, la etiqueta carga, la campana gasta y no se registra ni una
+// conversion: se optimiza a ciegas sin que nada avise. Por eso rompe el build en vez de avisar.
+{
+  const id = process.env.VITE_GOOGLE_ADS_ID;
+  const etiqueta = process.env.VITE_GOOGLE_ADS_CONVERSION_LABEL;
+  if (Boolean(id) !== Boolean(etiqueta)) {
+    fallas.push(
+      "la medicion de Google Ads esta a medias: van VITE_GOOGLE_ADS_ID y " +
+        `VITE_GOOGLE_ADS_CONVERSION_LABEL juntas, y falta ${id ? "la etiqueta" : "el ID"}.`,
+    );
+  } else if (id && !/^AW-\d+$/.test(id)) {
+    fallas.push(`VITE_GOOGLE_ADS_ID="${id}" no tiene la forma AW-123456789.`);
+  }
+}
+
 // EL INGRESO SE DECIDE EN EL BUILD, NO EN EJECUCION, y eso no es obvio.
 //
 // `sesion.jsx` construye el cliente de Supabase solo si las dos variables existen. Vite reemplaza

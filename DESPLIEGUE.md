@@ -50,6 +50,18 @@ formas de cada URL.
 |---|---|---|
 | `VITE_WHATSAPP` | El numero al que escribe el boton principal. Solo digitos, con indicativo. | El boton lleva a la guia en vez de abrir la conversacion. El build avisa. |
 | `VITE_SITIO_URL` | El dominio, para canonicas, sitemap y tarjetas al compartir. | Toma `https://declaras.co`. |
+| `VITE_GOOGLE_ADS_ID` | El ID de la cuenta de Google Ads (`AW-123456789`). | No se carga la etiqueta ni se mide nada. El sitio funciona igual. |
+| `VITE_GOOGLE_ADS_CONVERSION_LABEL` | La etiqueta de la accion de conversion, la parte que va despues de la barra en el `send_to`. | Igual que arriba; y si esta una sola de las dos, **el build falla a proposito**. |
+| `VITE_GA4_ID` | Google Analytics 4 (`G-XXXXXXX`), opcional e independiente. | No se mide el trafico. |
+
+## Que se mide y que no
+
+La atribucion del clic pago (`gclid`) **se guarda aunque no haya etiqueta configurada**: son dos
+cosas distintas. Medir en Google necesita las variables; saber de que anuncio vino un cliente que
+pago funciona solo con el navegador, porque el identificador viaja dentro del mensaje de WhatsApp.
+
+Y viaja DENTRO del mensaje, no como parametro de la URL, porque `wa.me` lee unicamente `text` y
+descarta cualquier otro parametro. Un enlace `wa.me/57...?gclid=...` no le llega a nadie.
 | `VITE_SUPABASE_URL` | El proyecto de Supabase contra el que se valida al contador. Va como `https://<ref>.supabase.co`, sin ruta. | La consola no puede iniciar sesion. El build avisa. |
 | `VITE_SUPABASE_ANON_KEY` | La llave publica del mismo proyecto. Es publica a proposito: la reja de verdad esta en el backend. | Igual que la anterior. |
 
