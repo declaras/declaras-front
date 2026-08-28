@@ -1003,8 +1003,32 @@ footer { position:relative;padding:0;color:#d6ded9;background:#07130f; }
 .vence-compacta .vence-r { margin: 0; font-size: 14.5px; line-height: 1.35; }
 .vence-compacta .vence-pie { margin: 9px 0 0; }
 .vence-compacta .vence-pie small { color: rgba(255,255,255,.5); font-size: 11.5px; }
-.vence-siguiente { display: inline-flex; align-items: center; gap: 7px; margin-top: 12px; padding: 0; border: 0; background: none; color: #6ee7b7; font-size: 12.5px; font-weight: 600; cursor: pointer; }
+/* El paso siguiente. En el hero es un enlace discreto porque compite con el boton principal que
+   ya esta ahi arriba; en la guia es la UNICA salida hacia la conversacion, asi que pesa como
+   boton. El mismo componente, dos pesos, segun con quien compita. */
+.vence-siguiente { display: inline-flex; align-items: center; gap: 7px; margin-top: 12px; padding: 0; border: 0; background: none; color: #6ee7b7; font-size: 12.5px; font-weight: 600; cursor: pointer; text-align: left; }
 .vence-siguiente:hover { color: white; }
+.vence:not(.vence-compacta) .vence-siguiente {
+  margin-top: 18px;
+  padding: 13px 20px;
+  border-radius: 12px;
+  background: var(--brand);
+  color: white;
+  font-size: 15px;
+}
+.vence:not(.vence-compacta) .vence-siguiente:hover { background: var(--brand-hover); color: white; }
+/* EN ANGOSTO LA FRASE PARTE EN DOS Y LOS ICONOS SE DESPEGAN. Con `justify-content: center` sobre
+   una fila de tres, el texto de dos lineas empuja el icono a un extremo y la flecha al otro, y
+   dejan de leerse como parte de la misma frase. Se alinean al inicio y la flecha final se retira:
+   sobra cuando el boton ya ocupa el ancho completo y dice a donde va. */
+@media (max-width: 520px) {
+  .vence:not(.vence-compacta) .vence-siguiente {
+    width: 100%;
+    justify-content: flex-start;
+    align-items: center;
+  }
+  .vence:not(.vence-compacta) .vence-siguiente svg:last-child { display: none; }
+}
 
 /* El aviso que manda al campo del comienzo, en la seccion del calendario. */
 .post-nota-arriba { background: rgba(14,159,110,.08); color: var(--forest); }

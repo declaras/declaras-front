@@ -1,5 +1,5 @@
 import { useId, useMemo, useState } from "react";
-import { ArrowRight, Calculator } from "lucide-react";
+import { ArrowRight, Calculator, MessageCircle } from "lucide-react";
 
 import CampoNumero from "./CampoNumero";
 import { vencimientoDe } from "../contenido/calendario-renta-2026";
@@ -74,9 +74,19 @@ export default function Vencimiento({ variante = "bloque", alResolver = null }) 
         </p>
       ) : null}
 
-      {compacta && fila && alResolver ? (
+      {/* EL PASO SIGUIENTE DICE A DONDE VA, y antes no. El boton decia "Averigua gratis si te toca
+          declarar" con una flecha: prometia una respuesta y no decia como llegaba, asi que quien lo
+          tocaba caia en WhatsApp sin esperarlo — y quien NO lo tocaba se quedaba con la fecha y sin
+          saber que hacer con ella ("¿y como les escribo?").
+
+          Nombrar el canal en el boton hace las dos cosas: quien quiere escribir sabe que ahi es, y
+          quien no quiere WhatsApp no se lleva la sorpresa. El icono es el mismo que el sitio ya usa
+          para la conversacion, en la cabecera y en el pie. */}
+      {fila && alResolver ? (
         <button type="button" className="vence-siguiente" onClick={alResolver}>
-          Averigua gratis si te toca declarar <ArrowRight size={15} aria-hidden="true" />
+          <MessageCircle size={16} aria-hidden="true" />
+          Escríbenos por WhatsApp y te decimos si te toca declarar
+          <ArrowRight size={15} aria-hidden="true" />
         </button>
       ) : null}
     </div>

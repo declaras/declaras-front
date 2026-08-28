@@ -789,7 +789,12 @@ export function abrirWhatsApp() {
     // Sin numero configurado el boton NO se queda muerto: lleva a la guia, que responde la misma
     // pregunta ("¿me toca declarar?") y tiene la calculadora de la fecha. Es un destino real
     // mientras el numero se configura, y el build avisa de que falta.
-    window.location.assign("/declaracion-de-renta-2026");
+    //
+    // SALVO QUE YA SE ESTE AHI, que es justo donde vive la calculadora. Mandar a alguien a la
+    // pagina que esta leyendo es un clic que no hace nada: el boton dice "escribenos por WhatsApp"
+    // y aparenta estar roto. Se manda a la portada, que es de donde sale la conversacion.
+    const guia = "/declaracion-de-renta-2026";
+    window.location.assign(window.location.pathname.startsWith(guia) ? "/" : guia);
     return;
   }
   // El aviso a Google va ANTES de abrir la pestaña. No porque se pueda perder —esta pagina sigue

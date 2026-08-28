@@ -2,6 +2,7 @@ import { AlertTriangle, ArrowRight, ArrowUp, Check, X } from "lucide-react";
 
 import Pagina, { Relacionadas } from "./Pagina";
 import Vencimiento from "../comun/Vencimiento";
+import { abrirWhatsApp } from "../App";
 import { CALENDARIO_2026 } from "./calendario-renta-2026";
 import { otras, pesos, PUBLICADO, UVT_2025, UVT_2026 } from "./datos";
 
@@ -123,7 +124,10 @@ export default function GuiaRenta2026() {
       h1="Declaración de renta 2026 en Colombia: quién debe declarar, fechas por cédula y cómo hacerla"
       bajada="Todo lo que sigue está en pesos, no en UVT, y las fechas salen del decreto que las fija en días hábiles. Si solo vienes por tu fecha límite, escríbela acá abajo."
     >
-        <Vencimiento />
+        {/* La calculadora de la guia no ofrecia NADA despues de dar la fecha: la persona conseguia
+            el dato que vino a buscar y ahi terminaba el camino. Es el sitio con mas trafico del
+            sitio y no tenia salida hacia la conversacion. */}
+        <Vencimiento alResolver={abrirWhatsApp} />
 
         <aside className="post-resumen">
           <h2>La respuesta corta</h2>
