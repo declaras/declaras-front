@@ -28,6 +28,8 @@
 const ID_ADS = import.meta.env.VITE_GOOGLE_ADS_ID;
 const ETIQUETA_CONVERSION = import.meta.env.VITE_GOOGLE_ADS_CONVERSION_LABEL;
 const ID_GA4 = import.meta.env.VITE_GA4_ID;
+const CLAVE_POSTHOG = import.meta.env.VITE_POSTHOG_KEY;
+const HOST_POSTHOG = import.meta.env.VITE_POSTHOG_HOST ?? "https://us.i.posthog.com";
 
 const HAY_ETIQUETA = Boolean(ID_ADS || ID_GA4);
 
@@ -150,6 +152,80 @@ export function referenciaDeAnuncio() {
  * Se llama una vez, desde el arranque del cliente. En el servidor no hace nada: el prerenderizado
  * no tiene navegador ni tiene por que medir.
  */
+/**
+ * PostHog: el embudo y la grabacion de sesion.
+ *
+ * ═══ POR QUE SE CARGA APARTE Y SOLO SI ESTA CONFIGURADO ═══
+ *
+ * El paquete pesa, y la portada esta afinada al kilobyte. Con `import()` queda en su propio
+ * archivo y no se descarga nunca si no hay clave: el sitio funciona igual y el paquete principal
+ * no crece.
+ *
+ * ═══ LO QUE SE ENMASCARA, Y POR QUE NO ES OPCIONAL ═══
+ *
+ * Grabar sesiones en un sitio donde alguien escribe la CLAVE DE SU CUENTA DE LA DIAN es
+ * peligroso por defecto. PostHog enmascara los `type="password"` solo, y en este flujo hay
+ * ademas cedula, correo y telefono, que son datos personales de un contribuyente.
+ *
+ * Por eso `maskAllInputs: true`, que tapa TODO lo que se teclee sin excepcion. Se pierde ver que
+ * escribio la persona; se conserva ver por donde se movio, donde dudo y donde se fue, que es
+ * para lo que sirve una grabacion. Cambiar esto a `false` para "ver mejor" convertiria la
+ * grabacion en un registro de claves ajenas.
+ *
+ * Y la consola queda fuera entera, igual que del resto de la medicion: ahi hay cifras
+ * tributarias de clientes en pantalla, y eso no se graba ni enmascarado.
+ */
+async function iniciarPostHog() {
+  if (!CLAVE_POSTHOG) return;
+  try {
+    const { default: posthog } = await import("posthog-js");
+    posthog.init(CLAVE_POSTHOG, {
+      api_host: HOST_POSTHOG,
+      // FIJA EL COMPORTAMIENTO DEL SDK A UNA FECHA. Sin esto, una version nueva de posthog-js
+      // puede cambiar que se captura por defecto, y en un sitio que graba sesiones sobre un
+      // formulario con la clave de la DIAN eso no puede cambiar solo. Subirla es una decision,
+      // no un efecto de actualizar una dependencia.
+      defaults: "2026-05-30",
+      // `identified_only` para no inflar el conteo con cada visita anonima: la gente que
+      // importa es la que deja sus datos, y esa se identifica sola mas abajo.
+      person_profiles: "identified_only",
+      capture_pageview: true,
+      session_recording: {
+        maskAllInputs: true,
+        // El texto de la pantalla SI se ve (si no, la grabacion no sirve para nada), salvo lo
+        // que se marque explicitamente como sensible.
+        maskTextSelector: "[data-sensible]",
+      },
+    });
+    window.posthog = posthog;
+  } catch {
+    // Que la medicion falle no puede tumbar el sitio.
+  }
+}
+
+/**
+ * Un hecho del embudo. Va a PostHog y, si hay GA4, tambien alla.
+ *
+ * TODO PASA POR AQUI para que cambiar de proveedor no obligue a tocar las pantallas: el dia que
+ * PostHog se reemplace, se cambia esta funcion y ninguna vista se entera.
+ */
+export function registrar(evento, propiedades = {}) {
+  if (!hayNavegador() || esRutaInterna()) return;
+  window.posthog?.capture(evento, propiedades);
+  if (ID_GA4 && window.gtag) window.gtag("event", evento, propiedades);
+}
+
+/**
+ * Le pone nombre a quien venia siendo anonimo, cuando deja sus datos.
+ *
+ * Es lo que permite coser la sesion del navegador con lo que pase despues en el backend: los dos
+ * lados usan el correo como identidad, asi que un evento de servidor cae en la misma persona.
+ */
+export function identificar({ correo, nombre, whatsapp }) {
+  if (!hayNavegador() || !correo) return;
+  window.posthog?.identify(correo.trim().toLowerCase(), { nombre, whatsapp, correo });
+}
+
 export function iniciarMedicion() {
   if (!hayNavegador() || esRutaInterna()) return;
 
@@ -157,6 +233,7 @@ export function iniciarMedicion() {
   // dos cosas separadas: medir en Google es una; saber de que anuncio vino un cliente que pago es
   // otra, y esta segunda funciona sola.
   guardarAtribucion();
+  iniciarPostHog();
 
   if (!HAY_ETIQUETA || window.gtag) return;
 

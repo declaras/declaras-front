@@ -32,7 +32,24 @@ if (!process.env.VITE_WHATSAPP) {
 // etiqueta de la accion. Con una sola, la etiqueta carga, la campana gasta y no se registra ni una
 // conversion: se optimiza a ciegas sin que nada avise. Por eso rompe el build en vez de avisar.
 {
-  const id = process.env.VITE_GOOGLE_ADS_ID;
+  // EL ENMASCARADO DE LA GRABACION NO PUEDE DESAPARECER EN UN REFACTOR.
+//
+// Con PostHog grabando sesiones, el sitio tiene una pantalla donde alguien teclea la CLAVE DE SU
+// CUENTA DE LA DIAN. `maskAllInputs: true` es lo unico que impide que esa clave quede guardada en
+// video. No se puede comprobar ejecutando (la grabacion solo arranca con una clave de proyecto
+// real, que no existe en el build), asi que se comprueba leyendo: si alguien lo pone en `false`
+// para "ver mejor que escribe la gente", el build falla y explica por que.
+{
+  const medicion = readFileSync(new URL("../src/comun/medicion.js", import.meta.url), "utf8");
+  if (medicion.includes("posthog") && !/maskAllInputs:\s*true/.test(medicion)) {
+    fallas.push(
+      "la grabacion de sesion no esta enmascarando lo que se teclea: falta " +
+        "`maskAllInputs: true`, y en el flujo de consulta se escribe la clave de la DIAN.",
+    );
+  }
+}
+
+const id = process.env.VITE_GOOGLE_ADS_ID;
   const etiqueta = process.env.VITE_GOOGLE_ADS_CONVERSION_LABEL;
   if (Boolean(id) !== Boolean(etiqueta)) {
     fallas.push(
