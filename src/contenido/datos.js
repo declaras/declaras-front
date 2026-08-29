@@ -48,3 +48,55 @@ export const RACIMO = {
 /** Las otras paginas del racimo, para el bloque de "sigue leyendo". */
 export const otras = (propia) =>
   Object.values(RACIMO).filter(([ruta]) => ruta !== propia);
+
+/**
+ * Los cinco topes del articulo 592, con su cifra y la pregunta con que se le averigua a alguien.
+ *
+ * LAS CIFRAS SE DERIVAN DE LA UVT, no se transcriben. Son las mismas del motor
+ * (`tax/obligation.py`), y ahi esta el detalle que casi nadie nota: cuatro topes se comparan con
+ * "supera" y el de ingresos con "iguala o supera", porque el art. 592 num. 1 define al NO obligado
+ * como quien tuvo ingresos "inferiores a 1.400 UVT". Estar exactamente en el tope ya obliga.
+ *
+ * EL ORDEN NO ES CASUAL: primero el que mas gente cruza. Como una sola respuesta afirmativa ya
+ * decide, poner ingresos de primero termina la consulta en una pregunta para la mayoria.
+ */
+export const TOPES = [
+  {
+    id: "ingresos",
+    uvt: 1400,
+    incluyeElTope: true,
+    pregunta: (v) => `¿Tus ingresos de 2025 llegaron a ${v}?`,
+    ayuda: (mes) => `Todo lo que te entró en el año, antes de descuentos. Equivale a ganar ${mes} al mes, con primas y cesantías.`,
+  },
+  {
+    id: "patrimonio",
+    uvt: 4500,
+    incluyeElTope: false,
+    pregunta: (v) => `¿Tus bienes valían más de ${v} al 31 de diciembre de 2025?`,
+    ayuda: () => "Todo junto: vivienda, carro, ahorros, inversiones. Sin restar deudas.",
+  },
+  {
+    id: "consumo_tarjeta",
+    uvt: 1400,
+    incluyeElTope: false,
+    pregunta: (v) => `¿Gastaste más de ${v} con tarjetas de crédito en 2025?`,
+    ayuda: () => "La suma de todo lo que pasaste por tus tarjetas de crédito en el año.",
+  },
+  {
+    id: "compras",
+    uvt: 1400,
+    incluyeElTope: false,
+    pregunta: (v) => `¿Tus compras y gastos del año pasaron de ${v}?`,
+    ayuda: () => "Todo lo que compraste, con cualquier medio de pago. Cuenta vivienda y vehículos.",
+  },
+  {
+    id: "movimientos",
+    uvt: 1400,
+    incluyeElTope: false,
+    pregunta: (v) => `¿Te consignaron o transfirieron más de ${v} en 2025?`,
+    ayuda: () => "Todo lo que entró a tus cuentas, aunque no fuera plata tuya ni ingreso.",
+  },
+];
+
+/** El tope en pesos, con la UVT del año gravable. */
+export const topeEnPesos = (tope) => pesos(tope.uvt * UVT_2025);
