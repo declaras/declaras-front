@@ -22,7 +22,7 @@
  * decirle a alguien que no declare sin saberlo. Ahi es donde tiene sentido cobrar por una revision.
  */
 
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { ArrowLeft, Check, Loader2, MessageCircle, ShieldCheck } from "lucide-react";
 
 import { TOPES, topeEnPesos, pesos, UVT_2025 } from "../contenido/datos";
@@ -30,6 +30,37 @@ import { abrirWhatsApp } from "../App";
 import { identificar, registrar } from "./medicion";
 
 const VALOR_EXPERTO = 30_000;
+
+/**
+ * Deja la tarjeta al comienzo cuando cambia de paso.
+ *
+ * ═══ POR QUE HACE FALTA ═══
+ *
+ * Cada paso mide un alto muy distinto: el formulario es largo, el progreso es corto, el resultado
+ * vuelve a ser largo. Al cambiar, el navegador conserva la posicion del scroll, asi que la
+ * tarjeta se encoge o se estira DEBAJO de donde estas mirando y la pantalla pega un brinco. En
+ * movil es peor, porque la tarjeta ocupa mas que la pantalla: tocas un boton abajo y el paso
+ * nuevo empieza fuera de vista, hacia arriba.
+ *
+ * NO CORRE EN EL PRIMER PINTADO. Si lo hiciera, abrir la portada arrastraria la pagina hasta la
+ * consulta sin que nadie lo pidiera.
+ *
+ * Y respeta a quien pidio menos animacion en su sistema: para esa persona el salto es instantaneo
+ * en vez de un desplazamiento, que es lo que la preferencia significa.
+ */
+function useIrAlComienzo(ref, dependencia) {
+  const primera = useRef(true);
+  useEffect(() => {
+    if (primera.current) {
+      primera.current = false;
+      return;
+    }
+    const nodo = ref.current;
+    if (!nodo || typeof window === "undefined") return;
+    const quietito = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+    nodo.scrollIntoView({ behavior: quietito ? "auto" : "smooth", block: "start" });
+  }, [ref, dependencia]);
+}
 const ANIO_GRAVABLE = 2025;
 
 /** Lo que pasa mientras se consulta. El primero es el que responde "¿mi clave sirvió?". */
@@ -74,6 +105,8 @@ export default function Consulta({ alCerrar = null }) {
   // antes no hay forma de saber DONDE se cae la gente, que es la unica pregunta que sirve para
   // arreglar algo.
   useEffect(() => registrar("consulta_vista"), []);
+  const caja = useRef(null);
+  useIrAlComienzo(caja, paso);
   const [datos, setDatos] = useState({ nombre: "", correo: "", whatsapp: "", acepta: false });
   // Lo que viaja al servidor: el `acepta` es del formulario, no un dato de la persona.
   const contacto = { nombre: datos.nombre, correo: datos.correo, whatsapp: datos.whatsapp };
@@ -120,7 +153,7 @@ export default function Consulta({ alCerrar = null }) {
   };
 
   return (
-    <div className="consulta">
+    <div className="consulta" ref={caja}>
       {paso === "datos" ? (
         <Datos
           datos={datos}
@@ -472,6 +505,10 @@ function Resultado({ veredicto, onReiniciar, onExperto }) {
  * colgo. Los pasos se muestran todos desde el principio y se van marcando.
  */
 function ConsultaDian({ contacto, onVolver }) {
+  // Este camino cambia de estado (formulario, corriendo, resultado) sin que cambie el `paso` de
+  // arriba, asi que lleva su propio aviso: si no, el unico salto que no se corrige es justo el
+  // que mas se nota, el de la espera al resultado.
+  const caja = useRef(null);
   const idDoc = useId();
   const idClave = useId();
   const [documento, setDocumento] = useState("");
@@ -480,6 +517,7 @@ function ConsultaDian({ contacto, onVolver }) {
   const [paso, setPaso] = useState(0);
   const [salida, setSalida] = useState(null);
   const [error, setError] = useState(null);
+  useIrAlComienzo(caja, estado);
 
   const puede = documento.replace(/\D/g, "").length >= 5 && clave.length >= 4;
 
@@ -533,7 +571,7 @@ function ConsultaDian({ contacto, onVolver }) {
 
   if (estado === "corriendo") {
     return (
-      <div className="consulta-paso">
+      <div className="consulta-paso" ref={caja}>
         <h3>Consultando con la DIAN</h3>
         <p className="consulta-nota">Tarda menos de un minuto. No cierres esta página.</p>
         <ol className="consulta-pasos">
@@ -550,10 +588,10 @@ function ConsultaDian({ contacto, onVolver }) {
     );
   }
 
-  if (estado === "resultado" && salida) return <ResultadoDian salida={salida} />;
+  if (estado === "resultado" && salida) return <ResultadoDian salida={salida} caja={caja} />;
 
   return (
-    <form className="consulta-paso" noValidate onSubmit={consultar}>
+    <form className="consulta-paso" noValidate onSubmit={consultar} ref={caja}>
       <button className="consulta-volver" type="button" onClick={onVolver}>
         <ArrowLeft size={15} /> Atrás
       </button>
@@ -597,12 +635,12 @@ function ConsultaDian({ contacto, onVolver }) {
 }
 
 /** El veredicto con las cifras: cuanto reporta la DIAN en cada tope y cual es el limite. */
-function ResultadoDian({ salida }) {
+function ResultadoDian({ salida, caja }) {
   const obligado = salida.resultado === "OBLIGADO";
   const superados = (salida.topes ?? []).filter((t) => t.supera);
 
   return (
-    <div className="consulta-paso consulta-resultado">
+    <div className="consulta-paso consulta-resultado" ref={caja}>
       <p className={obligado ? "consulta-veredicto consulta-si" : "consulta-veredicto"}>
         {obligado ? <Check size={18} /> : null}
         {obligado ? "Sí te toca declarar" : "No te toca declarar"}

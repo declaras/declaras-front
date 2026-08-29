@@ -1187,6 +1187,14 @@ footer { position:relative;padding:0;color:#d6ded9;background:#07130f; }
 .consulta-seccion { background: var(--cream); }
 .consulta {
   position: relative;
+  /* Al llevar la tarjeta al comienzo, deja aire arriba: sin esto queda pegada al borde de la
+     pantalla (o debajo de la cabecera) y se lee como si estuviera cortada. */
+  scroll-margin-top: 20px;
+  /* EL ALTO CAMBIA MUCHO ENTRE PASOS —el formulario es largo, el progreso corto, el resultado
+     largo otra vez— y ese salto es lo que se siente como un brinco. Un minimo evita el colapso
+     y la transicion hace que el resto del cambio se perciba como movimiento y no como corte. */
+  min-height: 340px;
+  transition: min-height .25s ease;
   max-width: 620px;
   margin: 0 auto;
   padding: 30px 32px;
@@ -1349,3 +1357,8 @@ footer { position:relative;padding:0;color:#d6ded9;background:#07130f; }
 .consulta-topes li.supera { color: var(--ink); font-weight: 600; }
 .consulta-cifras { display: flex; align-items: baseline; gap: 7px; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .consulta-cifras small { color: var(--muted); font-weight: 400; font-size: 12.5px; }
+
+/* Quien pidio menos animacion en su sistema no quiere que las cosas se muevan solas. */
+@media (prefers-reduced-motion: reduce) {
+  .consulta { transition: none; }
+}
