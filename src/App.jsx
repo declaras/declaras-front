@@ -19,7 +19,7 @@ import Seo, { SITIO } from "./seo/Seo";
 import { Cabecera, Pie } from "./comun/Marco";
 import { Avatar, Button } from "./comun/piezas";
 import { referenciaDeAnuncio, registrarAperturaDeChat } from "./comun/medicion";
-import Vencimiento from "./comun/Vencimiento";
+import Consulta from "./comun/Consulta";
 import { RACIMO } from "./contenido/datos";
 import phoneArtwork from "./assets/clara-phone-cutout.png";
 import phoneArtworkWebp from "./assets/clara-phone-cutout.webp";
@@ -334,36 +334,43 @@ function ClaraWorkspace({ start }) {
 
       <div className="hero-dos">
         <div className="workspace-copy">
-          <div className="eyebrow light">TODO POR WHATSAPP</div>
-          {/* El salto va dentro de un espacio explicito. Sin el, el texto que lee un rastreador
-              queda "Tu declaracion de rentapor $50.000", pegado, y es el encabezado principal de
-              la pagina. */}
+          {/* ═══ EL HERO TENIA OCHO BLOQUES APILADOS ═══
+              Antifaz, titular, parrafo, dos chips, boton, "mira como funciona", la segunda
+              puerta y la calculadora de vencimiento. Cada uno se defendia solo y juntos no
+              dejaban ver el titular. Se fue todo lo que repetia algo que ya estaba dicho:
+
+              - "TODO POR WHATSAPP" lo dice el boton, que dice WhatsApp.
+              - "Todo pasa en el chat" es lo mismo otra vez, ahora en forma de chip.
+              - "Mira como funciona" apunta a una seccion que esta justo debajo: quien baja la
+                encuentra sola, y quien no baja tampoco iba a tocar el enlace.
+              - La calculadora de vencimiento contesta OTRA pregunta ("¿cuando?") en el sitio
+                donde se decide la primera ("¿esto es para mi?"). Sigue viva en la guia, que es
+                donde llega quien la busca. */}
           <h1>
             Tu declaración de renta{" "}
             <br />
             por <em>$50.000</em>
           </h1>
           <p>
-            Le escribes a Clara, contestas unas preguntas y ella deja el formulario de la DIAN listo
-            para que lo revises y firmes. Sin portales ni contraseñas.
+            Le escribes a Clara por WhatsApp, contestas unas preguntas y ella deja el formulario
+            de la DIAN listo para que lo revises y firmes.
           </p>
-          <ul className="workspace-hooks">
-            <li>
-              <MessageCircle size={15} /> Todo pasa en el chat
-            </li>
-            <li>
-              <CheckCircle2 size={15} /> Gratis hasta que veas tu resultado
-            </li>
-          </ul>
+
           <div className="workspace-actions">
             <Button onClick={start}>
-              Averigua gratis si debes declarar <ArrowRight size={18} />
+              <MessageCircle size={18} /> Empieza tu declaración por WhatsApp
             </Button>
-            <a className="text-action" href="#como">
-              Mira cómo funciona <span>↓</span>
-            </a>
           </div>
-          <Vencimiento variante="compacta" alResolver={start} />
+          <p className="hero-gratis">Gratis hasta que veas tu resultado.</p>
+
+          {/* LA SEGUNDA PUERTA ES UN BOTON, NO UNA FRASE CON UN ENLACE ADENTRO. Decia "¿No sabes
+              si te toca declarar? Te lo decimos gratis en un minuto" con el subrayado en la
+              segunda mitad, y habia que adivinar que esa parte se tocaba. Ahora la accion se ve
+              y se nombra. */}
+          <a className="hero-segunda-puerta" href="#consulta">
+            <span>¿No sabes si te toca declarar?</span>
+            <b>Toca aquí y te lo decimos gratis <ArrowRight size={15} /></b>
+          </a>
         </div>
 
         <div className="hero-fono">
@@ -566,6 +573,23 @@ function Landing({ goTo }) {
               </div>
               <div className="audit-footer"><ShieldCheck size={17} /><span><b>Tú tienes la última palabra</b>Revisas el borrador antes de firmar.</span></div>
             </div>
+          </div>
+        </section>
+
+        {/* LA SEGUNDA PUERTA, ANTES DEL PRECIO. Quien todavia duda si le toca declarar no esta
+            listo para leer cuanto cuesta: primero necesita saber si esto es para el. Y va aqui y no
+            arriba porque el hero le pertenece a quien ya sabe que le toca. */}
+        <section id="consulta" className="section consulta-seccion">
+          <div className="container">
+            <div className="section-heading">
+              <div className="eyebrow">GRATIS Y EN UN MINUTO</div>
+              <h2>¿No sabes si te toca declarar?</h2>
+              <p>
+                Es la pregunta que más nos hacen. Contéstala acá sin escribirle a nadie: son cinco
+                preguntas y casi siempre termina en la primera.
+              </p>
+            </div>
+            <Consulta />
           </div>
         </section>
 
