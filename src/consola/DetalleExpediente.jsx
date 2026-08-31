@@ -27,6 +27,7 @@ import { api } from "./api";
 import { useAction, useApi } from "./hooks";
 import { Cargando, ErrorApi } from "./componentes";
 import Actividad from "./Actividad";
+import Documentos from "./Documentos";
 import Dialogo from "./Dialogo";
 import Etapas, { ETAPAS } from "./Etapas";
 import Plazo from "./Plazo";
@@ -243,7 +244,6 @@ function Flujo({ caseId, caso, conciliacion, peticiones, respuestas, patrimonio,
         {actual === "borrador" ? (
           <EtapaBorrador
             caseId={caseId}
-            caso={caso}
             resumen={resumen}
             liquidacion={liquidacion}
             liquidacionError={liquidacionError}
@@ -272,6 +272,13 @@ function Flujo({ caseId, caso, conciliacion, peticiones, respuestas, patrimonio,
       </div>
 
       <aside className="flujo-lateral">
+        {/* LOS DOCUMENTOS SE VEN DESDE CUALQUIER ETAPA. Vivieron un tiempo dentro de la etapa
+            Borrador, en una pestaña "Soportes", y eso los hacia inalcanzables justo cuando mas
+            se consultan: un cliente con decisiones pendientes no puede entrar a Borrador, asi
+            que "la consulta trajo 3 documentos" era un anuncio sin puerta. Son material de
+            referencia, no parte del proceso, y por eso van aqui: en el carril que acompaña a
+            todas las etapas, como ya lo dice el encabezado de este archivo. */}
+        <Documentos documentos={caso.documents} />
         <SubirDocumento caso={caso} onListo={onCambio} />
         <Actividad eventos={caso.events} />
       </aside>

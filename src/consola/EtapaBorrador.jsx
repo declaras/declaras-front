@@ -16,7 +16,6 @@ import { Cruzar } from "./componentes";
 import { ArrowRight, ChevronDown, ChevronRight } from "lucide-react";
 
 import { formatMoney } from "./formato";
-import Documentos from "./Documentos";
 import Memoria from "./Memoria";
 import Comparacion from "./Comparacion";
 import Recomendaciones from "./Recomendaciones";
@@ -28,11 +27,14 @@ const PESTANAS = [
   { id: "beneficios", nombre: "Beneficios" },
   // La comparación va en su propia pestaña y no dentro del resumen: son dos formularios enteros
   // enfrentados, y mezclarla con las cifras propias hace dudar de cuál es cuál.
+  //
+  // Aquí hubo una pestaña "Soportes" con los documentos, y era el único sitio de toda la
+  // pantalla donde se podían ver: quien no había llegado a esta etapa no tenía cómo abrirlos.
+  // Ahora viven en el carril lateral, visibles desde cualquier etapa.
   { id: "comparar", nombre: "Comparar" },
-  { id: "soportes", nombre: "Soportes" },
 ];
 
-export default function EtapaBorrador({ caseId, caso, resumen, liquidacion, liquidacionError, recomendaciones, comparaciones, onCambio }) {
+export default function EtapaBorrador({ caseId, resumen, liquidacion, liquidacionError, recomendaciones, comparaciones, onCambio }) {
   const { profunda } = useVista();
   const [pestana, setPestana] = useState("resumen");
   const [memoriaAbierta, setMemoriaAbierta] = useState(false);
@@ -115,7 +117,6 @@ export default function EtapaBorrador({ caseId, caso, resumen, liquidacion, liqu
         </div>
       ) : null}
 
-      {pestana === "soportes" ? <Documentos documentos={caso.documents} /> : null}
 
       <button className="enlace-suave abrir-memoria" onClick={() => setMemoriaAbierta(true)}>
         Ver la memoria de cálculo <ArrowRight size={13} />
