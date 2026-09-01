@@ -268,9 +268,28 @@ function Compuerta({ caseId, pregunta, bienes, onCambio }) {
     );
   }
 
+  // DIJO QUE SI Y NO CARGO NINGUNO. Es un estado pendiente y hasta ahora no se veia: la
+  // pestaña mostraba un "1" y esta seccion se veia igual que una terminada, asi que el numero
+  // no tenia a que apuntar. Quien lo mira tiene que buscar cual de las tres secciones es, y
+  // eso lo sabe el sistema.
+  const dijoQueSiYNoCargo = pregunta.contestada === true && !bienes.length;
+
   return (
-    <div className="patrimonio-compuerta">
+    <div
+      className={
+        dijoQueSiYNoCargo
+          ? "patrimonio-compuerta patrimonio-compuerta-pendiente"
+          : "patrimonio-compuerta"
+      }
+    >
       <p className="patrimonio-pregunta">{NOMBRE[pregunta.tipo].varios}</p>
+      {dijoQueSiYNoCargo ? (
+        <p className="patrimonio-pendiente">
+          {profunda
+            ? "Contestó que sí y no hay ninguno cargado: falta agregarlo o corregir la respuesta."
+            : "Dijiste que sí tienes y todavía no hay ninguno: agrégalo o corrige la respuesta."}
+        </p>
+      ) : null}
       <ul className="patrimonio-bienes">
         {bienes.map((bien) => (
           <Bien key={bien.id} caseId={caseId} bien={bien} onCambio={onCambio} />

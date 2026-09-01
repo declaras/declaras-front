@@ -2216,6 +2216,10 @@ button.historial-abrir:hover b { color: var(--brand); }
 .patrimonio-documento { margin: 6px 0 0; color: var(--muted); font-size: 13px; max-width: 62ch; }
 /* Contestada que no: se queda a la vista, en gris, porque es la unica forma de corregirla. */
 .patrimonio-compuerta-no { display: flex; align-items: center; gap: 12px; }
+/* La seccion que esta pendiente se marca, para que el contador del pestaña tenga a que
+   apuntar: un "1" sin nada resaltado obliga a revisar las tres secciones a ver cual es. */
+.patrimonio-compuerta-pendiente { border-left: 2px solid #d0a04a; padding-left: 14px; }
+.patrimonio-pendiente { margin: 2px 0 10px; color: #9a6b12; font-size: 13px; line-height: 1.5; }
 .patrimonio-compuerta-no p {
   display: flex;
   align-items: center;
