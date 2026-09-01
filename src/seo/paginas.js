@@ -21,6 +21,13 @@ export const PAGINAS = {
     imagen: "/clara-og.jpg",
     tipo: "website",
   },
+  "/te-toca-declarar": {
+    titulo: "¿Te toca declarar renta en 2026? Averígualo gratis | Clara",
+    descripcion:
+      "Contesta cinco preguntas o consulta con tu clave de la DIAN y te decimos gratis si estás obligado a declarar renta este año, con tu fecha límite exacta.",
+    imagen: "/clara-og.jpg",
+    tipo: "website",
+  },
   "/declaracion-de-renta-2026": {
     titulo: "Declaración de renta 2026: topes y fechas por cédula | Clara",
     descripcion:

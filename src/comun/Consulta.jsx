@@ -23,11 +23,15 @@
  */
 
 import { useEffect, useId, useRef, useState } from "react";
-import { ArrowLeft, Check, Loader2, MessageCircle, ShieldCheck } from "lucide-react";
+import { ArrowLeft, CalendarDays, Check, Loader2, MessageCircle, ShieldCheck } from "lucide-react";
 
 import { TOPES, topeEnPesos, pesos, UVT_2025 } from "../contenido/datos";
+import { vencimientoDe } from "../contenido/calendario-renta-2026";
 import { abrirWhatsApp } from "../App";
 import { identificar, registrar } from "./medicion";
+import { MENSAJES } from "./mensajes";
+import Promo from "./Promo";
+import Vencimiento, { enDias } from "./Vencimiento";
 
 const VALOR_EXPERTO = 30_000;
 
@@ -43,18 +47,20 @@ const VALOR_EXPERTO = 30_000;
  * nuevo empieza fuera de vista, hacia arriba.
  *
  * NO CORRE EN EL PRIMER PINTADO. Si lo hiciera, abrir la portada arrastraria la pagina hasta la
- * consulta sin que nadie lo pidiera.
+ * consulta sin que nadie lo pidiera. Y OJO CON COMO SE DETECTA ESE PRIMER PINTADO: la version
+ * anterior usaba una bandera ("¿ya corri una vez?"), y StrictMode ejecuta los efectos dos veces
+ * en desarrollo, asi que la segunda pasada veia la bandera apagada y scrolleaba la pagina recien
+ * abierta hasta la consulta. Comparar CONTRA EL VALOR ANTERIOR no tiene ese problema: en el
+ * montaje (las veces que sea) el valor no ha cambiado, y solo un cambio real de paso mueve algo.
  *
  * Y respeta a quien pidio menos animacion en su sistema: para esa persona el salto es instantaneo
  * en vez de un desplazamiento, que es lo que la preferencia significa.
  */
 function useIrAlComienzo(ref, dependencia) {
-  const primera = useRef(true);
+  const anterior = useRef(dependencia);
   useEffect(() => {
-    if (primera.current) {
-      primera.current = false;
-      return;
-    }
+    if (anterior.current === dependencia) return;
+    anterior.current = dependencia;
     const nodo = ref.current;
     if (!nodo || typeof window === "undefined") return;
     const quietito = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
@@ -99,7 +105,7 @@ async function registrarConsulta(cuerpo) {
 /** El salario mensual equivalente al tope de ingresos, que es como la gente piensa su plata. */
 const mensualDe = (tope) => pesos((tope.uvt * UVT_2025) / 12);
 
-export default function Consulta({ alCerrar = null }) {
+export default function Consulta({ alCerrar = null, titulo = "¿No sabes si te toca declarar?" }) {
   const [paso, setPaso] = useState("datos");
   // El embudo entero era ciego: solo se medía abrir WhatsApp, que es el ultimo paso. Sin los de
   // antes no hay forma de saber DONDE se cae la gente, que es la unica pregunta que sirve para
@@ -156,6 +162,7 @@ export default function Consulta({ alCerrar = null }) {
     <div className="consulta" ref={caja}>
       {paso === "datos" ? (
         <Datos
+          titulo={titulo}
           datos={datos}
           setDatos={setDatos}
           onSeguir={() => {
@@ -217,7 +224,7 @@ export default function Consulta({ alCerrar = null }) {
  *
  * Se piden ANTES y no despues: quien ya vio su resultado no tiene ningun motivo para dejarlos.
  */
-function Datos({ datos, setDatos, onSeguir }) {
+function Datos({ titulo, datos, setDatos, onSeguir }) {
   // `useId` y no un id fijo: la consulta puede aparecer dos veces en una pagina, y con ids
   // repetidos la etiqueta de la segunda enfoca el campo de la primera.
   const idNombre = useId();
@@ -250,7 +257,10 @@ function Datos({ datos, setDatos, onSeguir }) {
         if (puede) onSeguir();
       }}
     >
-      <h3>¿No sabes si te toca declarar?</h3>
+      {/* En la portada la tarjeta se presenta sola y el titulo hace la pregunta. En el hero de
+          /te-toca-declarar la pregunta ya la hizo el h1 de al lado, y repetirla palabra por
+          palabra se lee como un error de armado: alla el titulo invita a empezar. */}
+      <h3>{titulo}</h3>
       <p className="consulta-nota">Te lo decimos gratis en un minuto. Sin claves ni papeles.</p>
 
       <div className="consulta-campo">
@@ -438,8 +448,19 @@ function Resultado({ veredicto, onReiniciar, onExperto }) {
         <p className="consulta-nota">
           Declarar no es lo mismo que pagar. Mucha gente declara y le devuelven plata.
         </p>
-        <button className="consulta-boton consulta-boton-grande" type="button" onClick={abrirWhatsApp}>
-          <MessageCircle size={17} /> Empezar mi declaración por WhatsApp
+        {/* LA FECHA, AQUI MISMO. "Si te toca" abre de inmediato la siguiente pregunta ("¿para
+            cuando?"), y mandarla a otra pagina es perder a la persona justo cuando decidio
+            averiguarlo. Es el mismo componente de la guia. */}
+        <div className="consulta-vence">
+          <Vencimiento />
+        </div>
+        <Promo />
+        <button
+          className="consulta-boton consulta-boton-grande"
+          type="button"
+          onClick={() => abrirWhatsApp(MENSAJES.meToca)}
+        >
+          <MessageCircle size={17} /> Hazlo ahora por WhatsApp
         </button>
         <button className="consulta-volver" type="button" onClick={onReiniciar}>
           Volver a empezar
@@ -588,7 +609,9 @@ function ConsultaDian({ contacto, onVolver }) {
     );
   }
 
-  if (estado === "resultado" && salida) return <ResultadoDian salida={salida} caja={caja} />;
+  if (estado === "resultado" && salida) {
+    return <ResultadoDian salida={salida} documento={documento} caja={caja} />;
+  }
 
   return (
     <form className="consulta-paso" noValidate onSubmit={consultar} ref={caja}>
@@ -635,9 +658,11 @@ function ConsultaDian({ contacto, onVolver }) {
 }
 
 /** El veredicto con las cifras: cuanto reporta la DIAN en cada tope y cual es el limite. */
-function ResultadoDian({ salida, caja }) {
+function ResultadoDian({ salida, documento, caja }) {
   const obligado = salida.resultado === "OBLIGADO";
   const superados = (salida.topes ?? []).filter((t) => t.supera);
+  // Por este camino el documento ya se escribio: la fecha limite no se pregunta, se dice.
+  const fila = vencimientoDe(documento);
 
   return (
     <div className="consulta-paso consulta-resultado" ref={caja}>
@@ -666,9 +691,24 @@ function ResultadoDian({ salida, caja }) {
       </ul>
 
       {obligado ? (
-        <button className="consulta-boton consulta-boton-grande" type="button" onClick={abrirWhatsApp}>
-          <MessageCircle size={17} /> Empezar mi declaración por WhatsApp
-        </button>
+        <>
+          {fila ? (
+            <p className="consulta-fecha">
+              <CalendarDays size={16} aria-hidden="true" />
+              <span>
+                Tu fecha límite es el <b>{fila[3]}</b>. <b>{enDias(fila[2])}</b>
+              </span>
+            </p>
+          ) : null}
+          <Promo />
+          <button
+            className="consulta-boton consulta-boton-grande"
+            type="button"
+            onClick={() => abrirWhatsApp(MENSAJES.meToca)}
+          >
+            <MessageCircle size={17} /> Hazlo ahora por WhatsApp
+          </button>
+        </>
       ) : (
         <p className="consulta-nota">
           La DIAN puede recibir reportes nuevos durante el año. Si tu situación cambia, vuelve a
@@ -691,7 +731,11 @@ function Experto({ onVolver }) {
         Por <b>{pesos(VALOR_EXPERTO)}</b> un contador mira tus cifras reales y te dice con certeza
         si te toca declarar y qué hacer. Si no tienes RUT o clave de la DIAN, te ayuda a sacarlos.
       </p>
-      <button className="consulta-boton consulta-boton-grande" type="button" onClick={abrirWhatsApp}>
+      <button
+        className="consulta-boton consulta-boton-grande"
+        type="button"
+        onClick={() => abrirWhatsApp(MENSAJES.experto)}
+      >
         <MessageCircle size={17} /> Hablar con un contador
       </button>
     </div>

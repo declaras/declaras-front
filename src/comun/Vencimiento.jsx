@@ -5,6 +5,27 @@ import CampoNumero from "./CampoNumero";
 import { vencimientoDe } from "../contenido/calendario-renta-2026";
 
 /**
+ * Cuantos dias faltan para una fecha, contados en dias de Bogota (UTC-5 todo el año).
+ * Negativo si ya paso; cero si es hoy.
+ */
+export function diasHasta(iso) {
+  const hoyBogota = new Date(Date.now() - 5 * 3600_000).toISOString().slice(0, 10);
+  return Math.round((Date.parse(iso) - Date.parse(hoyBogota)) / 86_400_000);
+}
+
+/**
+ * La fecha con su urgencia: "faltan 12 dias" convierte un dato de calendario en una razon para
+ * actuar, y "ya paso" en el aviso honesto de que cada mes de espera agranda la sancion.
+ */
+export function enDias(iso) {
+  const dias = diasHasta(iso);
+  if (dias > 1) return `Faltan ${dias} días.`;
+  if (dias === 1) return "Es mañana.";
+  if (dias === 0) return "Es hoy.";
+  return "Ya pasó: entre más pronto la presentes, menor la sanción.";
+}
+
+/**
  * Averigua la fecha limite para declarar a partir de los dos ultimos digitos del documento.
  *
  * POR QUE ES COMPARTIDA Y NO VIVE SOLO EN LA GUIA: es lo mas concreto que el producto puede dar
@@ -47,14 +68,15 @@ export default function Vencimiento({ variante = "bloque", alResolver = null }) 
         />
         {compacta && fila ? (
           <p className="vence-r">
-            Vence el <b>{fila[3]}</b>
+            Vence el <b>{fila[3]}</b> <span className="vence-dias">{enDias(fila[2])}</span>
           </p>
         ) : null}
       </div>
 
       {!compacta && fila ? (
         <p className="vence-r">
-          Tu declaración de renta vence el <b>{fila[3]}</b>.
+          Tu declaración de renta vence el <b>{fila[3]}</b>.{" "}
+          <span className="vence-dias">{enDias(fila[2])}</span>
           <small>
             Por los dos últimos dígitos ({fila[0]} y {fila[1]}). Si tienes NIT, no cuentes el dígito
             de verificación, ese que va después del guion.

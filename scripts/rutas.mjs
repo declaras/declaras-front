@@ -24,6 +24,12 @@ export const RUTAS = [
     fuentes: ["src/App.jsx", "src/comun/Marco.jsx", "index.html"],
   },
   {
+    ruta: "/te-toca-declarar",
+    prioridad: "0.9",
+    frecuencia: "weekly",
+    fuentes: ["src/App.jsx", "src/comun/Consulta.jsx", "src/comun/Marco.jsx"],
+  },
+  {
     ruta: "/declaracion-de-renta-2026",
     prioridad: "0.9",
     frecuencia: "monthly",

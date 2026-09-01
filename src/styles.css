@@ -1187,9 +1187,10 @@ footer { position:relative;padding:0;color:#d6ded9;background:#07130f; }
 .consulta-seccion { background: var(--cream); }
 .consulta {
   position: relative;
-  /* Al llevar la tarjeta al comienzo, deja aire arriba: sin esto queda pegada al borde de la
-     pantalla (o debajo de la cabecera) y se lee como si estuviera cortada. */
-  scroll-margin-top: 20px;
+  /* Al llevar la tarjeta al comienzo, deja aire arriba. LA CABECERA ES FIJA Y MIDE 74px: un
+     margen menor que eso pone el titulo del paso exactamente debajo de ella, y el veredicto
+     ("Si te toca declarar") era lo que quedaba tapado. */
+  scroll-margin-top: 94px;
   /* EL ALTO CAMBIA MUCHO ENTRE PASOS —el formulario es largo, el progreso corto, el resultado
      largo otra vez— y ese salto es lo que se siente como un brinco. Un minimo evita el colapso
      y la transicion hace que el resto del cambio se perciba como movimiento y no como corte. */
@@ -1357,6 +1358,214 @@ footer { position:relative;padding:0;color:#d6ded9;background:#07130f; }
 .consulta-topes li.supera { color: var(--ink); font-weight: 600; }
 .consulta-cifras { display: flex; align-items: baseline; gap: 7px; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .consulta-cifras small { color: var(--muted); font-weight: 400; font-size: 12.5px; }
+
+/* ── la oferta: el precio con su ancla y el reloj ── */
+/* La tarjeta completa: dos filas con jerarquia clara (que es la oferta / de cuanto a cuanto).
+   Antes era una pildora de una linea que en movil se partia donde le tocara y quedaba
+   amontonada: la insignia con una cifra, el precio con el reloj, todo revuelto. */
+.promo {
+  display: inline-grid;
+  gap: 10px;
+  margin: 18px 0 0;
+  padding: 14px 20px 15px;
+  border: 1px solid rgba(14,159,110,.3);
+  border-radius: 18px;
+  background: rgba(14,159,110,.08);
+  box-shadow: 0 6px 24px rgba(14,159,110,.14);
+  line-height: 1;
+}
+.promo-cabeza { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.promo-precios { display: flex; align-items: center; gap: 10px; margin: 0; }
+.promo-precios s { color: var(--muted); font-size: 17px; text-decoration-thickness: 1.5px; }
+.promo-precios svg { color: var(--brand); flex: 0 0 auto; }
+.promo-precios b { color: var(--brand); font-size: 27px; font-weight: 800; letter-spacing: -0.01em; }
+
+/* La insignia es lo que la vuelve una OFERTA y no una fila de numeros. Late despacio para
+   llamar el ojo sin gritar; quien pidio menos animacion la ve quieta. */
+.promo-insignia {
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #10b981, #0e9f6e);
+  color: white;
+  font-size: 12.5px;
+  font-weight: 800;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  animation: promo-late 2.6s ease-in-out infinite;
+}
+@keyframes promo-late {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(16,185,129,.45); }
+  50% { box-shadow: 0 0 0 7px rgba(16,185,129,0); }
+}
+.promo-resta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+.promo-resta svg { flex: 0 0 auto; }
+/* Ancho fijo en cifras tabulares: sin esto el reloj "respira" a cada segundo y arrastra la fila. */
+.promo-reloj { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 14px; color: inherit; }
+
+.promo-clara {
+  border-color: rgba(110,231,183,.38);
+  background: rgba(4,20,15,.62);
+  box-shadow: 0 10px 34px rgba(0,0,0,.35), 0 0 0 1px rgba(110,231,183,.08);
+  backdrop-filter: blur(6px);
+}
+.promo-clara .promo-precios s { color: rgba(255,255,255,.55); }
+.promo-clara .promo-precios svg { color: #6ee7b7; }
+.promo-clara .promo-precios b { color: #6ee7b7; }
+.promo-clara .promo-resta { color: rgba(255,255,255,.78); }
+
+/* El ancla en linea: insignia + "antes $150.000" + reloj, pegada al titular que ya dice el
+   precio nuevo en grande. Sin caja, para no meterle al hero otra pieza que compita. */
+.promo-ancla {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 16px 0 0;
+  font-size: 14.5px;
+  line-height: 1.4;
+  color: var(--muted);
+}
+.promo-antes { white-space: nowrap; }
+.promo-antes s { text-decoration-thickness: 1.5px; }
+/* En el ancla el reloj lleva su propia capsula y digitos grandes: suelto entre el titular y el
+   parrafo se perdia, y el reloj ES la urgencia. */
+.promo-ancla .promo-resta {
+  padding: 9px 14px;
+  border: 1px solid rgba(14,159,110,.35);
+  border-radius: 999px;
+  font-size: 13.5px;
+}
+.promo-ancla .promo-reloj { font-size: 17px; }
+.promo-ancla-clara { color: rgba(255,255,255,.78); }
+.promo-ancla-clara .promo-resta {
+  border-color: rgba(110,231,183,.4);
+  background: rgba(4,20,15,.5);
+  color: rgba(255,255,255,.8);
+}
+.promo-ancla-clara .promo-resta .promo-reloj { color: #6ee7b7; }
+
+/* El reloj solo, para la tarjeta de precio: las cifras grandes ya estan pintadas alli. */
+.promo-chip {
+  display: inline-flex;
+  margin: 10px 0 0;
+  padding: 9px 14px;
+  border: 1px solid rgba(14,159,110,.25);
+  border-radius: 999px;
+  background: rgba(14,159,110,.07);
+  line-height: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .promo-insignia { animation: none; }
+}
+
+/* ── el hero de /te-toca-declarar: la consulta como protagonista ── */
+.hero-consulta {
+  position: relative;
+  overflow: hidden;
+  padding: 118px 0 72px;
+  background: var(--forest);
+  color: white;
+}
+.hero-consulta-fondo { position: absolute; inset: 0; }
+/* La foto es una banda ancha (1600x351): se ancla arriba a su escala natural, como en el hero
+   principal, y el velo hace el resto. Estirarla a toda la seccion la volvia una mancha borrosa. */
+.hero-consulta-fondo img { width: 100%; height: 68%; object-fit: cover; object-position: 50% 38%; }
+.hero-consulta-velo {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(820px 420px at 82% 8%, rgba(52,211,153,.14), transparent 62%),
+    linear-gradient(180deg, rgba(7,23,18,.62) 0%, rgba(8,27,20,.78) 34%, var(--forest) 72%);
+}
+
+.hero-consulta-dos {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 620px);
+  gap: 56px;
+  align-items: start;
+}
+.hero-consulta-copy h1 {
+  margin: 0;
+  font-size: clamp(44px, 5.4vw, 72px);
+  line-height: 1;
+  text-wrap: balance;
+}
+.hero-consulta-copy h1 em { color: #d9f1e7; font-weight: 400; }
+.hero-consulta-copy > p {
+  max-width: 46ch;
+  margin: 18px 0 0;
+  color: rgba(255,255,255,.82);
+  font-size: 16px;
+  line-height: 1.62;
+}
+.hero-consulta-senas { list-style: none; margin: 22px 0 0; padding: 0; display: grid; gap: 10px; }
+.hero-consulta-senas li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: rgba(255,255,255,.86);
+  font-size: 14.5px;
+}
+.hero-consulta-senas svg { color: #6ee7b7; flex: 0 0 auto; }
+/* La tarjeta ya trae su sombra; sobre el bosque solo hace falta que no se funda con el borde. */
+.hero-consulta-caja .consulta { box-shadow: 0 30px 70px rgba(2,14,10,.45); }
+/* La puerta inversa es un boton (abre WhatsApp), asi que hay que quitarle la pinta de boton
+   del navegador para que herede la de la segunda puerta. */
+.hero-consulta-caja .hero-segunda-puerta {
+  margin-top: 22px;
+  width: 100%;
+  max-width: none;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+
+/* ── el resultado cuando si toca: la fecha y el cierre ── */
+/* El componente de la fecha es el de la guia; aqui solo se le quita el aire de articulo para
+   que quepa dentro de la tarjeta. */
+.consulta-vence .vence { margin: 6px 0 0; padding: 20px 22px; border-radius: 14px; }
+.vence-dias { font-weight: 600; color: inherit; }
+/* El selector lleva al padre a proposito: `.consulta-paso > p` pinta los parrafos del gris de
+   fondo blanco, le gana en especificidad a una clase sola, y esta caja es verde oscura: el
+   texto quedaba gris sobre verde, casi invisible. */
+.consulta-paso .consulta-fecha {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  margin: 6px 0 0;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: var(--forest);
+  color: rgba(255,255,255,.95);
+  font-size: 14.5px;
+  line-height: 1.5;
+}
+.consulta-fecha svg { flex: 0 0 auto; align-self: center; color: #6ee7b7; }
+.consulta-fecha b { color: #6ee7b7; }
+/* El tachado del ancla en la tarjeta de precio y el cierre: gris y mas chico que la cifra real,
+   porque su papel es dar contexto, no competir. */
+.price-antes { margin-right: 10px; color: var(--muted); font-size: 24px; font-weight: 500; }
+.cta-result s { margin-right: 7px; color: var(--muted); font-weight: 400; font-size: 14px; }
+
+@media (max-width: 900px) {
+  .hero-consulta { padding: 96px 0 52px; }
+  .hero-consulta-dos { grid-template-columns: 1fr; gap: 30px; }
+}
+@media (max-width: 560px) {
+  .hero-consulta { padding: 86px 0 40px; }
+  .hero-consulta-copy h1 { font-size: clamp(36px, 10.5vw, 46px); }
+  .hero-consulta-copy > p { font-size: 14.5px; }
+  .consulta { padding: 24px 20px; }
+}
 
 /* Quien pidio menos animacion en su sistema no quiere que las cosas se muevan solas. */
 @media (prefers-reduced-motion: reduce) {

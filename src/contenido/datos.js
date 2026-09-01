@@ -100,3 +100,11 @@ export const TOPES = [
 
 /** El tope en pesos, con la UVT del año gravable. */
 export const topeEnPesos = (tope) => pesos(tope.uvt * UVT_2025);
+
+/**
+ * El precio, con su ancla. UN SOLO LUGAR: aparece en los dos heroes, en la tarjeta de precio y en
+ * el cierre de la consulta, y dos cifras distintas en la misma pagina es lo que hace cerrar la
+ * pestaña. `LISTA` es el precio de referencia sin descuento; si la promocion termina, se iguala
+ * a `AHORA` y todos los tachados desaparecen solos.
+ */
+export const PRECIO = { AHORA: 50_000, LISTA: 150_000 };

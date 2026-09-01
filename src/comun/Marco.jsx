@@ -165,7 +165,7 @@ const ENLACES = [
  * `alCta` es opcional: sin el, el boton es un enlace a la portada, porque la guia no tiene el
  * conmutador de pantallas del prototipo.
  */
-export function Cabecera({ solida = false, alCta = null }) {
+export function Cabecera({ solida = false, alCta = null, ctaTexto = "Averigua gratis" }) {
   return (
     <header className={`site-header ${solida ? "solid" : ""}`}>
       <div className="container nav-inner">
@@ -178,10 +178,10 @@ export function Cabecera({ solida = false, alCta = null }) {
         </nav>
         {alCta ? (
           <button type="button" className="button button-primary" onClick={alCta}>
-            Averigua gratis
+            {ctaTexto}
           </button>
         ) : (
-          <a className="button button-primary" href="/">Averigua gratis</a>
+          <a className="button button-primary" href="/">{ctaTexto}</a>
         )}
       </div>
     </header>

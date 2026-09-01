@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router";
 import {
   ArrowRight,
   BadgeCheck,
@@ -16,11 +17,14 @@ import {
 } from "lucide-react";
 import heroHorizonte from "./assets/clara-hero-montanas.jpg";
 import Seo, { SITIO } from "./seo/Seo";
+import { PAGINAS } from "./seo/paginas";
 import { Cabecera, Pie } from "./comun/Marco";
 import { Avatar, Button } from "./comun/piezas";
-import { referenciaDeAnuncio, registrarAperturaDeChat } from "./comun/medicion";
+import { referenciaDeAnuncio, registrar, registrarAperturaDeChat } from "./comun/medicion";
+import { MENSAJES } from "./comun/mensajes";
+import Promo from "./comun/Promo";
 import Consulta from "./comun/Consulta";
-import { RACIMO } from "./contenido/datos";
+import { pesos, PRECIO, RACIMO } from "./contenido/datos";
 import phoneArtwork from "./assets/clara-phone-cutout.png";
 import phoneArtworkWebp from "./assets/clara-phone-cutout.webp";
 
@@ -349,16 +353,18 @@ function ClaraWorkspace({ start }) {
           <h1>
             Tu declaración de renta{" "}
             <br />
-            por <em>$50.000</em>
+            por <em>{pesos(PRECIO.AHORA)}</em>
           </h1>
+          {/* El ancla va PEGADA al precio del titular, no despues del parrafo: "antes $150.000"
+              solo cuenta la historia si se lee junto al $50.000 grande. */}
+          <Promo clara ancla />
           <p>
             Le escribes a Clara por WhatsApp, contestas unas preguntas y ella deja el formulario
             de la DIAN listo para que lo revises y firmes.
           </p>
-
           <div className="workspace-actions">
             <Button onClick={start}>
-              <MessageCircle size={18} /> Empieza tu declaración por WhatsApp
+              <MessageCircle size={18} /> Toca aquí y empieza tu declaración por WhatsApp
             </Button>
           </div>
           <p className="hero-gratis">Gratis hasta que veas tu resultado.</p>
@@ -396,6 +402,68 @@ function ClaraWorkspace({ start }) {
   );
 }
 
+/**
+ * El hero de la landing de intencion baja (/te-toca-declarar).
+ *
+ * ═══ POR QUE EXISTE UNA SEGUNDA LANDING ═══
+ *
+ * Las busquedas que pagan los anuncios son de dos familias distintas. "declarar renta online" es
+ * alguien decidido: a ese le sirve el hero clasico, que vende el servicio. Pero "quien debe
+ * declarar renta" o "topes para declarar" es alguien con una PREGUNTA, y aterrizarlo en un hero
+ * que vende es contestarle otra cosa: por eso el 80% se iba sin tocar nada. Aca la respuesta a su
+ * pregunta es lo primero que ve, y el producto aparece despues, cuando el veredicto lo vuelve
+ * relevante.
+ *
+ * La consulta es el MISMO componente de la portada: un solo flujo que mantener, dos puertas.
+ */
+function HeroConsulta() {
+  return (
+    <section id="consulta" className="hero-consulta">
+      {/* El mismo amanecer del hero principal: las dos puertas son la misma marca, y el color
+          plano se leia como una pagina de relleno. El velo oscurece hacia abajo para que la
+          foto no compita con las cifras de la tarjeta. */}
+      <div className="hero-consulta-fondo" aria-hidden="true">
+        <img src={heroHorizonte} alt="" width="1600" height="351" fetchPriority="high" decoding="async" />
+        <div className="hero-consulta-velo" />
+      </div>
+      <div className="container hero-consulta-dos">
+        <div className="hero-consulta-copy">
+          <h1>
+            ¿Te toca declarar renta <em>este año?</em>
+          </h1>
+          <p>
+            Averígualo aquí mismo, sin escribirle a nadie. Y si te toca, te decimos tu fecha
+            límite y Clara te deja la declaración lista por WhatsApp.
+          </p>
+          <ul className="hero-consulta-senas">
+            <li><Check size={15} /> Cinco preguntas, sin papeles ni claves</li>
+            <li><ShieldCheck size={15} /> O con tu clave de la DIAN, con tus cifras reales</li>
+            <li><MessageCircle size={15} /> Si te toca, la hacemos hoy por WhatsApp</li>
+          </ul>
+        </div>
+        <div className="hero-consulta-caja">
+          {/* SIN DESCUENTO EN ESTE HERO, y es deliberado: quien llega aqui viene con una
+              pregunta, no a comprar, y ponerle el precio antes de su respuesta es contestarle
+              otra cosa. La oferta aparece donde si corresponde: en el veredicto, justo cuando
+              se entera de que le toca, y en la seccion de precio de abajo. */}
+          <Consulta titulo="Averígualo aquí" />
+          {/* La puerta inversa de la segunda puerta de la portada: el trafico nunca se reparte
+              perfecto, y el comprador decidido que caiga en la pagina de la pregunta necesita
+              su atajo igual que el dudoso que cae en la de compra. */}
+          <button
+            type="button"
+            className="hero-segunda-puerta"
+            onClick={() => abrirWhatsApp(MENSAJES.declarar)}
+          >
+            <span>¿Ya sabes que te toca declarar?</span>
+            <b>Toca aquí y empieza ya por WhatsApp <ArrowRight size={15} /></b>
+          </button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export const FAQS_PORTADA = [
   ["¿Es seguro darle mi clave de la DIAN?", "Sí. La conexión va cifrada, tu clave nunca pasa por WhatsApp y puedes pedir que la borremos al terminar."],
   ["¿Clara presenta por mí?", "No. Clara prepara todo, pero la firma y la presentación siempre las haces tú."],
@@ -410,6 +478,11 @@ function Landing({ goTo }) {
   const [faqOpen, setFaqOpen] = useState(0);
   const [headerSolid, setHeaderSolid] = useState(false);
   const heroRef = useRef(null);
+
+  // DOS LANDINGS, UNA PAGINA. La ruta decide el hero: /te-toca-declarar abre con la consulta
+  // (intencion baja: alguien con una pregunta) y / con el producto (intencion alta: alguien
+  // decidido). Todo lo demas es identico, porque la historia que sigue es la misma.
+  const baja = useLocation().pathname === "/te-toca-declarar";
 
   const start = () => goTo("whatsapp");
   useEffect(() => {
@@ -452,19 +525,31 @@ function Landing({ goTo }) {
   return (
     <div className="landing">
       <Seo
-        titulo="Declaración de renta 2026 por WhatsApp, por $50.000 | Clara"
-        descripcion="Clara deja tu declaración de renta lista para revisar y firmar. Todo por WhatsApp, un solo pago de $50.000. Te decimos gratis si debes declarar."
-        ruta="/"
-        datos={datos}
+        titulo={PAGINAS[baja ? "/te-toca-declarar" : "/"].titulo}
+        descripcion={PAGINAS[baja ? "/te-toca-declarar" : "/"].descripcion}
+        ruta={baja ? "/te-toca-declarar" : "/"}
+        datos={baja ? null : datos}
       />
-      <Cabecera solida={headerSolid} alCta={start} />
+      {/* En la variante de consulta la cabecera va opaca desde el principio: no hay foto del
+          hero que pida transparencia, y su CTA lleva a la consulta que esta ahi mismo. */}
+      {/* El boton de la cabecera habla el idioma de cada landing: en la de consulta invita a
+          averiguar; en la de compra, "Averigua gratis" era mandar al comprador a otra puerta. */}
+      <Cabecera
+        solida={baja || headerSolid}
+        alCta={baja ? irAlaConsulta : start}
+        ctaTexto={baja ? "Averigua gratis" : "Empieza ya"}
+      />
 
       <main>
-        <section className="hero-story" ref={heroRef}>
-          <div className="hero-sticky">
-            <ClaraWorkspace start={start} />
-          </div>
-        </section>
+        {baja ? (
+          <HeroConsulta />
+        ) : (
+          <section className="hero-story" ref={heroRef}>
+            <div className="hero-sticky">
+              <ClaraWorkspace start={start} />
+            </div>
+          </section>
+        )}
 
         <section className="section problem">
           <div className="container">
@@ -578,32 +663,34 @@ function Landing({ goTo }) {
 
         {/* LA SEGUNDA PUERTA, ANTES DEL PRECIO. Quien todavia duda si le toca declarar no esta
             listo para leer cuanto cuesta: primero necesita saber si esto es para el. Y va aqui y no
-            arriba porque el hero le pertenece a quien ya sabe que le toca. */}
-        <section id="consulta" className="section consulta-seccion">
-          <div className="container">
-            <div className="section-heading">
-              <div className="eyebrow">GRATIS Y EN UN MINUTO</div>
-              <h2>¿No sabes si te toca declarar?</h2>
-              <p>
-                Es la pregunta que más nos hacen. Contéstala acá sin escribirle a nadie: son cinco
-                preguntas y casi siempre termina en la primera.
-              </p>
+            arriba porque el hero le pertenece a quien ya sabe que le toca. En la landing de
+            consulta NO se repite: alla la consulta ya es el hero. */}
+        {baja ? null : (
+          <section id="consulta" className="section consulta-seccion">
+            <div className="container">
+              <div className="section-heading">
+                <div className="eyebrow">GRATIS Y EN UN MINUTO</div>
+                <h2>¿No sabes si te toca declarar?</h2>
+                <p>
+                  Es la pregunta que más nos hacen. Contéstala acá sin escribirle a nadie: son cinco
+                  preguntas y casi siempre termina en la primera.
+                </p>
+              </div>
+              <Consulta />
             </div>
-            <Consulta />
-          </div>
-        </section>
+          </section>
+        )}
 
         <section id="precio" className="section pricing">
           <div className="container">
             <div className="section-heading">
               <div className="eyebrow">PRECIO CLARO</div>
-              <h2>$50.000. Un solo pago, sin sorpresas</h2>
+              <h2>Hoy $50.000. Un solo pago, sin sorpresas</h2>
             </div>
             <div className="pricing-grid pricing-unico">
               <PriceCard
                 featured
                 title="Tu declaración de renta"
-                price="$50.000"
                 extra="Asalariado, independiente, con arriendos o dividendos. El mismo precio."
                 onClick={start}
               />
@@ -701,7 +788,7 @@ function Landing({ goTo }) {
               <div className="cta-chat-head"><Avatar /><div><strong>Clara</strong><span>en línea ahora</span></div><i /></div>
               <div className="cta-bubble">Hola. En 30 segundos te digo gratis si debes declarar este año.</div>
               <div className="cta-result"><span>Consulta inicial</span><strong className="money">$0</strong></div>
-              <div className="cta-result"><span>Si decides presentar</span><strong className="money">$50.000</strong></div>
+              <div className="cta-result"><span>Si decides presentar</span><strong className="money"><s>$150.000</s> $50.000</strong></div>
               <Button onClick={start}>Escribirle a Clara <ArrowRight size={18} /></Button>
               <small>No necesitas tarjeta para empezar</small>
             </div>
@@ -762,7 +849,7 @@ function TrafficCard({ color, metric, status, title, children }) {
  * lo que incluye al otro) porque una tarjeta sola en una rejilla de dos columnas quedaba en trescientos
  * pixeles de ancho, con cada linea de la lista partida en tres.
  */
-function PriceCard({ title, price, extra, onClick }) {
+function PriceCard({ title, extra, onClick }) {
   const items = [
     "Consultamos tu información en la DIAN",
     "Buscamos los ahorros que tengan soporte",
@@ -774,8 +861,12 @@ function PriceCard({ title, price, extra, onClick }) {
     <article className="price-card price-card-ancha">
       <div className="price-lado">
         <h3>{title}</h3>
-        <div className="price money">{price}</div>
+        <div className="price money">
+          <s className="price-antes money">{pesos(PRECIO.LISTA)}</s>
+          {pesos(PRECIO.AHORA)}
+        </div>
         <span className="once">pago único, por WhatsApp</span>
+        <Promo soloReloj />
         {extra ? <p className="price-extra">{extra}</p> : null}
         <Button onClick={onClick}>
           Empieza gratis por WhatsApp <ArrowRight size={17} />
@@ -806,8 +897,16 @@ const CON_PROTOTIPO =
 
 const Pantallas = CON_PROTOTIPO ? lazy(() => import("./prototipo/Pantallas")) : null;
 
-/** Abre la conversacion real. En el prototipo, en cambio, se salta a la pantalla de la maqueta. */
-export function abrirWhatsApp() {
+/**
+ * Abre la conversacion real. En el prototipo, en cambio, se salta a la pantalla de la maqueta.
+ *
+ * EL MENSAJE DEPENDE DE QUIEN LLEGA. "Quiero hacer mi declaracion" y "quiero saber si me toca"
+ * son dos conversaciones distintas, y el primer mensaje es lo unico que el canal sabe del
+ * contexto. El parametro se valida porque la mitad de los botones llaman esto con el evento del
+ * clic de primer argumento: solo una cadena cuenta como mensaje.
+ */
+export function abrirWhatsApp(mensaje) {
+  const texto = typeof mensaje === "string" ? mensaje : MENSAJES.declarar;
   const numero = import.meta.env.VITE_WHATSAPP;
   if (!numero) {
     // Sin numero configurado el boton NO se queda muerto: lleva a la guia, que responde la misma
@@ -825,13 +924,23 @@ export function abrirWhatsApp() {
   // viva— sino porque si `window.open` lo bloquea un navegador, el hecho igual ocurrio: la persona
   // hizo clic en el boton, y eso es lo que se esta midiendo.
   registrarAperturaDeChat();
+  // El mismo hecho en PostHog, con el mensaje como propiedad: el embudo dependia del autocapture
+  // adivinando cual boton era "el de WhatsApp", y el acto mas importante del sitio no puede
+  // depender de una adivinanza.
+  registrar("whatsapp_abierto", { mensaje: texto });
 
   // El rastro del anuncio viaja DENTRO del mensaje, no como parametro: wa.me lee `text` y descarta
   // todo lo demas. Quien llega por busqueda organica no lleva ninguno y el mensaje sale limpio.
-  const texto = encodeURIComponent(
-    `Hola Clara, quiero saber si debo declarar renta.${referenciaDeAnuncio()}`,
+  window.open(
+    `https://wa.me/${numero}?text=${encodeURIComponent(texto + referenciaDeAnuncio())}`,
+    "_blank",
+    "noopener",
   );
-  window.open(`https://wa.me/${numero}?text=${texto}`, "_blank", "noopener");
+}
+
+/** Sube a la consulta del hero. Es el CTA de la cabecera en la landing de intencion baja. */
+function irAlaConsulta() {
+  document.getElementById("consulta")?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 export default function App() {
