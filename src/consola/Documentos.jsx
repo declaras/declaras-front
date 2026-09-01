@@ -35,13 +35,17 @@ import {
 import { SoloContador, useVista } from "./vista";
 import VisorDocumento from "./VisorDocumento";
 import { descargarArchivo } from "./archivos";
+import { esDelHistorial } from "./Historial";
 import { useAction } from "./hooks";
 
 const CAMPOS_TECNICOS = new Set(["raw_text"]);
 
 export default function Documentos({ documentos }) {
   const [viendo, setViendo] = useState(null);
-  if (!documentos.length) return null;
+  // Las declaraciones de años anteriores salen de esta lista y viven en su propia seccion: como
+  // serie de años se recorren de un vistazo, y aca serian cinco filas que se llaman casi igual.
+  const delAnio = documentos.filter((d) => !esDelHistorial(d.doc_type));
+  if (!delAnio.length) return null;
 
   return (
     <section className="bloque">
@@ -53,7 +57,7 @@ export default function Documentos({ documentos }) {
       </header>
 
       <ul className="docs">
-        {documentos.map((doc) => (
+        {delAnio.map((doc) => (
           <Documento key={doc.id} doc={doc} onVer={() => setViendo(doc)} />
         ))}
       </ul>

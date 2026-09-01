@@ -235,6 +235,11 @@ export const api = {
     request(`/v1/cases/${caseId}/comparacion-con-lo-presentado`),
   escribirAlPortal: (caseId, dianPassword) =>
     request(`/v1/cases/${caseId}/portal/escribir`, json({ dian_password: dianPassword })),
+  // El historial de declaraciones. Se LEE sin clave (para poder mostrar algo antes de pedir
+  // nada) y se TRAE con clave, que es lo que abre la sesión en el portal.
+  getHistorial: (caseId) => request(`/v1/cases/${caseId}/historial`),
+  traerHistorial: (caseId, dianPassword) =>
+    request(`/v1/cases/${caseId}/historial`, json({ dian_password: dianPassword })),
   cerrarLiquidacion: (caseId) =>
     request(`/v1/cases/${caseId}/liquidacion/cerrar`, { method: "POST" }),
 };

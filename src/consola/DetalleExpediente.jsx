@@ -28,6 +28,7 @@ import { useAction, useApi } from "./hooks";
 import { Cargando, ErrorApi } from "./componentes";
 import Actividad from "./Actividad";
 import Documentos from "./Documentos";
+import Historial from "./Historial";
 import Dialogo from "./Dialogo";
 import Etapas, { ETAPAS } from "./Etapas";
 import Plazo from "./Plazo";
@@ -279,6 +280,9 @@ function Flujo({ caseId, caso, conciliacion, peticiones, respuestas, patrimonio,
             referencia, no parte del proceso, y por eso van aqui: en el carril que acompaña a
             todas las etapas, como ya lo dice el encabezado de este archivo. */}
         <Documentos documentos={caso.documents} />
+        {/* El historial va DESPUES de los documentos del año en curso: primero el trabajo, y
+            despues los antecedentes, que se consultan menos. */}
+        <Historial caseId={caseId} documentos={caso.documents} onCambio={onCambio} />
         <SubirDocumento caso={caso} onListo={onCambio} />
         <Actividad eventos={caso.events} />
       </aside>

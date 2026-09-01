@@ -1610,6 +1610,45 @@
 /* Los documentos, a la medida del carril: misma lista, tipografia un punto mas chica, y el
    nombre del archivo (vista de contador) partido donde haga falta para no desbordar la columna. */
 .flujo-lateral .doc { padding: 11px 0; gap: 8px; }
+
+/* ── el historial de declaraciones ── */
+/* Es una SERIE DE AÑOS, no una lista de archivos: filas cortas, el año como ancla a la
+   izquierda y el veredicto a su lado. Asi el hueco (el año que no se declaro) se ve sin leer. */
+.historial { list-style: none; margin: 0 0 14px; padding: 0; }
+.historial-anio {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 8px;
+  border-top: 1px solid var(--line);
+}
+.historial-anio:last-child { border-bottom: 1px solid var(--line); }
+.historial-abrir {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+.historial-abrir b { font-size: 14px; font-variant-numeric: tabular-nums; }
+.historial-abrir em { color: var(--muted); font-size: 11.5px; font-style: normal; }
+/* El ojito SE VE SIEMPRE, por la misma razon que en la lista de documentos: un año que no
+   muestra que se puede abrir no se abre. Lo que cambia en hover es el color, no la existencia. */
+.historial-abrir svg { color: var(--line); transition: color .15s; }
+.historial-anio:hover .historial-abrir svg { color: var(--muted); }
+/* Un año descargable se ve tocable; uno sin documento, no. */
+button.historial-abrir { cursor: pointer; }
+button.historial-abrir:hover b { color: var(--brand); }
+.historial-sin_revisar b { color: var(--muted); font-weight: 400; }
+/* EL AÑO QUE FALTA. Se marca porque es una declaracion no presentada: puede ser legitima o
+   puede ser un atraso con sancion corriendo, y en los dos casos hay que hablarlo. */
+.historial-sin_declaracion b { color: #9a6b12; }
+.historial-sin_declaracion em { color: #9a6b12; }
+
 .flujo-lateral .doc-nombre { font-size: 13.5px; }
 .flujo-lateral .doc-meta { font-size: 11.5px; flex-wrap: wrap; }
 .flujo-lateral .doc-origen { overflow-wrap: anywhere; }
