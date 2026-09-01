@@ -239,8 +239,16 @@ export const api = {
   // un contador. Es la segunda opinión.
   getComparacionPresentada: (caseId) =>
     request(`/v1/cases/${caseId}/comparacion-con-lo-presentado`),
+  // La clave es OPCIONAL: si el cliente ya tiene una guardada, se usa esa. Mandarla la
+  // reemplaza, que es como se corrige una clave que cambió.
   escribirAlPortal: (caseId, dianPassword) =>
-    request(`/v1/cases/${caseId}/portal/escribir`, json({ dian_password: dianPassword })),
+    request(
+      `/v1/cases/${caseId}/portal/escribir`,
+      json(dianPassword ? { dian_password: dianPassword } : {}),
+    ),
+  // Si hay clave guardada para el cliente. Devuelve SI hay, nunca cuál.
+  getClave: (caseId) => request(`/v1/cases/${caseId}/clave`),
+  olvidarClave: (caseId) => request(`/v1/cases/${caseId}/clave`, { method: "DELETE" }),
   // El historial de declaraciones anteriores. Solo se LEE: llegan con la consulta a la DIAN,
   // en la misma sesión, así que no hay clave que volver a pedir.
   getHistorial: (caseId) => request(`/v1/cases/${caseId}/historial`),

@@ -239,6 +239,12 @@ function EscribirAlPortal({ caseId, profunda, documentos, onEscrito }) {
   const [clave, setClave] = useState("");
   const [resultado, setResultado] = useState(null);
   const escribir = useAction((password) => api.escribirAlPortal(caseId, password));
+  // SI YA HAY CLAVE GUARDADA, NO SE PIDE. Preparar una declaración son varias visitas al
+  // portal repartidas en días, y quien opera la consola no tiene la clave del cliente: pedirla
+  // en cada paso significaba una llamada al cliente por paso.
+  const claveGuardada = useApi(() => api.getClave(caseId), [caseId]);
+  const hayGuardada = claveGuardada.data?.guardada === true;
+  const olvidar = useAction(() => api.olvidarClave(caseId));
 
   const enviar = async (evento) => {
     evento.preventDefault();
@@ -262,20 +268,42 @@ function EscribirAlPortal({ caseId, profunda, documentos, onEscrito }) {
               ? "Clara crea el borrador del 210 en la cuenta del cliente si no existe, lo llena casilla por casilla y verifica releyendo lo que quedó guardado. Después solo falta que él entre a firmar."
               : "Dejamos tu declaración lista en el portal de la DIAN y verificamos que quede igual a esto. Después solo entras a firmarla."}
           </p>
-          <label className="campo portal-clave">
-            <span>{profunda ? "Clave del portal del cliente" : "Tu clave del portal de la DIAN"}</span>
-            <input
-              type="password"
-              autoComplete="off"
-              value={clave}
-              onChange={(e) => setClave(e.target.value)}
-              required
-            />
-          </label>
-          <button className="btn-grande" disabled={escribir.running || !clave}>
+          {hayGuardada ? (
+            <p className="clave-guardada">
+              {profunda ? "Se usa la clave guardada del cliente." : "Usamos tu clave guardada."}{" "}
+              <button
+                type="button"
+                className="enlace-suave"
+                disabled={olvidar.running}
+                onClick={async () => {
+                  if (await olvidar.run()) claveGuardada.reload();
+                }}
+              >
+                {olvidar.running ? "borrando…" : "borrarla"}
+              </button>
+            </p>
+          ) : (
+            <label className="campo portal-clave">
+              <span>
+                {profunda ? "Clave del portal del cliente" : "Tu clave del portal de la DIAN"}
+              </span>
+              <input
+                type="password"
+                autoComplete="off"
+                value={clave}
+                onChange={(e) => setClave(e.target.value)}
+                required
+              />
+            </label>
+          )}
+          <button
+            className="btn-grande"
+            disabled={escribir.running || (!clave && !hayGuardada)}
+          >
             {escribir.running ? "Escribiendo en el portal…" : "Escribir el borrador"}
           </button>
           <ErrorApi error={escribir.error} />
+          <ErrorApi error={olvidar.error} />
         </form>
       ) : (
         <ResultadoEscritura

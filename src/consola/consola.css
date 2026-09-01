@@ -2456,6 +2456,9 @@ button.historial-abrir:hover b { color: var(--brand); }
   max-width: 560px;
 }
 .portal-clave { max-width: 320px; margin: 14px 0; }
+/* Cuando la clave ya esta guardada, este bloque reemplaza al campo: dice que se va a usar y
+   ofrece borrarla, que es lo que hace legitimo el guardado. */
+.clave-guardada { margin: 4px 0 14px; color: var(--muted); font-size: 13.5px; line-height: 1.55; }
 .portal-resultado { display: grid; gap: 12px; justify-items: start; }
 .portal-veredicto {
   display: flex;

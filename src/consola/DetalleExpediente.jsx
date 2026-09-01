@@ -422,9 +422,14 @@ function ConsultarDian({ caso, onListo, discreto = false }) {
           autoFocus={discreto}
         />
       </label>
+      {/* ESTE TEXTO DECIA "no queda guardada en ninguna parte" Y DEJO DE SER CIERTO. La clave
+          ahora se guarda cifrada para no pedirla en cada visita al portal (preparar una
+          declaración son varias, repartidas en días, y quien opera la consola no tiene la
+          clave del cliente). Guardar una credencial ajena y seguir diciendo lo contrario no es
+          un detalle de copy: es la diferencia entre pedir permiso y no pedirlo. */}
       <p className="clave-nota">
-        La usamos para esta consulta y la borramos al terminar. No queda guardada en ninguna
-        parte.
+        Queda guardada cifrada para no pedírtela en cada paso. Puedes borrarla cuando quieras
+        desde el expediente.
       </p>
       <div className="clave-botones">
         <button className="btn-grande" disabled={!clave}>
