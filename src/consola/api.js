@@ -235,11 +235,9 @@ export const api = {
     request(`/v1/cases/${caseId}/comparacion-con-lo-presentado`),
   escribirAlPortal: (caseId, dianPassword) =>
     request(`/v1/cases/${caseId}/portal/escribir`, json({ dian_password: dianPassword })),
-  // El historial de declaraciones. Se LEE sin clave (para poder mostrar algo antes de pedir
-  // nada) y se TRAE con clave, que es lo que abre la sesión en el portal.
+  // El historial de declaraciones anteriores. Solo se LEE: llegan con la consulta a la DIAN,
+  // en la misma sesión, así que no hay clave que volver a pedir.
   getHistorial: (caseId) => request(`/v1/cases/${caseId}/historial`),
-  traerHistorial: (caseId, dianPassword) =>
-    request(`/v1/cases/${caseId}/historial`, json({ dian_password: dianPassword })),
   cerrarLiquidacion: (caseId) =>
     request(`/v1/cases/${caseId}/liquidacion/cerrar`, { method: "POST" }),
 };

@@ -14,21 +14,27 @@
  * sanción corriendo. En los dos casos es algo de lo que hay que hablar con el cliente, así que
  * se marca en vez de dejarlo como un vacío que nadie nota.
  *
- * ═══ "NO SE HA PREGUNTADO" NO ES "NO DECLARO" ═══
+ * ═══ "NO SE SABE" NO ES "NO DECLARO" ═══
  *
- * Mientras nadie consulte el portal, los años sin documento salen apagados y sin veredicto.
- * Pintarlos como "no declaró" sería afirmar algo sobre la vida tributaria de una persona a
- * partir de no haber mirado, que es exactamente la clase de error silencioso que este
- * expediente existe para evitar.
+ * Más atrás de lo que trae la consulta, los años salen apagados y sin veredicto. Pintarlos
+ * como "no declaró" sería afirmar algo sobre la vida tributaria de una persona sin poder
+ * saberlo, que es exactamente la clase de error silencioso que este expediente existe para
+ * evitar.
+ *
+ * ═══ NO HAY BOTON, Y ESO ES EL ARREGLO ═══
+ *
+ * Hubo uno ("Revisar en la DIAN") de cuando la consulta no traía el historial. En cuanto
+ * empezó a traerlo, ese botón quedó pidiendo la clave por segunda vez para un trabajo que ya
+ * estaba hecho. Lo que falta se trae volviendo a consultar la DIAN, que es el botón que ya
+ * existe arriba: un solo sitio donde se escribe la clave.
  */
 
 import { useState } from "react";
-import { Download, Eye, RefreshCw } from "lucide-react";
+import { Download, Eye } from "lucide-react";
 
 import { api } from "./api";
 import { useAction, useApi } from "./hooks";
 import { ErrorApi } from "./componentes";
-import Dialogo from "./Dialogo";
 import VisorDocumento from "./VisorDocumento";
 import { descargarArchivo } from "./archivos";
 
@@ -37,15 +43,13 @@ export const esDelHistorial = (docType = "") => docType.startsWith("DECLARACION_
 
 const LEYENDA = {
   guardada: null,
-  en_la_dian: "sin traer",
   sin_declaracion: "no declaró",
   sin_revisar: "sin revisar",
 };
 
-export default function Historial({ caseId, documentos, onCambio }) {
+export default function Historial({ caseId, documentos }) {
   const historial = useApi(() => api.getHistorial(caseId), [caseId]);
   const [viendo, setViendo] = useState(null);
-  const [pidiendoClave, setPidiendoClave] = useState(false);
 
   const filas = historial.data ?? [];
   // El estado viene del backend; la URL de descarga vive en el documento del expediente. Se
@@ -78,24 +82,6 @@ export default function Historial({ caseId, documentos, onCambio }) {
             );
           })}
         </ul>
-      ) : null}
-
-      <button className="btn-mini" onClick={() => setPidiendoClave(true)}>
-        <RefreshCw size={13} />
-        Revisar en la DIAN
-      </button>
-
-      {pidiendoClave ? (
-        <PedirClave
-          caseId={caseId}
-          onListo={() => {
-            setPidiendoClave(false);
-            historial.reload();
-            // El expediente tambien cambio: llegaron documentos nuevos.
-            onCambio?.();
-          }}
-          onCerrar={() => setPidiendoClave(false)}
-        />
       ) : null}
 
       {viendo ? <VisorDocumento doc={viendo} onCerrar={() => setViendo(null)} /> : null}
@@ -131,62 +117,5 @@ function Anio({ fila, doc, onVer }) {
         </button>
       ) : null}
     </li>
-  );
-}
-
-/**
- * La clave, para abrir UNA sesion y traer todo el historial de una vez.
- *
- * Abrir sesion es lo caro y es lo que la DIAN cuenta para bloquear la cuenta, asi que no se
- * pide una clave por año: se pide una vez y adentro se baja lo que falte.
- */
-function PedirClave({ caseId, onListo, onCerrar }) {
-  const [clave, setClave] = useState("");
-  const accion = useAction(() => api.traerHistorial(caseId, clave));
-
-  const enviar = async (evento) => {
-    evento.preventDefault();
-    if (await accion.run()) onListo();
-  };
-
-  return (
-    <Dialogo
-      titulo="Revisar el historial en la DIAN"
-      descripcion={
-        accion.running
-          ? null
-          : "Pregunta qué años tiene declarados el contribuyente y trae los que falten."
-      }
-      onCerrar={onCerrar}
-      bloqueado={accion.running}
-    >
-      {accion.running ? (
-        <p className="estado">Consultando el portal y bajando las declaraciones…</p>
-      ) : (
-        <form className="clave-forma" onSubmit={enviar}>
-          <ErrorApi error={accion.error} />
-          <label className="campo">
-            <span>Tu clave del portal de la DIAN</span>
-            <input
-              type="password"
-              value={clave}
-              onChange={(e) => setClave(e.target.value)}
-              required
-              autoComplete="off"
-              autoFocus
-            />
-          </label>
-          <p className="clave-nota">
-            La usamos para esta consulta y la borramos al terminar. No queda guardada en ninguna
-            parte.
-          </p>
-          <div className="clave-botones">
-            <button className="btn-grande" disabled={!clave}>
-              Revisar
-            </button>
-          </div>
-        </form>
-      )}
-    </Dialogo>
   );
 }

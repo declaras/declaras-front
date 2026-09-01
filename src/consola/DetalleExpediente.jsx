@@ -282,7 +282,7 @@ function Flujo({ caseId, caso, conciliacion, peticiones, respuestas, patrimonio,
         <Documentos documentos={caso.documents} />
         {/* El historial va DESPUES de los documentos del año en curso: primero el trabajo, y
             despues los antecedentes, que se consultan menos. */}
-        <Historial caseId={caseId} documentos={caso.documents} onCambio={onCambio} />
+        <Historial caseId={caseId} documentos={caso.documents} />
         <SubirDocumento caso={caso} onListo={onCambio} />
         <Actividad eventos={caso.events} />
       </aside>
