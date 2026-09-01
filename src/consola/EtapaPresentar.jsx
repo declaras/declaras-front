@@ -193,9 +193,15 @@ export default function EtapaPresentar({ caseId, caso, conciliacion, peticiones,
             {cerrar.running ? "Guardando…" : "Dar la declaración por lista"}
           </button>
           <ErrorApi error={cerrar.error} />
+          {/* ESTE TEXTO PROMETIA MAL, y se noto al usarlo: decia que despues de cerrar quedaba
+              "el paso que no podemos hacer nosotros", como si al dar por lista hubiera que ir a
+              llenar el formulario a mano. Es de antes de que Clara escribiera el borrador en el
+              portal, y desde entonces omite justamente el paso que sigue. Ahora dice los dos:
+              el que hacemos y el unico que no. */}
           <p className="presentar-nota">
-            Después de esto queda el paso que no podemos hacer nosotros: firmarla y presentarla en
-            el portal de la DIAN con tu firma electrónica.
+            {profunda
+              ? "Después Clara escribe el 210 en el portal y baja el PDF para revisarlo. Lo único que no podemos hacer es firmar y presentar: la firma electrónica es personal e intransferible."
+              : "Después Clara llena tu formulario en el portal de la DIAN y te lo deja listo. Lo único que falta es que entres a firmarlo con tu firma electrónica."}
           </p>
         </div>
       ) : null}
