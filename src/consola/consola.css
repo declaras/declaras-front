@@ -683,6 +683,9 @@
   color: #96262a;
   font-size: 13.5px;
 }
+/* Lo que respondio la DIAN, debajo del mensaje: es evidencia, no la explicacion, asi que va
+   mas chico y en otra linea. */
+.estado-error-motivo { display: block; margin-top: 6px; opacity: .8; font-size: 12.5px; }
 .estado-error code { font-family: ui-monospace, monospace; font-size: 12px; opacity: 0.7; }
 .skeleton {
   height: 13px;

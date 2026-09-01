@@ -50,7 +50,12 @@ const QUE_SIGNIFICA = {
   DIAN_PORTAL_TIMEOUT: "El portal de la DIAN se demoró demasiado. Se puede volver a intentar.",
   DIAN_RATE_LIMITED: "La DIAN está limitando las consultas. Hay que esperar unos minutos.",
   DIAN_SESSION_EXPIRED: "La sesión con la DIAN se venció. Hay que volver a empezar la consulta.",
-  DIAN_DOCUMENT_UNAVAILABLE: "La DIAN todavía no tiene ese documento publicado.",
+  // DIAN_DOCUMENT_UNAVAILABLE NO SE TRADUCE, y es a proposito. El backend lo lanza desde media
+  // docena de sitios con mensajes escritos y especificos ("la DIAN no tiene la declaracion del
+  // 2024; si la tiene de 2023, 2022..."), y una traduccion generica los tapaba todos con la
+  // misma frase. Al escribir el borrador quedaba peor que inutil: decia "la DIAN todavia no
+  // tiene ese documento publicado" cuando lo que fallo fue crear el borrador, o sea que
+  // apuntaba al lado contrario. Cuando el backend escribe mejor que la tabla, gana el backend.
   NETWORK_ERROR: "No se pudo contactar el servicio.",
   CASE_ALREADY_EXISTS: "Ya existe una declaración de esa persona para ese año.",
 };
@@ -60,11 +65,16 @@ export function ErrorApi({ error, children }) {
   const conocido = QUE_SIGNIFICA[error.code];
   const texto =
     typeof conocido === "function" ? conocido(error.details ?? {}) : (conocido ?? error.message);
+  // LO QUE RESPONDIO LA DIAN, CUANDO LO DIJO. Es la unica evidencia que distingue "no hay" de
+  // "la consulta fallo", y el backend se toma el trabajo de arrastrarla hasta aca; tirarla en
+  // la pantalla dejaba a quien opera adivinando con una frase generica.
+  const motivo = error.details?.motivo;
 
   return (
     <div className="estado-error">
       <AlertTriangle size={15} style={{ verticalAlign: "-2px", marginRight: 7 }} />
       {texto}
+      {motivo ? <small className="estado-error-motivo">La DIAN respondió: {motivo}</small> : null}
       {/* El codigo solo aparece cuando no hay una explicacion escrita: ahi si sirve, porque es
           lo que permite reportar el problema. Cuando la hay, es ruido. */}
       {conocido ? null : <code>{error.code}</code>}
