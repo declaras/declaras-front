@@ -158,11 +158,17 @@ function PartidaContestada({ caseId, partida, profunda, onCambio, Decision }) {
  * Aca cambiar es un solo clic porque la pregunta es binaria: se manda la respuesta contraria. Un
  * "no" dado por error apagaba la peticion para siempre, y con ella la deduccion que ese documento
  * habria soportado.
+ *
+ * Y AL LADO, DESHACER, que no es lo mismo y hacia falta. Cambiar sirve cuando se sabe la
+ * respuesta correcta ("dije que no y si tengo prepagada"). Deshacer sirve cuando NO se sabe:
+ * alguien contesto por error, probando, y lo que hace falta es que la pregunta vuelva a la cola
+ * en vez de afirmar en nombre del cliente lo contrario de lo que ya se afirmo mal.
  */
 function RespuestaContestada({ caseId, respuesta, profunda, onCambio }) {
   const cambiar = useAction(() =>
     api.postRespuesta(caseId, { pregunta: respuesta.pregunta, tiene: !respuesta.tiene }),
   );
+  const deshacer = useAction(() => api.deshacerRespuesta(caseId, respuesta.pregunta));
 
   // La etiqueta viene escrita para ir DENTRO de una oración ("el soporte de salarios"), así que se
   // usa así y no como título: partida en dos líneas quedaba "el soporte de salarios / No lo tienes",
@@ -184,6 +190,15 @@ function RespuestaContestada({ caseId, respuesta, profunda, onCambio }) {
         >
           {cambiar.running ? "cambiando…" : respuesta.tiene ? "marcar que no" : "marcar que sí"}
         </button>
+        <button
+          className="enlace-suave"
+          disabled={deshacer.running}
+          onClick={async () => {
+            if (await deshacer.run()) onCambio();
+          }}
+        >
+          {deshacer.running ? "deshaciendo…" : "deshacer"}
+        </button>
       </div>
       {profunda ? (
         <p className="contestada-quien">
@@ -191,6 +206,7 @@ function RespuestaContestada({ caseId, respuesta, profunda, onCambio }) {
         </p>
       ) : null}
       <ErrorApi error={cambiar.error} />
+      <ErrorApi error={deshacer.error} />
     </li>
   );
 }

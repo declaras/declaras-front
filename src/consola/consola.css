@@ -1761,7 +1761,11 @@ button.historial-abrir:hover b { color: var(--brand); }
   display: flex;
   align-items: baseline;
   gap: 12px;
+  flex-wrap: wrap;
 }
+/* La frase se queda con el espacio y empuja las acciones al final: con dos botones al lado
+   (cambiar y deshacer) sin esto se repartian el ancho a partes iguales con el texto. */
+.contestada-linea .contestada-frase { flex: 1 1 auto; }
 .contestada-que {
   flex: 1;
   min-width: 0;

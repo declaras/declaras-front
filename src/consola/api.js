@@ -209,6 +209,12 @@ export const api = {
   listPeticiones: (caseId) => request(`/v1/cases/${caseId}/peticiones`),
   listRespuestas: (caseId) => request(`/v1/cases/${caseId}/respuestas`),
   postRespuesta: (caseId, payload) => request(`/v1/cases/${caseId}/respuestas`, json(payload)),
+  // Deshacer NO es contestar lo contrario: devuelve la pregunta a SIN CONTESTAR, que es un
+  // estado distinto de "contestó que no" y el único que equivale a no haber respondido.
+  deshacerRespuesta: (caseId, pregunta) =>
+    request(`/v1/cases/${caseId}/respuestas/${encodeURIComponent(pregunta)}`, {
+      method: "DELETE",
+    }),
 
   getPatrimonio: (caseId) => request(`/v1/cases/${caseId}/patrimonio`),
   guardarBien: (caseId, bien) =>

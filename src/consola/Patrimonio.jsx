@@ -202,6 +202,7 @@ function YaContado({ reportados, deudas }) {
 function Compuerta({ caseId, pregunta, bienes, onCambio }) {
   const { profunda } = useVista();
   const [agregando, setAgregando] = useState(false);
+  const deshacer = useAction(() => api.deshacerRespuesta(caseId, pregunta.pregunta));
   const responder = useAction((tiene) =>
     api.postRespuesta(caseId, { pregunta: pregunta.pregunta, tiene }),
   );
@@ -219,9 +220,20 @@ function Compuerta({ caseId, pregunta, bienes, onCambio }) {
         <p>
           <X size={14} /> {NOMBRE[pregunta.tipo].varios}: no tiene
         </p>
-        <button className="enlace-suave" onClick={() => contestar(true)}>
-          corregir
+        {/* CORREGIR ES DESHACER, NO CONTESTAR QUE SI. Antes este boton escribia un "si", y
+            eso no devuelve las cosas a como estaban: afirma en nombre del cliente algo que
+            nunca dijo, y deja la pregunta contestada cuando lo que hacia falta era que
+            volviera a la cola. */}
+        <button
+          className="enlace-suave"
+          disabled={deshacer.running}
+          onClick={async () => {
+            if (await deshacer.run()) onCambio();
+          }}
+        >
+          {deshacer.running ? "deshaciendo…" : "deshacer"}
         </button>
+        <ErrorApi error={deshacer.error} />
       </div>
     );
   }
