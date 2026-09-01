@@ -64,6 +64,31 @@ src/
     consola.css           estilos, sobre los tokens de styles.css
 ```
 
+## Despliegue
+
+Vercel construye desde `main` en cada push. **El repositorio tiene que estar PÚBLICO**: el plan
+Hobby de Vercel no despliega repositorios privados de una organización, y cuando el repo pasa a
+privado los despliegues no fallan — dejan de dispararse, en silencio.
+
+Eso ya pasó dos veces y el síntoma engaña, porque el sitio sigue vivo sirviendo la versión
+anterior: no hay error en ninguna parte, simplemente los cambios nuevos no aparecen. La forma
+de comprobarlo en un minuto, sin entrar a Vercel, es buscar en el bundle desplegado un texto
+que solo exista en el código nuevo:
+
+```bash
+B=$(curl -s https://declaras.co/consola | grep -o 'index-[A-Za-z0-9_-]*\.js' | head -1)
+C=$(curl -s "https://declaras.co/assets/$B" | grep -o 'assets/Consola-[A-Za-z0-9_-]*\.js' | head -1)
+curl -s "https://declaras.co/$C" | grep -c "un texto que agregaste hoy"
+```
+
+Y para saber si el repo es público, sin token (200 público, 404 privado):
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" https://api.github.com/repos/declaras/declaras-front
+```
+
+El backend se despliega aparte, en Railway, desde su propio repositorio.
+
 ## Notas
 
 - Los errores de la API conservan el `code` estable que devuelve el backend
