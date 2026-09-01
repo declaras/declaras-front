@@ -9,7 +9,7 @@
 
 import { AlertCircle, Check, ExternalLink, Eye } from "lucide-react";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 
 import { api } from "./api";
 import { useAction, useApi } from "./hooks";
@@ -17,6 +17,7 @@ import { ErrorApi } from "./componentes";
 import { formatMoney } from "./formato";
 import Comparacion from "./Comparacion";
 import VisorDocumento from "./VisorDocumento";
+import Progreso from "./Progreso";
 import { useVista } from "./vista";
 
 export default function EtapaPresentar({ caseId, caso, conciliacion, peticiones, liquidacion, onIr, onCambio }) {
@@ -235,10 +236,50 @@ export default function EtapaPresentar({ caseId, caso, conciliacion, peticiones,
  * real el portal respondio 201 habiendo corrompido una letra, asi que un 201 sin relectura
  * no prueba nada. Si algo volvio distinto, se muestra en rojo con lo enviado y lo leido.
  */
+/**
+ * Los pasos que el backend hace por dentro al escribir, en el orden real.
+ *
+ * La escritura es UNA petición síncrona que hace cinco llamadas al portal, así que el frente no
+ * recibe el avance real: lo muestra por TIEMPO, que es una promesa de ritmo, no una medición.
+ * Es lo mismo que hace el flujo público de "consultar la DIAN", y por la misma razón: medio
+ * minuto de pantalla quieta no dice si sigue vivo. El último paso no avanza solo — se queda
+ * girando hasta que llega la respuesta de verdad.
+ */
+const PASOS_ESCRITURA = [
+  "Entrando al portal de la DIAN",
+  "Abriendo tu borrador del año",
+  "Llenando las casillas del 210",
+  "Verificando lo que quedó guardado",
+];
+
+/** Un tick cada segundo, sin estado propio: `useSyncExternalStore` recalcula en el snapshot. */
+function cadaSegundo(avisar) {
+  const reloj = setInterval(avisar, 1000);
+  return () => clearInterval(reloj);
+}
+
+function useProgresoPorTiempo(corriendo, desde) {
+  // El reloj no vive en estado de este componente —eso obligaría a un setState dentro de un
+  // efecto, que dispara renders en cascada—: `useSyncExternalStore` suscribe al tick y devuelve
+  // la hora actual, de la que se DERIVA el paso. En el servidor no hay reloj (snapshot fijo).
+  const ahora = useSyncExternalStore(cadaSegundo, () => Date.now(), () => 0);
+  const transcurrido = corriendo && desde ? ahora - desde : 0;
+  const indice = Math.min(Math.floor(transcurrido / 4000), PASOS_ESCRITURA.length - 1);
+  // Con la forma que espera <Progreso/>: los anteriores hechos, el actual corriendo, el resto
+  // pendiente. El último se queda en RUNNING hasta que la petición real termine.
+  return PASOS_ESCRITURA.map((label, i) => ({
+    key: label,
+    label,
+    state: i < indice ? "DONE" : i === indice ? "RUNNING" : "PENDING",
+  }));
+}
+
 function EscribirAlPortal({ caseId, profunda, documentos, onEscrito }) {
   const [clave, setClave] = useState("");
   const [resultado, setResultado] = useState(null);
+  const [desde, setDesde] = useState(null);
   const escribir = useAction((password) => api.escribirAlPortal(caseId, password));
+  const pasos = useProgresoPorTiempo(escribir.running, desde);
   // SI YA HAY CLAVE GUARDADA, NO SE PIDE. Preparar una declaración son varias visitas al
   // portal repartidas en días, y quien opera la consola no tiene la clave del cliente: pedirla
   // en cada paso significaba una llamada al cliente por paso.
@@ -248,6 +289,7 @@ function EscribirAlPortal({ caseId, profunda, documentos, onEscrito }) {
 
   const enviar = async (evento) => {
     evento.preventDefault();
+    setDesde(Date.now());
     const r = await escribir.run(clave);
     if (r) {
       setResultado(r);
@@ -257,6 +299,18 @@ function EscribirAlPortal({ caseId, profunda, documentos, onEscrito }) {
       onEscrito?.();
     }
   };
+
+  if (escribir.running) {
+    return (
+      <div className="portal-escribir">
+        <h3 className="revisar-titulo">Llevando el borrador al portal de la DIAN</h3>
+        <p className="presentar-nota">
+          Tarda cerca de medio minuto. No cierres esta pantalla.
+        </p>
+        <Progreso pasos={pasos} />
+      </div>
+    );
+  }
 
   return (
     <div className="portal-escribir">
@@ -300,7 +354,7 @@ function EscribirAlPortal({ caseId, profunda, documentos, onEscrito }) {
             className="btn-grande"
             disabled={escribir.running || (!clave && !hayGuardada)}
           >
-            {escribir.running ? "Escribiendo en el portal…" : "Escribir el borrador"}
+            Escribir el borrador
           </button>
           <ErrorApi error={escribir.error} />
           <ErrorApi error={olvidar.error} />
