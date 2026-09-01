@@ -7,7 +7,7 @@
  * Y cada linea que NO esta lista es un enlace a donde se arregla, no un reproche.
  */
 
-import { AlertCircle, Check, ExternalLink } from "lucide-react";
+import { AlertCircle, Check, ExternalLink, Eye } from "lucide-react";
 
 import { useState } from "react";
 
@@ -16,6 +16,7 @@ import { useAction, useApi } from "./hooks";
 import { ErrorApi } from "./componentes";
 import { formatMoney } from "./formato";
 import Comparacion from "./Comparacion";
+import VisorDocumento from "./VisorDocumento";
 import { useVista } from "./vista";
 
 export default function EtapaPresentar({ caseId, caso, conciliacion, peticiones, liquidacion, onIr, onCambio }) {
@@ -199,7 +200,14 @@ export default function EtapaPresentar({ caseId, caso, conciliacion, peticiones,
         </div>
       ) : null}
 
-      {yaLista ? <EscribirAlPortal caseId={caseId} profunda={profunda} /> : null}
+      {yaLista ? (
+        <EscribirAlPortal
+          caseId={caseId}
+          profunda={profunda}
+          documentos={caso.documents}
+          onEscrito={onCambio}
+        />
+      ) : null}
     </section>
   );
 }
@@ -221,7 +229,7 @@ export default function EtapaPresentar({ caseId, caso, conciliacion, peticiones,
  * real el portal respondio 201 habiendo corrompido una letra, asi que un 201 sin relectura
  * no prueba nada. Si algo volvio distinto, se muestra en rojo con lo enviado y lo leido.
  */
-function EscribirAlPortal({ caseId, profunda }) {
+function EscribirAlPortal({ caseId, profunda, documentos, onEscrito }) {
   const [clave, setClave] = useState("");
   const [resultado, setResultado] = useState(null);
   const escribir = useAction((password) => api.escribirAlPortal(caseId, password));
@@ -232,6 +240,9 @@ function EscribirAlPortal({ caseId, profunda }) {
     if (r) {
       setResultado(r);
       setClave("");
+      // El expediente cambió: el PDF del borrador acaba de entrar como documento. Sin esto
+      // habría que refrescar la página para poder abrirlo.
+      onEscrito?.();
     }
   };
 
@@ -261,15 +272,44 @@ function EscribirAlPortal({ caseId, profunda }) {
           <ErrorApi error={escribir.error} />
         </form>
       ) : (
-        <ResultadoEscritura resultado={resultado} profunda={profunda} />
+        <ResultadoEscritura
+          resultado={resultado}
+          profunda={profunda}
+          documentos={documentos}
+        />
       )}
     </div>
   );
 }
 
-function ResultadoEscritura({ resultado, profunda }) {
-  const { verificado, escritas, form_id: formId, diferencias, ajenas } = resultado;
+/**
+ * Lo que quedo en el portal.
+ *
+ * ═══ EL PDF ES LA PRUEBA, Y ANTES NO ESTABA ═══
+ *
+ * La verificacion casilla por casilla dice que el portal guardo lo que se envio, pero eso es
+ * el sistema dandose la razon a si mismo. El documento que genera la DIAN es lo que un
+ * contador puede abrir, archivar y mostrarle al cliente. Hasta ahora el proceso terminaba sin
+ * el: quedaba un enlace al portal, o sea "vaya a verlo usted".
+ *
+ * Se baja en la misma sesion de la escritura y entra al expediente como un documento mas, asi
+ * que ademas de este boton queda en la lista de documentos, que es donde alguien lo va a
+ * buscar la semana entrante.
+ */
+function ResultadoEscritura({ resultado, profunda, documentos }) {
+  const {
+    verificado,
+    escritas,
+    form_id: formId,
+    diferencias,
+    ajenas,
+    documento_id: documentoId,
+  } = resultado;
   const numerosAjenos = Object.keys(ajenas ?? {});
+  const [viendo, setViendo] = useState(false);
+  // La escritura devuelve el id; la URL de descarga vive en el documento del expediente, que
+  // se recargo al terminar. Si todavia no llego, el boton no se pinta en vez de fallar.
+  const borrador = documentos?.find((d) => d.id === documentoId) ?? null;
 
   return (
     <div className={verificado ? "portal-resultado" : "portal-resultado portal-fallo"}>
@@ -296,6 +336,19 @@ function ResultadoEscritura({ resultado, profunda }) {
             ? `El borrador además trae cifras que Clara no calcula (casillas ${numerosAjenos.join(", ")}): estaban en el portal y se conservaron. Revisarlas antes de firmar.`
             : "El borrador trae además unas cifras que ya estaban en el portal. Tu contador las revisa antes de la firma."}
         </p>
+      ) : null}
+
+      {borrador ? (
+        <div className="portal-acciones">
+          <button className="btn-mini" onClick={() => setViendo(true)}>
+            <Eye size={13} />
+            Ver el borrador que quedó
+          </button>
+        </div>
+      ) : null}
+
+      {viendo && borrador ? (
+        <VisorDocumento doc={borrador} onCerrar={() => setViendo(false)} />
       ) : null}
 
       {verificado ? (

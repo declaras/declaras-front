@@ -77,6 +77,7 @@ const DOC_LABELS_CONTADOR = {
   SUGGESTED_RETURN: "Borrador sugerido por la DIAN",
   EINVOICE_SUMMARY: "Facturas electrónicas",
   CLIENT_DOCUMENT: "Documento que aportó el cliente",
+  BORRADOR_ESCRITO: "210 escrito en el portal",
 };
 
 /**
@@ -92,6 +93,7 @@ export function anioDelDocumento(doc) {
 }
 
 const DOC_LABELS = {
+  BORRADOR_ESCRITO: "Tu borrador, listo en la DIAN",
   RUT: "Tu RUT",
   EXOGENA: "Lo que otros reportaron a tu nombre",
   PRIOR_RETURN: "Tu declaración del año pasado",

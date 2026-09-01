@@ -52,6 +52,10 @@ export default function Historial({ caseId, documentos }) {
   const [viendo, setViendo] = useState(null);
 
   const filas = historial.data ?? [];
+  // SIN NINGUNA GUARDADA NO HAY SERIE QUE MOSTRAR. Cinco filas diciendo "sin revisar" es una
+  // tabla vacia de significado: ocupa el mismo espacio que la informacion y no dice ni que
+  // hay, ni que falta, ni que hacer. Lo que corresponde ahi es una frase.
+  const hayAlguna = filas.some((f) => f.estado === "guardada");
   // El estado viene del backend; la URL de descarga vive en el documento del expediente. Se
   // cruzan por año, que es lo unico que los dos lados comparten.
   const documentoDe = (fila) =>
@@ -63,12 +67,14 @@ export default function Historial({ caseId, documentos }) {
     <section className="bloque">
       <header className="bloque-top">
         <h2 className="bloque-titulo">Declaraciones anteriores</h2>
-        <p className="bloque-nota">Lo que la DIAN tiene presentado a tu nombre.</p>
+        <p className="bloque-nota">
+          Lo que la DIAN tiene presentado a tu nombre en años anteriores.
+        </p>
       </header>
 
       <ErrorApi error={historial.error} />
 
-      {filas.length ? (
+      {hayAlguna ? (
         <ul className="historial">
           {filas.map((fila) => {
             const doc = fila.estado === "guardada" ? documentoDe(fila) : null;
@@ -82,7 +88,12 @@ export default function Historial({ caseId, documentos }) {
             );
           })}
         </ul>
-      ) : null}
+      ) : (
+        <p className="estado">
+          Llegan al consultar la DIAN. Si este expediente se consultó antes, vuelve a
+          consultarlo y quedan aquí.
+        </p>
+      )}
 
       {viendo ? <VisorDocumento doc={viendo} onCerrar={() => setViendo(null)} /> : null}
     </section>

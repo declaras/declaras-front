@@ -1590,6 +1590,9 @@
 .check-detalle + .check-detalle { margin-top: 3px; }
 
 .presentar-cerrar { margin-top: 8px; }
+/* La accion de ver el borrador: va antes del boton grande de ir a firmar, porque mirar lo que
+   quedo es el paso previo a firmarlo. */
+.portal-acciones { display: flex; gap: 8px; margin: 12px 0 4px; }
 .presentar-nota {
   margin: 16px 0 0;
   color: var(--muted);
