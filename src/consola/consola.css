@@ -2176,14 +2176,18 @@ button.historial-abrir:hover b { color: var(--brand); }
 .patrimonio-cuenta dd.strong { font-weight: 600; }
 /* Que el patrimonio haya bajado no es un error del sistema, es una pregunta para el contador:
    o se vendio algo o falta algo. Por eso avisa y no bloquea. */
-.patrimonio-alerta {
-  margin: 14px 0 0;
-  padding-top: 12px;
-  border-top: 1px dashed var(--line);
-  color: var(--ink);
+/* La referencia del año pasado: informa, no alarma. Por eso no lleva el color de alerta:
+   que el patrimonio haya bajado puede ser que se vendio algo, y acusar de un olvido a quien
+   vendio su apartamento es peor que no decir nada. */
+.patrimonio-referencia {
+  margin: 0 0 18px;
+  padding: 12px 14px;
+  border-left: 2px solid var(--line);
+  color: var(--muted);
   font-size: 13.5px;
-  max-width: 62ch;
+  line-height: 1.55;
 }
+.patrimonio-referencia b { color: var(--ink); font-weight: 600; }
 
 .patrimonio-contado { margin-top: 14px; }
 .patrimonio-lista-contada { list-style: none; margin: 10px 0 0; padding: 0; }

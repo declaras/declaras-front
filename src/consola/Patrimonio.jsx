@@ -66,6 +66,7 @@ export default function Patrimonio({ caseId, datos, onCambio }) {
       <div className="bloque-cuerpo">
         <Cuenta datos={datos} profunda={profunda} />
         <YaContado reportados={datos.reportados} deudas={datos.deudas_reportadas} />
+        <Referencia datos={datos} profunda={profunda} />
 
         {datos.preguntas.map((pregunta) => (
           <Compuerta
@@ -84,15 +85,17 @@ export default function Patrimonio({ caseId, datos, onCambio }) {
 /**
  * La suma, arriba y no al final.
  *
- * Va primero porque es la respuesta a la pregunta que alguien trae cuando abre esta pantalla ("¿en
- * cuánto va mi patrimonio?"), y porque el numero del año pasado al lado es lo que convierte el
- * cuestionario en algo que se puede verificar: si el año pasado declaro 180 millones y este año
- * vamos en 12, falta algo, y eso se ve sin leer una sola pregunta.
+ * Va primero porque es la respuesta a la pregunta que alguien trae cuando abre esta pantalla:
+ * "¿en cuánto va mi patrimonio?".
+ *
+ * LA COMPARACION CON EL AÑO PASADO SE FUE DE AQUI, a `Referencia`, y no fue solo por dónde se
+ * lee. Aquí comparaba patrimonio LIQUIDO contra líquido, y el líquido baja también cuando
+ * alguien se endeuda: le decía "falta algo por registrar" a quien pidió un crédito, que es un
+ * falso positivo. Lo que estas preguntas capturan son BIENES, así que la comparación que
+ * corresponde es contra el patrimonio BRUTO del año pasado.
  */
 function Cuenta({ datos, profunda }) {
-  const anterior = datos.patrimonio_liquido_anterior;
   const liquido = datos.total_bruto - datos.total_deudas;
-  const bajo = anterior != null && anterior > 0 && liquido < anterior;
 
   return (
     <div className="patrimonio-cuenta">
@@ -111,15 +114,49 @@ function Cuenta({ datos, profunda }) {
         </div>
       </dl>
 
-      {bajo ? (
-        // El patrimonio no baja solo. Si bajo, o se vendio algo o falta algo, y las dos cosas
-        // hay que resolverlas antes de presentar.
-        <p className="patrimonio-alerta">
-          El año pasado declaraste {formatMoney(anterior)} y hoy vamos en {formatMoney(liquido)}.
-          Si no vendiste nada, falta algo por registrar.
-        </p>
-      ) : null}
     </div>
+  );
+}
+
+/**
+ * Lo que declaro el año pasado, JUSTO ANTES de las preguntas.
+ *
+ * ═══ EL DATO ESTABA Y NO SE USABA DONDE HACIA FALTA ═══
+ *
+ * Un inmueble no lo reporta nadie año tras año —ninguna notaría le dice a la DIAN que alguien
+ * SIGUE siendo dueño de su apartamento— así que el patrimonio se pregunta. Pero preguntarlo en
+ * blanco, teniendo la declaración del año pasado en el expediente, es esconder el dato más útil
+ * que hay: el año pasado esta persona declaró un número, y ese número dice cuánto había.
+ *
+ * Va aquí y no arriba con la suma porque es donde se DECIDE. Arriba contesta "¿en cuánto voy?";
+ * acá contesta "¿me falta algo por registrar?", que es la pregunta que uno se hace un segundo
+ * antes de contestar "no tengo carro".
+ *
+ * ═══ ES UNA PISTA, NO UN FALTANTE ═══
+ *
+ * El patrimonio pudo bajar de verdad: se vendió el carro, se gastó el ahorro. Por eso el texto
+ * pregunta en vez de acusar. Decirle "te falta registrar $168.000.000" a alguien que vendió su
+ * apartamento seria inventarle un bien.
+ */
+function Referencia({ datos, profunda }) {
+  const anterior = datos.bruto_anterior;
+  const falta = datos.por_explicar;
+  if (anterior == null || anterior <= 0) return null;
+
+  return (
+    <p className="patrimonio-referencia">
+      {profunda
+        ? `El año pasado el cliente declaró ${formatMoney(anterior)} de patrimonio bruto.`
+        : `El año pasado declaraste ${formatMoney(anterior)} en bienes.`}{" "}
+      {falta ? (
+        <b>
+          Acá van {formatMoney(datos.total_bruto)}: quedan {formatMoney(falta)} sin registrar, o
+          se vendió algo.
+        </b>
+      ) : (
+        <b>Lo registrado acá ya lo cubre.</b>
+      )}
+    </p>
   );
 }
 
