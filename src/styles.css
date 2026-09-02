@@ -1711,3 +1711,62 @@ footer { position:relative;padding:0;color:#d6ded9;background:#07130f; }
 @media (prefers-reduced-motion: reduce) {
   .consulta { transition: none; }
 }
+
+/* ═══════════════ términos y política de datos ═══════════════
+   Un documento legal que se pueda leer. El del sector son dieciseis paginas de bloque corrido, y
+   un consentimiento que nadie puede leer es un consentimiento debil: la legibilidad aca no es
+   estetica, es lo que hace que el permiso valga. */
+.legal { background: var(--cream); min-height: 100vh; }
+.legal-ancho { max-width: 760px; }
+.legal-top { padding: 108px 0 26px; }
+.legal-top h1 { font-size: clamp(30px, 6vw, 42px); margin-bottom: 14px; }
+.legal-bajada { margin: 0; color: var(--muted); font-size: 16.5px; line-height: 1.6; max-width: 62ch; }
+.legal-fecha { margin: 14px 0 0; color: var(--muted); font-size: 13px; }
+.legal-cuerpo { padding-bottom: 72px; }
+
+/* El indice: en un documento largo, poder saltar a "tu clave de la DIAN" sin leer lo anterior
+   es la diferencia entre que se consulte y que no. */
+.legal-indice {
+  margin: 8px 0 34px; padding: 18px 20px;
+  background: var(--white); border: 1px solid var(--line); border-radius: 14px;
+}
+.legal-indice b { display: block; margin-bottom: 10px; font-size: 13px; }
+.legal-indice ol { margin: 0; padding-left: 20px; columns: 2; column-gap: 26px; }
+.legal-indice li { margin-bottom: 6px; font-size: 13.5px; break-inside: avoid; }
+.legal-indice a { color: var(--forest); text-decoration: none; }
+.legal-indice a:hover { text-decoration: underline; }
+
+.legal-intro { font-size: 16px; line-height: 1.7; margin-bottom: 34px; }
+.legal h2 {
+  font-family: "Fraunces", serif; font-weight: 500; font-size: 27px; line-height: 1.2;
+  margin: 0 0 22px; padding-bottom: 12px; border-bottom: 2px solid var(--line);
+}
+.legal-h2-segundo { margin-top: 58px; }
+.legal-nota { margin: -14px 0 26px; color: var(--muted); font-size: 13.5px; }
+.legal h3 { font-size: 19px; line-height: 1.3; margin: 34px 0 10px; }
+/* EL MARGEN DE ANCLA VA EN LA SECCION, que es lo que apunta el indice, no en el h3. Puesto en el
+   h3 no hacia nada: la cabecera es fija y el titulo quedaba justo debajo de ella, o sea tapado. */
+.legal section { scroll-margin-top: 92px; }
+.legal p { margin: 0 0 13px; font-size: 15.5px; line-height: 1.72; }
+.legal ul { margin: 0 0 13px; padding-left: 21px; }
+.legal li { margin-bottom: 8px; font-size: 15.5px; line-height: 1.65; }
+
+/* Lo que mas se malinterpreta del servicio va destacado: que no firmamos, y que la clave se
+   guarda cifrada y se puede borrar. Enterrarlas en el corrido seria esconderlas. */
+.legal-destacado {
+  margin: 16px 0 18px; padding: 18px 20px;
+  background: var(--white); border-left: 3px solid var(--brand); border-radius: 0 12px 12px 0;
+}
+.legal-destacado > b { display: block; margin-bottom: 8px; font-size: 16px; }
+.legal-destacado p:last-child, .legal-destacado ul:last-child { margin-bottom: 0; }
+
+.legal-cierre {
+  margin-top: 44px; padding: 18px 20px;
+  background: var(--white); border: 1px solid var(--line); border-radius: 14px;
+  font-size: 15px;
+}
+
+@media (max-width: 620px) {
+  .legal-top { padding-top: 92px; }
+  .legal-indice ol { columns: 1; }
+}

@@ -24,6 +24,7 @@ const App = lazy(() => import("./App"));
 const Consola = lazy(() => import("./consola/Consola"));
 const Login = lazy(() => import("./consola/Login"));
 const GuiaRenta2026 = lazy(() => import("./contenido/GuiaRenta2026"));
+const Legal = lazy(() => import("./contenido/Legal"));
 const SancionRenta = lazy(() => import("./contenido/SancionRenta"));
 const Deducciones = lazy(() => import("./contenido/Deducciones"));
 const PasoAPaso = lazy(() => import("./contenido/PasoAPaso"));
@@ -53,6 +54,7 @@ createRoot(document.getElementById("root")).render(
         <Routes>
           <Route path="/consola/*" element={<Consola />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/terminos" element={<Legal />} />
           <Route path="/declaracion-de-renta-2026" element={<GuiaRenta2026 />} />
           <Route path="/sancion-por-no-declarar-renta" element={<SancionRenta />} />
           <Route path="/deducciones-declaracion-de-renta" element={<Deducciones />} />
