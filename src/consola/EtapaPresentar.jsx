@@ -14,7 +14,7 @@ import { useState, useSyncExternalStore } from "react";
 import { api } from "./api";
 import { useAction, useApi } from "./hooks";
 import { ErrorApi } from "./componentes";
-import { formatMoney } from "./formato";
+import { formatDate, formatMoney } from "./formato";
 import Comparacion from "./Comparacion";
 import VisorDocumento from "./VisorDocumento";
 import Progreso from "./Progreso";
@@ -212,6 +212,7 @@ export default function EtapaPresentar({ caseId, caso, conciliacion, peticiones,
           caseId={caseId}
           profunda={profunda}
           documentos={caso.documents}
+          cambiadoEl={caso.updated_at}
           onEscrito={onCambio}
         />
       ) : null}
@@ -274,12 +275,39 @@ function useProgresoPorTiempo(corriendo, desde) {
   }));
 }
 
-function EscribirAlPortal({ caseId, profunda, documentos, onEscrito }) {
+/**
+ * El borrador que YA quedo en el portal, si lo hay.
+ *
+ * ═══ EL ESTADO VIVIA SOLO EN LA PANTALLA ═══
+ *
+ * El resultado de escribir se guardaba en `useState`, asi que al recargar la pagina se perdia y
+ * el formulario volvia a pedir la clave como si nunca se hubiera escrito. Quien entraba al dia
+ * siguiente no tenia forma de saber si ya lo habia llevado al portal, y la unica salida era
+ * escribirlo otra vez — una sesion mas contra la DIAN para averiguar algo que el expediente ya
+ * sabia.
+ *
+ * El dato SI es persistente: al escribir queda el PDF del borrador como documento del
+ * expediente. De ahi se deriva, que ademas es la fuente correcta —el hecho es que el documento
+ * existe, no que esta pantalla se acuerde—.
+ */
+function borradorYaEscrito(documentos, cambiadoEl) {
+  const doc = documentos?.find((d) => d.doc_type === "BORRADOR_ESCRITO") ?? null;
+  if (!doc) return null;
+  // ¿El expediente cambio DESPUES de escribirlo? Entonces lo que esta en el portal ya no es lo
+  // que dice la pantalla, y firmarlo seria firmar cifras viejas.
+  const desactualizado =
+    Boolean(cambiadoEl) && new Date(cambiadoEl).getTime() > new Date(doc.added_at).getTime();
+  return { doc, desactualizado };
+}
+
+function EscribirAlPortal({ caseId, profunda, documentos, cambiadoEl, onEscrito }) {
   const [clave, setClave] = useState("");
   const [resultado, setResultado] = useState(null);
   const [desde, setDesde] = useState(null);
+  const [reescribiendo, setReescribiendo] = useState(false);
   const escribir = useAction((password) => api.escribirAlPortal(caseId, password));
   const pasos = useProgresoPorTiempo(escribir.running, desde);
+  const anterior = borradorYaEscrito(documentos, cambiadoEl);
   // SI YA HAY CLAVE GUARDADA, NO SE PIDE. Preparar una declaración son varias visitas al
   // portal repartidas en días, y quien opera la consola no tiene la clave del cliente: pedirla
   // en cada paso significaba una llamada al cliente por paso.
@@ -299,6 +327,19 @@ function EscribirAlPortal({ caseId, profunda, documentos, onEscrito }) {
       onEscrito?.();
     }
   };
+
+  // YA ESTA ESCRITO: se muestra eso, no un formulario que invita a repetir una operacion
+  // contra la DIAN que ya se hizo. `resultado` gana cuando se acaba de escribir en esta visita,
+  // porque trae la verificacion casilla por casilla que el documento solo no cuenta.
+  if (anterior && !resultado && !reescribiendo && !escribir.running) {
+    return (
+      <YaEnElPortal
+        anterior={anterior}
+        profunda={profunda}
+        onReescribir={() => setReescribiendo(true)}
+      />
+    );
+  }
 
   if (escribir.running) {
     return (
@@ -366,6 +407,62 @@ function EscribirAlPortal({ caseId, profunda, documentos, onEscrito }) {
           documentos={documentos}
         />
       )}
+    </div>
+  );
+}
+
+/**
+ * El borrador que ya esta en el portal, al volver a entrar.
+ *
+ * Contesta de una la pregunta con la que alguien abre esta pantalla al dia siguiente: ¿ya lo
+ * llevamos? Antes habia que escribirlo otra vez para saberlo, o sea gastar una sesion contra la
+ * DIAN para averiguar algo que el expediente ya sabia.
+ *
+ * Y si el expediente cambio DESPUES de escribirlo, lo dice: lo que esta en el portal ya no es lo
+ * que muestra la pantalla, y firmarlo seria firmar cifras viejas.
+ */
+function YaEnElPortal({ anterior, profunda, onReescribir }) {
+  const [viendo, setViendo] = useState(false);
+  const { doc, desactualizado } = anterior;
+
+  return (
+    <div className={desactualizado ? "portal-escribir portal-viejo" : "portal-escribir"}>
+      <h3 className="revisar-titulo">
+        {desactualizado ? "El borrador del portal quedó desactualizado" : "Ya está en el portal"}
+      </h3>
+      <p className="presentar-nota">
+        {desactualizado
+          ? `Se escribió el ${formatDate(doc.added_at)} y el expediente cambió después. Lo que está en la DIAN ya no es lo que ves acá: hay que volver a escribirlo antes de firmar.`
+          : `Lo llevamos el ${formatDate(doc.added_at)}. ${
+              profunda
+                ? "Falta que el cliente entre a firmarlo."
+                : "Solo falta que entres a firmarlo."
+            }`}
+      </p>
+
+      <div className="portal-acciones">
+        <button className="btn-mini" onClick={() => setViendo(true)}>
+          <Eye size={13} />
+          Ver el borrador que quedó
+        </button>
+        <button className="btn-mini" onClick={onReescribir}>
+          {desactualizado ? "Volver a escribirlo" : "Escribirlo de nuevo"}
+        </button>
+      </div>
+
+      {viendo ? <VisorDocumento doc={doc} onCerrar={() => setViendo(false)} /> : null}
+
+      {!desactualizado ? (
+        <a
+          className="btn-grande"
+          href="https://muisca.dian.gov.co/WebDilIngresoFormRenta210/#/ingreso/borradores"
+          target="_blank"
+          rel="noreferrer"
+        >
+          Entrar a la DIAN a firmar
+          <ExternalLink size={15} />
+        </a>
+      ) : null}
     </div>
   );
 }

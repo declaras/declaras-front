@@ -1596,6 +1596,10 @@
 /* La accion de ver el borrador: va antes del boton grande de ir a firmar, porque mirar lo que
    quedo es el paso previo a firmarlo. */
 .portal-acciones { display: flex; gap: 8px; margin: 12px 0 4px; }
+/* Un borrador que quedo desactualizado: lo que esta en la DIAN ya no es lo que muestra la
+   pantalla, y firmarlo seria firmar cifras viejas. Se marca sin alarmar: es algo que se
+   resuelve volviendo a escribir, no un error. */
+.portal-viejo { border-left: 2px solid #d0a04a; padding-left: 16px; }
 .presentar-nota {
   margin: 16px 0 0;
   color: var(--muted);
