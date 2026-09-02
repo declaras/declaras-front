@@ -23,7 +23,6 @@ import { Avatar, Button } from "./comun/piezas";
 import { referenciaDeAnuncio, registrar, registrarAperturaDeChat } from "./comun/medicion";
 import { MENSAJES } from "./comun/mensajes";
 import Promo from "./comun/Promo";
-import Consulta from "./comun/Consulta";
 import ConsultaRapida from "./comun/ConsultaRapida";
 import { pesos, PRECIO, RACIMO } from "./contenido/datos";
 import phoneArtwork from "./assets/clara-phone-cutout.png";
@@ -663,14 +662,19 @@ function Landing({ goTo }) {
           <section id="consulta" className="section consulta-seccion">
             <div className="container">
               <div className="section-heading">
-                <div className="eyebrow">GRATIS Y EN UN MINUTO</div>
+                <div className="eyebrow">GRATIS Y EN DOS TOQUES</div>
                 <h2>¿No sabes si te toca declarar?</h2>
+                {/* EL MISMO FLUJO EN LAS DOS PUERTAS. Estuvo un rato con el cuestionario largo
+                    aca y el corto en /te-toca-declarar, para poder comparar los dos embudos. La
+                    comparacion dejo de tener sentido cuando el corto resulto mejor en todo lo
+                    que se puede medir sin trafico: dos toques contra cuatro campos y cinco
+                    preguntas, y sin las tres que nadie puede contestar de memoria. */}
                 <p>
-                  Es la pregunta que más nos hacen. Contéstala acá sin escribirle a nadie: son cinco
-                  preguntas y casi siempre termina en la primera.
+                  Es la pregunta que más nos hacen. Contéstala acá sin escribirle a nadie: son dos
+                  toques y a veces basta con uno.
                 </p>
               </div>
-              <Consulta />
+              <ConsultaRapida />
             </div>
           </section>
         )}
