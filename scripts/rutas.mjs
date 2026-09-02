@@ -53,6 +53,15 @@ export const RUTAS = [
     fuentes: ["src/contenido/Deducciones.jsx", "src/contenido/datos.js"],
   },
   {
+    // Prioridad baja y frecuencia anual a proposito: es una pagina que tiene que EXISTIR y ser
+    // encontrable, no una por la que compitamos en buscadores. Lo que no puede es faltar, porque
+    // la casilla obligatoria de la consulta enlaza aca y estaba cayendo en 404.
+    ruta: "/terminos",
+    prioridad: "0.3",
+    frecuencia: "yearly",
+    fuentes: ["src/contenido/Legal.jsx"],
+  },
+  {
     ruta: "/como-declarar-renta-paso-a-paso",
     prioridad: "0.8",
     frecuencia: "monthly",

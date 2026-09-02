@@ -9,6 +9,7 @@ import GuiaRenta2026, { FAQ } from "./contenido/GuiaRenta2026";
 import SancionRenta, { PREGUNTAS as SANCION } from "./contenido/SancionRenta";
 import Deducciones, { PREGUNTAS as DEDUCCIONES } from "./contenido/Deducciones";
 import PasoAPaso, { PREGUNTAS as PASOS } from "./contenido/PasoAPaso";
+import Legal from "./contenido/Legal";
 import { cabezaDe, PAGINAS, SITIO } from "./seo/paginas";
 
 /**
@@ -32,6 +33,8 @@ const RUTAS = {
   "/sancion-por-no-declarar-renta": [SancionRenta, SANCION],
   "/deducciones-declaracion-de-renta": [Deducciones, DEDUCCIONES],
   "/como-declarar-renta-paso-a-paso": [PasoAPaso, PASOS],
+  // Sin preguntas frecuentes: un documento legal no es una pagina de contenido.
+  "/terminos": [Legal, []],
 };
 
 /** Los datos estructurados de la ruta, armados sin renderizar: los efectos no corren en el servidor. */

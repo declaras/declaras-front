@@ -38,6 +38,16 @@ export const PAGINAS = {
     migaja: "Declaración de renta 2026",
     h1: "Declaración de renta 2026 en Colombia: quién debe declarar, fechas por cédula y cómo hacerla",
   },
+  // NO LLEVA `tipo: "article"` NI `publicado`: no es contenido editorial, es el documento
+  // vigente. Marcarlo como articulo con fecha invita a que un buscador muestre "publicado el
+  // ..." sobre unas condiciones de servicio, que es justo lo que no se quiere decir.
+  "/terminos": {
+    titulo: "Términos y política de datos | Clara",
+    descripcion:
+      "Las condiciones del servicio de Clara y qué hacemos con tus datos personales, incluida tu clave de la DIAN. Escrito para que se pueda leer.",
+    migaja: "Términos y política de datos",
+    h1: "Términos y política de datos",
+  },
   "/sancion-por-no-declarar-renta": {
     titulo: "Sanción por no declarar renta en 2026: cuánto es | Clara",
     descripcion:
