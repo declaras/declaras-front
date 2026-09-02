@@ -14,4 +14,15 @@ export const MENSAJES = {
   meToca: "Hola, ya sé que me toca declarar y quiero hacer mi declaración con Clara.",
   averiguar: "Hola Clara, quiero saber si debo declarar renta.",
   experto: "Hola, quiero que un contador revise si me toca declarar renta.",
+  // LOS DOS QUE PARTEN EL PRECIO. Quien no puede entrar al portal no tiene camino gratis: para
+  // esa persona hay un tramite de verdad (sacar el RUT, habilitar la cuenta, recuperar la clave)
+  // y es lo que se cobra. El texto lo dice para que la conversacion arranque sabiendolo, sin
+  // tener que averiguarlo preguntando.
+  //
+  // "No se mi clave" y no "no tengo cuenta", a proposito: tener RUT, tener la cuenta activa en
+  // Muisca y acordarse de la clave son tres cosas distintas, y mucha gente tiene RUT de algun
+  // trabajo sin haber entrado nunca. Lo que la persona SI puede juzgar es si puede entrar, y en
+  // los tres casos el tramite que hay que hacer es el mismo.
+  sinClave: "Hola, quiero saber si me toca declarar renta. No sé mi clave de la DIAN.",
+  conClave: "Hola, quiero saber si me toca declarar renta. Tengo mi clave de la DIAN.",
 };

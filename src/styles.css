@@ -1186,6 +1186,12 @@ footer { position:relative;padding:0;color:#d6ded9;background:#07130f; }
  * que se lea como una herramienta, algo con lo que se hace algo, no algo que se lee. */
 .consulta-seccion { background: var(--cream); }
 .consulta {
+  /* LA TARJETA MANDA SU PROPIO COLOR DE TEXTO. En el hero de /te-toca-declarar el contenedor
+     pone `color: white` para la copia sobre la foto, y la tarjeta va encima en blanco: sin esta
+     linea, todo lo de adentro que no declare su color se vuelve blanco sobre blanco, o sea
+     invisible. Funcionaba de casualidad porque cada elemento traia el suyo, asi que el primer
+     elemento nuevo que se agregara sin color desaparecia. Paso con la pregunta del sueldo. */
+  color: var(--ink);
   position: relative;
   /* Al llevar la tarjeta al comienzo, deja aire arriba. LA CABECERA ES FIJA Y MIDE 74px: un
      margen menor que eso pone el titulo del paso exactamente debajo de ella, y el veredicto
@@ -1245,6 +1251,140 @@ footer { position:relative;padding:0;color:#d6ded9;background:#07130f; }
 .consulta-boton-grande { width: 100%; margin-top: 6px; padding: 15px 22px; font-size: 15.5px; }
 .consulta-boton-suave { background: white; border: 1px solid var(--line); color: var(--ink); }
 .consulta-boton-suave:hover:not(:disabled) { background: var(--cream); border-color: var(--muted); }
+
+/* ═══════════════ el flujo corto de /te-toca-declarar ═══════════════ */
+
+/* EN COLUMNA Y NO EN FILA. Tres botones en fila dejan "Menos de $4 millones" en tres renglones
+   de dos palabras en un movil de 360 puntos, que es el 83% del trafico. Apilados se leen. */
+.rapida-opciones { display: grid; gap: 7px; margin-top: 11px; }
+.rapida-opcion {
+  width: 100%;
+  padding: 13px 15px;
+  border: 1.5px solid var(--line);
+  border-radius: 11px;
+  background: white;
+  color: var(--ink);
+  font-size: 14.5px;
+  font-weight: 550;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color .15s ease, background .15s ease;
+}
+.rapida-opcion:hover { border-color: var(--brand); background: #f4fbf8; }
+.rapida-opcion-duda { color: var(--muted); }
+.rapida-opcion-duda:hover { color: var(--ink); }
+.rapida-ayuda { margin: 8px 0 0; color: var(--muted); font-size: 12.5px; line-height: 1.5; }
+
+/* El atajo del que ya sabe que le toca: no se le cobra peaje de cuestionario para comprar. */
+.rapida-atajo {
+  display: block;
+  width: 100%;
+  margin-top: 20px;
+  padding: 12px 15px;
+  border: 1px dashed var(--line);
+  border-radius: 11px;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+.rapida-atajo:hover { border-color: var(--brand); background: #f7fdfa; }
+.rapida-atajo span { display: block; color: var(--muted); font-size: 12.5px; }
+.rapida-atajo b { display: flex; align-items: center; gap: 5px; margin-top: 2px;
+                  color: var(--brand); font-size: 13.5px; }
+
+/* Los tres topes que no se preguntan. Es el argumento de venta, asi que pesa mas que una nota. */
+.rapida-faltan {
+  margin-top: 18px;
+  padding: 14px 15px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--cream);
+}
+.rapida-faltan > b { display: flex; align-items: center; gap: 6px; font-size: 13.5px; }
+.rapida-faltan > b svg { color: var(--brand); }
+/* Tres lineas de tres palabras, con vineta. Antes eran frases largas con la cifra repetida
+   debajo de cada una: seis renglones que quien ojea no lee. */
+.rapida-faltan ul { list-style: none; margin: 11px 0 0; padding: 0; display: grid; gap: 7px; }
+.rapida-faltan li {
+  position: relative; padding-left: 15px;
+  font-size: 14.5px; font-weight: 550; line-height: 1.35;
+}
+.rapida-faltan li::before {
+  content: ""; position: absolute; left: 0; top: 8px;
+  width: 5px; height: 5px; border-radius: 50%; background: var(--brand);
+}
+.rapida-faltan > p {
+  margin: 12px 0 0; padding-top: 11px; border-top: 1px solid var(--line);
+  color: var(--forest); font-size: 12.5px; line-height: 1.5; font-weight: 550;
+}
+
+/* La linea que explica el veredicto. Una sola frase corta: el titulo ya dijo lo importante. */
+.rapida-porque { margin: 0 0 4px; font-size: 14.5px; line-height: 1.5; }
+
+/* "Puede que si te toque": ni verde de exito ni rojo de alarma, porque la respuesta esta
+   abierta y pintarla de un color ya seria contestarla. */
+.consulta-quiza { color: var(--ink); }
+
+
+
+/* La bifurcacion que decide el precio: una pregunta con dos respuestas, no dos botones sueltos.
+   Se ven iguales a proposito. Pintar una de verde y otra de blanco haria ver la de pago como el
+   plan B, y para quien no tiene clave el camino gratis no es una opcion: le exige algo que no
+   tiene. */
+.rapida-bifurcacion { display: grid; gap: 9px; margin-top: 18px; }
+.rapida-pregunta { margin: 0 0 2px; font-size: 15px; font-weight: 650; line-height: 1.35; }
+.rapida-salida {
+  display: block; width: 100%; padding: 13px 15px;
+  border: 1.5px solid var(--line); border-radius: 12px; background: white;
+  text-align: left; cursor: pointer;
+  transition: border-color .15s ease, background .15s ease;
+}
+.rapida-salida:hover { border-color: var(--brand); background: #f7fdfa; }
+.rapida-salida b { display: block; font-size: 15px; line-height: 1.3; }
+.rapida-salida span { display: block; margin-top: 3px; color: var(--brand); font-size: 13px; font-weight: 550; }
+.rapida-salida span svg { display: inline; vertical-align: -2px; margin-left: 3px; }
+
+/* La fecha por los dos ultimos digitos de la cedula: urgencia real, no un reloj inventado. */
+.rapida-fecha {
+  margin-top: 16px; padding: 14px 15px;
+  border: 1px solid var(--line); border-radius: 12px; background: var(--cream);
+}
+.rapida-fecha label { display: flex; align-items: center; gap: 6px; font-size: 13.5px; font-weight: 600; }
+.rapida-fecha label svg { color: var(--brand); }
+.rapida-fecha input {
+  width: 84px; margin-top: 9px; padding: 10px 12px;
+  border: 1.5px solid var(--line); border-radius: 9px;
+  font-size: 17px; font-variant-numeric: tabular-nums; letter-spacing: .06em; text-align: center;
+}
+.rapida-fecha input:focus { outline: 0; border-color: var(--brand); }
+.rapida-vence { margin: 10px 0 0; font-size: 13.5px; line-height: 1.5; }
+.rapida-volver { margin: 16px auto 0; }
+
+/* La salida de emergencia de la pantalla de la clave. Es la unica cosa de la tarjeta que le
+   habla a quien NO puede seguir, asi que se separa con una linea en vez de competir por color. */
+.consulta-sin-clave {
+  display: block; width: 100%; margin-top: 16px; padding: 13px 0 0;
+  border: 0; border-top: 1px solid var(--line); background: transparent;
+  text-align: left; cursor: pointer;
+}
+.consulta-sin-clave b { display: block; font-size: 13.5px; }
+.consulta-sin-clave span {
+  /* `inline` y no `flex`: en flex, cuando el texto ocupa dos lineas la flecha se va sola al
+     extremo derecho de la segunda, separada de la frase que acompaña. */
+  display: block; margin-top: 3px;
+  color: var(--brand); font-size: 13px; font-weight: 550;
+}
+.consulta-sin-clave span svg { display: inline; vertical-align: -2px; margin-left: 3px; }
+.consulta-sin-clave:hover span { text-decoration: underline; }
+
+/* El "no te toca" con la puerta de las retenciones: no estar obligado y no convenirte declarar
+   son cosas distintas, y a quien le retuvieron declarar le devuelve plata. */
+.consulta-retenciones {
+  margin-top: 16px; padding: 14px 15px;
+  border: 1px solid var(--line); border-radius: 12px; background: var(--cream);
+}
+.consulta-retenciones b { font-size: 13.5px; }
+.consulta-retenciones p { margin: 7px 0 12px; color: var(--muted); font-size: 13px; line-height: 1.55; }
 
 /* Los tres caminos. Cada uno con su costo para quien pregunta: tiempo, clave, o plata. */
 .consulta-caminos { list-style: none; margin: 20px 0 0; padding: 0; display: grid; gap: 4px; }

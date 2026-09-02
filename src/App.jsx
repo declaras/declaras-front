@@ -24,6 +24,7 @@ import { referenciaDeAnuncio, registrar, registrarAperturaDeChat } from "./comun
 import { MENSAJES } from "./comun/mensajes";
 import Promo from "./comun/Promo";
 import Consulta from "./comun/Consulta";
+import ConsultaRapida from "./comun/ConsultaRapida";
 import { pesos, PRECIO, RACIMO } from "./contenido/datos";
 import phoneArtwork from "./assets/clara-phone-cutout.png";
 import phoneArtworkWebp from "./assets/clara-phone-cutout.webp";
@@ -436,7 +437,7 @@ function HeroConsulta() {
             límite y Clara te deja la declaración lista por WhatsApp.
           </p>
           <ul className="hero-consulta-senas">
-            <li><Check size={15} /> Cinco preguntas, sin papeles ni claves</li>
+            <li><Check size={15} /> Dos toques, sin datos ni claves</li>
             <li><ShieldCheck size={15} /> O con tu clave de la DIAN, con tus cifras reales</li>
             <li><MessageCircle size={15} /> Si te toca, la hacemos hoy por WhatsApp</li>
           </ul>
@@ -446,18 +447,11 @@ function HeroConsulta() {
               pregunta, no a comprar, y ponerle el precio antes de su respuesta es contestarle
               otra cosa. La oferta aparece donde si corresponde: en el veredicto, justo cuando
               se entera de que le toca, y en la seccion de precio de abajo. */}
-          <Consulta titulo="Averígualo aquí" />
-          {/* La puerta inversa de la segunda puerta de la portada: el trafico nunca se reparte
-              perfecto, y el comprador decidido que caiga en la pagina de la pregunta necesita
-              su atajo igual que el dudoso que cae en la de compra. */}
-          <button
-            type="button"
-            className="hero-segunda-puerta"
-            onClick={() => abrirWhatsApp(MENSAJES.declarar)}
-          >
-            <span>¿Ya sabes que te toca declarar?</span>
-            <b>Toca aquí y empieza ya por WhatsApp <ArrowRight size={15} /></b>
-          </button>
+          {/* EL FLUJO CORTO SOLO EN ESTA LANDING, y la portada sigue con el largo: son dos
+              intenciones distintas y conviene poder comparar los dos embudos con trafico real
+              antes de cambiar el de todos. El atajo para el comprador decidido ya viene dentro
+              de `ConsultaRapida`, asi que aca no se repite. */}
+          <ConsultaRapida />
         </div>
       </div>
     </section>

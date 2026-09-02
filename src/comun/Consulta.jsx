@@ -23,7 +23,7 @@
  */
 
 import { useEffect, useId, useRef, useState } from "react";
-import { ArrowLeft, CalendarDays, Check, Loader2, MessageCircle, ShieldCheck } from "lucide-react";
+import { ArrowLeft, ArrowRight, CalendarDays, Check, Loader2, MessageCircle, ShieldCheck } from "lucide-react";
 
 import { TOPES, topeEnPesos, pesos, UVT_2025 } from "../contenido/datos";
 import { vencimientoDe } from "../contenido/calendario-renta-2026";
@@ -56,7 +56,7 @@ const VALOR_EXPERTO = 30_000;
  * Y respeta a quien pidio menos animacion en su sistema: para esa persona el salto es instantaneo
  * en vez de un desplazamiento, que es lo que la preferencia significa.
  */
-function useIrAlComienzo(ref, dependencia) {
+export function useIrAlComienzo(ref, dependencia) {
   const anterior = useRef(dependencia);
   useEffect(() => {
     if (anterior.current === dependencia) return;
@@ -224,7 +224,7 @@ export default function Consulta({ alCerrar = null, titulo = "¿No sabes si te t
  *
  * Se piden ANTES y no despues: quien ya vio su resultado no tiene ningun motivo para dejarlos.
  */
-function Datos({ titulo, datos, setDatos, onSeguir }) {
+export function Datos({ titulo, datos, setDatos, onSeguir, nota = null }) {
   // `useId` y no un id fijo: la consulta puede aparecer dos veces en una pagina, y con ids
   // repetidos la etiqueta de la segunda enfoca el campo de la primera.
   const idNombre = useId();
@@ -261,7 +261,9 @@ function Datos({ titulo, datos, setDatos, onSeguir }) {
           /te-toca-declarar la pregunta ya la hizo el h1 de al lado, y repetirla palabra por
           palabra se lee como un error de armado: alla el titulo invita a empezar. */}
       <h3>{titulo}</h3>
-      <p className="consulta-nota">Te lo decimos gratis en un minuto. Sin claves ni papeles.</p>
+      <p className="consulta-nota">
+        {nota ?? "Te lo decimos gratis en un minuto. Sin claves ni papeles."}
+      </p>
 
       <div className="consulta-campo">
         <label htmlFor={idNombre}>Tu nombre</label>
@@ -310,7 +312,12 @@ function Datos({ titulo, datos, setDatos, onSeguir }) {
       <label className="consulta-check">
         <input type="checkbox" checked={datos.acepta} onChange={poner("acepta")} />
         <span>
-          Acepto los <a href="/terminos">términos y la política de datos</a>.
+          Acepto los{" "}
+          {/* EN OTRA PESTAÑA, y no por gusto: navegar aca desmonta el formulario y se pierde
+              todo lo escrito. Y la pagina hoy responde 404, asi que la persona perdia sus datos
+              para llegar a un error. Lo segundo hay que arreglarlo aparte (es contenido legal);
+              lo primero se arregla aca. */}
+          <a href="/terminos" target="_blank" rel="noreferrer">términos y la política de datos</a>.
         </span>
       </label>
       {verError("acepta") ? <p className="consulta-error">{errores.acepta}</p> : null}
@@ -525,7 +532,7 @@ function Resultado({ veredicto, onReiniciar, onExperto }) {
  * pantalla quieta con "Consultando…" deja a quien espera sin saber si la clave sirvio o si se
  * colgo. Los pasos se muestran todos desde el principio y se van marcando.
  */
-function ConsultaDian({ contacto, onVolver }) {
+export function ConsultaDian({ contacto, onVolver, onSinClave = null }) {
   // Este camino cambia de estado (formulario, corriendo, resultado) sin que cambie el `paso` de
   // arriba, asi que lleva su propio aviso: si no, el unico salto que no se corrige es justo el
   // que mas se nota, el de la espera al resultado.
@@ -653,6 +660,26 @@ function ConsultaDian({ contacto, onVolver }) {
       <p className="consulta-nota consulta-fina">
         Tu clave viaja cifrada y se usa solo para esta consulta. No firmamos ni presentamos nada.
       </p>
+
+      {/* ═══ LA SALIDA DE EMERGENCIA ═══
+
+          ESTA PANTALLA ERA UN CALLEJON SIN SALIDA, y se midio: tres personas reales eligieron
+          este camino, llegaron aca, y ninguna consulto. Quien no tiene la clave no tiene nada
+          que hacer en un formulario que la pide, y la unica salida era volver atras por su
+          cuenta al menu de caminos, que ya habia dejado. Ninguna volvio.
+
+          Y es justo la persona a la que hay que venderle: para ella el camino gratis NO EXISTE,
+          porque exige una clave que no tiene. Lo que hay es un tramite (sacar el RUT, habilitar
+          la cuenta, recuperar la clave) y eso es trabajo de verdad, que se cobra.
+
+          El precio NO va aca: va en la conversacion. Un precio en una pantalla fria invita a
+          comparar antes de que nadie haya explicado que incluye. */}
+      {onSinClave ? (
+        <button type="button" className="consulta-sin-clave" onClick={onSinClave}>
+          <b>¿No sabes tu clave, o nunca has entrado al portal?</b>
+          <span>Te creamos la cuenta y te la sacamos nosotros. Escríbenos <ArrowRight size={14} /></span>
+        </button>
+      ) : null}
     </form>
   );
 }
@@ -710,10 +737,36 @@ function ResultadoDian({ salida, documento, caja }) {
           </button>
         </>
       ) : (
-        <p className="consulta-nota">
-          La DIAN puede recibir reportes nuevos durante el año. Si tu situación cambia, vuelve a
-          consultar antes de la fecha límite.
-        </p>
+        <>
+          {/* ═══ "NO TE TOCA" NO ES EL FINAL DEL CAMINO ═══
+
+              No estar obligado y no convenirte declarar son cosas distintas. Al asalariado por
+              debajo del tope al que le retuvieron en la fuente, declarar VOLUNTARIAMENTE le
+              devuelve esa plata; sin declarar se la queda la DIAN. Es el caso mas comun de todos
+              y hasta ahora esta pantalla lo despedia con una nota de "vuelve si algo cambia".
+
+              No se promete la devolucion, porque depende de si le retuvieron y de cuanto, y eso
+              esta en el certificado de ingresos y retenciones que aca no tenemos. Se nombra la
+              posibilidad, que es lo unico honesto que se puede decir sin el dato. */}
+          <div className="consulta-retenciones">
+            <b>¿Te retuvieron en la fuente durante el año?</b>
+            <p>
+              Si tu empleador o tus clientes te descontaron retención, puedes declarar
+              voluntariamente y pedir que te la devuelvan. No estás obligado, pero puede convenirte.
+            </p>
+            <button
+              type="button"
+              className="consulta-boton consulta-boton-suave"
+              onClick={() => abrirWhatsApp(MENSAJES.averiguar)}
+            >
+              <MessageCircle size={16} /> Que Clara lo revise
+            </button>
+          </div>
+          <p className="consulta-nota">
+            La DIAN puede recibir reportes nuevos durante el año. Si tu situación cambia, vuelve a
+            consultar antes de la fecha límite.
+          </p>
+        </>
       )}
     </div>
   );
