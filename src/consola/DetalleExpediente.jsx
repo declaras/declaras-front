@@ -187,7 +187,12 @@ function Flujo({ caseId, caso, conciliacion, peticiones, respuestas, patrimonio,
 
   // Hasta donde se puede llegar hoy. No es una restricción de permisos: es que una etapa sin
   // insumos no tiene nada que mostrar.
-  const hasta = faltan ? "decisiones" : hayBorrador ? "presentar" : "decisiones";
+  //
+  // UNA DECLARACION YA CERRADA LLEGA HASTA PRESENTAR, aunque aparezca algo nuevo por decidir:
+  // el trabajo de ese expediente esta en el ultimo tramo (escribir el borrador, firmarlo), y
+  // devolverlo a Decisiones cada vez que entra seria esconderle el paso que le falta.
+  const cerrada = caso.status === "DRAFT_READY" || caso.status === "SUBMITTED";
+  const hasta = cerrada ? "presentar" : faltan ? "decisiones" : hayBorrador ? "presentar" : "decisiones";
 
   // LA ETAPA VIVE EN LA DIRECCION, no en el estado de este componente. Dos razones: sobrevive a
   // un refresco de pagina y a cualquier remontaje del arbol (que es lo que rompio esto antes:
@@ -195,7 +200,12 @@ function Flujo({ caseId, caso, conciliacion, peticiones, respuestas, patrimonio,
   // de una etapa concreta.
   const [parametros, setParametros] = useSearchParams();
   const pedida = parametros.get("paso");
-  const actual = ETAPAS.some((e) => e.id === pedida) ? pedida : "resultado";
+  // SIN ETAPA EN LA DIRECCION SE ABRE DONDE TOCA, no siempre en la primera. El encabezado de
+  // este archivo lo prometia ("la etapa se propone, no se impone: se abre en la que toca segun
+  // el estado") y el codigo abria en `resultado` siempre: quien entraba a un expediente ya
+  // cerrado caia en la pantalla del veredicto y tenia que navegar a mano hasta Presentar cada
+  // vez. `hasta` ya calcula la etapa mas avanzada que tiene algo que mostrar.
+  const actual = ETAPAS.some((e) => e.id === pedida) ? pedida : hasta;
   const setEtapa = (id) => {
     const siguientes = new URLSearchParams(parametros);
     siguientes.set("paso", id);
