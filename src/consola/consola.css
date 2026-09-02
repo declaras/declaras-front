@@ -1600,6 +1600,13 @@
    pantalla, y firmarlo seria firmar cifras viejas. Se marca sin alarmar: es algo que se
    resuelve volviendo a escribir, no un error. */
 .portal-viejo { border-left: 2px solid #d0a04a; padding-left: 16px; }
+
+/* EL FINAL DEL CAMINO. Es el unico estado terminal bueno de todo el expediente, y se distingue
+   del resto por eso, no por decorarlo: el verde marca "esto ya no requiere nada de nadie". */
+.portal-presentada { border-left: 2px solid var(--green); padding-left: 16px; }
+.portal-presentada .revisar-titulo { display: flex; align-items: center; gap: 7px; }
+.portal-presentada .revisar-titulo svg { color: var(--green); }
+
 .presentar-nota {
   margin: 16px 0 0;
   color: var(--muted);

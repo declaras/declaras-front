@@ -26,6 +26,11 @@ export default function EtapaPresentar({ caseId, caso, conciliacion, peticiones,
   const formulario = useApi(() => api.getFormulario(caseId), [caseId]);
   const comparacion = useApi(() => api.getComparacionDian(caseId), [caseId]);
   const yaLista = caso.status === "DRAFT_READY" || caso.status === "SUBMITTED";
+  // LA DECLARACION FIRMADA, si la DIAN ya la tiene. Es el unico hecho de esta pantalla que no
+  // sale de nuestro sistema sino del portal, y manda sobre todo lo demas: si esta, el trabajo
+  // termino. Las de años anteriores llegan con el año en el tipo (`DECLARACION_2024`), asi que
+  // un `FILED_RETURN` a secas es siempre la de este año.
+  const presentada = (caso.documents ?? []).find((d) => d.doc_type === "FILED_RETURN") ?? null;
 
   const sinDecidir = (conciliacion?.partidas ?? []).filter((p) => !p.resolucion).length;
   const porConfirmar = caso.flags.filter((f) => !f.resolved_at && f.severity !== "info").length;
@@ -114,7 +119,11 @@ export default function EtapaPresentar({ caseId, caso, conciliacion, peticiones,
   return (
     <section className="etapa-cuerpo">
       <h1 className="etapa-titulo">
-        {yaLista ? "Declaración dada por lista" : "Antes de presentar"}
+        {presentada
+          ? "Declaración presentada"
+          : yaLista
+            ? "Declaración dada por lista"
+            : "Antes de presentar"}
       </h1>
 
       {actual ? (
@@ -207,7 +216,9 @@ export default function EtapaPresentar({ caseId, caso, conciliacion, peticiones,
         </div>
       ) : null}
 
-      {yaLista ? (
+      {presentada ? (
+        <YaPresentada doc={presentada} profunda={profunda} caseId={caseId} />
+      ) : yaLista ? (
         <EscribirAlPortal
           caseId={caseId}
           profunda={profunda}
@@ -407,6 +418,59 @@ function EscribirAlPortal({ caseId, profunda, documentos, cambiadoEl, onEscrito 
           documentos={documentos}
         />
       )}
+    </div>
+  );
+}
+
+/**
+ * QUE FIRMO, comparado con lo que le preparamos.
+ *
+ * La declaracion presentada es el unico dato de esta pantalla que no sale de nuestro sistema: la
+ * baja la consulta a la DIAN. Y por eso puede contradecirnos. Que exista NO prueba que haya
+ * firmado nuestro borrador: pudo firmar la sugerida de la DIAN, un borrador viejo nuestro de
+ * antes del ultimo cambio, o lo que le armo otro contador. Los tres casos se ven identicos si uno
+ * se limita a decir "ya esta presentada", y los tres significan cosas distintas para quien
+ * responde por ese expediente.
+ *
+ * La comparacion NO se hace aca: la hace el backend (`comparacion-con-lo-presentado`), que ya
+ * empareja casilla por casilla y sabe distinguir "la trae solo uno de los dos" de "las dos en
+ * cero". Rehacerla en JavaScript era tener dos reglas para la misma pregunta.
+ */
+function YaPresentada({ doc, profunda, caseId }) {
+  const [viendo, setViendo] = useState(false);
+  const comparacion = useApi(() => api.getComparacionPresentada(caseId), [caseId]);
+
+  return (
+    <div className="portal-escribir portal-presentada">
+      <h3 className="revisar-titulo">
+        <Check size={15} /> Ya está presentada
+      </h3>
+      <p className="presentar-nota">
+        {profunda
+          ? `La DIAN ya tiene la declaración firmada de este año. La bajamos el ${formatDate(doc.added_at)}.`
+          : `Tu declaración ya quedó presentada ante la DIAN. La bajamos el ${formatDate(doc.added_at)} y la puedes ver acá cuando quieras.`}
+      </p>
+
+      <div className="portal-acciones">
+        <button className="btn-mini" onClick={() => setViendo(true)}>
+          <Eye size={13} />
+          Ver la declaración presentada
+        </button>
+        <a className="btn-mini" href={doc.download_url} download={doc.filename}>
+          Descargarla
+        </a>
+      </div>
+
+      {viendo ? <VisorDocumento doc={doc} onCerrar={() => setViendo(false)} /> : null}
+
+      {/* EN QUE SE PARECE A LO QUE PREPARAMOS. Nadie va a cotejar cien casillas a mano en el PDF,
+          y la diferencia importa: si lo que firmo no es lo nuestro, el impuesto que pago no es el
+          que calculamos. */}
+      <Comparacion
+        comparacion={comparacion.data}
+        error={comparacion.error}
+        cargando={comparacion.loading}
+      />
     </div>
   );
 }
