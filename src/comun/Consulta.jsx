@@ -87,7 +87,7 @@ const PASOS_DIAN = [
  * El SERVIDOR recalcula el veredicto sobre las respuestas: lo que se manda son los hechos, no
  * la conclusion.
  */
-async function registrarConsulta(cuerpo) {
+export async function registrarConsulta(cuerpo) {
   const base = import.meta.env.VITE_API_URL;
   if (!base) return null;
   try {

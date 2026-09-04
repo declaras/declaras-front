@@ -35,11 +35,11 @@ import { ArrowLeft, ArrowRight, CalendarDays, Check, MessageCircle, ShieldCheck 
 import { BANDAS_INGRESO, TOPES, topeEnPesos } from "../contenido/datos";
 import { vencimientoDe } from "../contenido/calendario-renta-2026";
 import { abrirWhatsApp } from "../App";
-import { registrar } from "./medicion";
+import { identificar, registrar } from "./medicion";
 import { MENSAJES } from "./mensajes";
 import Promo from "./Promo";
 import { enDias } from "./Vencimiento";
-import { ConsultaDian, Datos, useIrAlComienzo } from "./Consulta";
+import { ConsultaDian, Datos, registrarConsulta, useIrAlComienzo } from "./Consulta";
 
 const PATRIMONIO = TOPES.find((t) => t.id === "patrimonio");
 const INGRESOS = TOPES.find((t) => t.id === "ingresos");
@@ -51,6 +51,10 @@ export default function ConsultaRapida() {
   // y el 85% no toca nada. Seis opciones para elegir no es informacion, es paralisis.
   const [indice, setIndice] = useState(0);
   const [banda, setBanda] = useState(null);
+  // La respuesta de patrimonio SE GUARDA, no solo se usa de paso. El registro del lead la manda
+  // al servidor, y el servidor la necesita para recalcular el veredicto sobre los hechos en vez
+  // de confiar en la conclusion del navegador.
+  const [patrimonio, setPatrimonio] = useState(null);
   const [datos, setDatos] = useState({ nombre: "", correo: "", whatsapp: "", acepta: false });
   const [veredicto, setVeredicto] = useState(null);
   const caja = useRef(null);
@@ -80,6 +84,7 @@ export default function ConsultaRapida() {
   };
 
   const responderPatrimonio = (valor) => {
+    setPatrimonio(valor);
     const detalle = { banda: banda?.id, patrimonio: valor, preguntas: 2 };
     if (valor === "si") return cerrar("OBLIGADO", detalle);
     if (valor === "no-se" || banda?.veredicto === "filo") return cerrar("FILO", detalle);
@@ -88,6 +93,7 @@ export default function ConsultaRapida() {
 
   const reiniciar = () => {
     setBanda(null);
+    setPatrimonio(null);
     setVeredicto(null);
     setIndice(0);
     setPaso("preguntas");
@@ -125,6 +131,24 @@ export default function ConsultaRapida() {
           datos={datos}
           setDatos={setDatos}
           onSeguir={() => {
+            // ═══ EL LEAD SE GUARDA AQUI, NO AL FINAL ═══
+            //
+            // Este flujo nacio sin estas dos llamadas y se midio lo que costo: cuatro personas
+            // escribieron nombre, correo y WhatsApp en dos dias y no quedo ninguna. El dato solo
+            // llegaba al servidor si completaban toda la consulta con la DIAN, y de cuatro solo
+            // una lo logro: los otros tres abandonaron en la pantalla de la clave, o la clave les
+            // fallo, y su dato no existia en ninguna parte.
+            //
+            // El momento correcto es este, cuando la persona ENTREGA los datos. Lo que pase
+            // despues con el portal es problema nuestro, no razon para perder el contacto.
+            identificar(datos);
+            registrarConsulta({
+              nombre: datos.nombre,
+              correo: datos.correo,
+              whatsapp: datos.whatsapp,
+              via: "dian",
+              respuestas: respuestasParaElServidor(banda, patrimonio),
+            });
             registrar("consulta_datos_dejados", { version: "rapida" });
             setPaso("dian");
           }}
@@ -140,6 +164,29 @@ export default function ConsultaRapida() {
       ) : null}
     </div>
   );
+}
+
+/**
+ * Lo que contesto la persona, dicho en el vocabulario del backend.
+ *
+ * ═══ POR QUE HACE FALTA TRADUCIR ═══
+ *
+ * El servidor solo acepta "si", "no" y "no-se" por tope, y rechaza cualquier otra cosa con un
+ * 422. Las bandas de sueldo de este flujo ("baja", "media", "alta") no son eso, asi que
+ * mandarlas crudas habria hecho fallar el registro y perdido el lead igual que antes.
+ *
+ * ═══ LA BANDA DEL MEDIO ES "NO SE", NO "NO" ═══
+ *
+ * Un sueldo entre $4 y $5 millones puede quedar por encima o por debajo del tope segun primas y
+ * cesantias, asi que afirmar que no lo pasa seria afirmar algo que no sabemos. El servidor trata
+ * la duda igual que nosotros: sin ningun "si" pero con un "no-se", el veredicto es que no se
+ * puede saber. Asi la conclusion del servidor y la de la pantalla coinciden en vez de contradecirse.
+ */
+function respuestasParaElServidor(banda, patrimonio) {
+  const r = {};
+  if (banda) r.ingresos = banda.veredicto === "si" ? "si" : banda.veredicto === "filo" ? "no-se" : "no";
+  if (patrimonio) r.patrimonio = patrimonio;
+  return r;
 }
 
 /**
